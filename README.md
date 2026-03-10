@@ -45,16 +45,7 @@ AI-помощник:
 - Настроит символическую ссылку SpecKit
 - Сконфигурирует шаблоны проектов
 - Опционально установит Ollama для векторного поиска
-
-### Ручная настройка
-
-```bash
-# Создание директорий памяти
-mkdir -p ~/.claude/memory/projects
-
-# Создание символической ссылки SpecKit (укажите правильный путь)
-ln -s /path/to/spec-kit ~/.claude/spec-kit
-```
+- Настроит SkillsMP запросив опционально api key
 
 См. [INSTALL.md](specs/001-global-agent-memory/INSTALL.md) для полных AI-executable инструкций по установке.
 
@@ -68,13 +59,6 @@ ln -s /path/to/spec-kit ~/.claude/spec-kit
 
 ```
 Инициализируй SpecKit Memory System для этого проекта согласно specs/001-global-agent-memory/INSTALL.md
-```
-
-Или вручную:
-
-```bash
-cd ваш-проект
-mkdir -p .spec-kit/memory
 ```
 
 ### 2. Использование памяти в коде
@@ -408,16 +392,6 @@ The AI assistant will:
 - Configure project templates
 - Optionally install Ollama for vector search
 
-### Manual Setup
-
-```bash
-# Create memory directories
-mkdir -p ~/.claude/memory/projects
-
-# Create SpecKit symlink (adjust path as needed)
-ln -s /path/to/spec-kit ~/.claude/spec-kit
-```
-
 See [INSTALL.md](specs/001-global-agent-memory/INSTALL.md) for complete AI-executable installation instructions.
 
 ---
@@ -432,17 +406,7 @@ Ask your AI assistant:
 Initialize SpecKit Memory System for this project following specs/001-global-agent-memory/INSTALL.md
 ```
 
-Or manually:
-
-```bash
-cd your-project
-mkdir -p .spec-kit/memory
-```
-
-### 2. Use Memory in Your Code
-
-```python
-from specify_cli.memory.orchestrator import MemoryOrchestrator
+orchestrator import MemoryOrchestrator
 
 # Initialize memory system
 memory = MemoryOrchestrator()
