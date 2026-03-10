@@ -1,0 +1,90 @@
+name: "Performance Optimization"
+version: 1.0
+description: "Правила производительности (latency, throughput, caching, scaling)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "performance.caching"
+    description: "Кэширование для дорогостоящих операций"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify cache decorators, caching layer, or CDN usage"
+    check_type: "content"
+
+  - id: "performance.async_operations"
+    description: "Асинхронные операции для I/O (database, API)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify async/await for database and external calls"
+    check_type: "content"
+
+  - id: "performance.query_optimization"
+    description: "Оптимизированные SQL/NoSQL запросы"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify indexed columns, no N+1 queries, query limits"
+    check_type: "content"
+
+  - id: "performance.lazy_loading"
+    description: "Ленивая загрузка ресурсов (lazy loading)"
+    severity: "info"
+    weight: 0
+    phase: "A"
+    check: "verify lazy loading for images, components, data"
+    check_type: "content"
+
+  - id: "performance.pagination"
+    description: "Пагинация для больших списков данных"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify LIMIT/OFFSET or cursor-based pagination"
+    check_type: "content"
+
+  - id: "performance.compression"
+    description: "Сжатие данных (gzip, brotli, compression)"
+    severity: "info"
+    weight: 0
+    phase: "A"
+    check: "verify compression middleware or headers"
+    check_type: "content"
+
+  - id: "performance.connection_pooling"
+    description: "Пулирование соединений (database, HTTP)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify connection pool configuration"
+    check_type: "content"
+
+  - id: "performance.batch_operations"
+    description: "Пакетные операции вместо множественных одиночных"
+    severity: "warn"
+    phase: "B"
+    check: "verify bulk insert, batch processing, or bulk API calls"
+    check_type: "content"
+
+  - id: "performance.memory_leaks"
+    description: "Отсутствие утечек памяти (unclosed resources)"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    check: "verify proper cleanup, close() calls, using statements"
+    check_type: "content"
+
+  - id: "performance.monitoring"
+    description: "Мониторинг производительности (metrics, APM)"
+    severity: "warn"
+    phase: "B"
+    check: "verify performance metrics collection or APM integration"
+    check_type: "content"

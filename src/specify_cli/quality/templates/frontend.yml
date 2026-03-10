@@ -1,0 +1,90 @@
+name: "Frontend Code"
+version: 1.0
+description: "Quality rules for frontend code (React, Vue, Angular, components)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.components"
+    description: "Component-based architecture used"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify component structure (export default Component)"
+    check_type: "content"
+
+  - id: "correctness.state_management"
+    description: "State management properly implemented"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify useState/useReducer for state, no direct mutations"
+    check_type: "content"
+
+  - id: "quality.props_validation"
+    description: "PropTypes or TypeScript interfaces for props"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify prop types defined (propTypes or TypeScript)"
+    check_type: "content"
+
+  - id: "correctness.routing"
+    description: "Routing configuration defined"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify route definitions (routes, Router, BrowserRouter)"
+    check_type: "content"
+
+  - id: "quality.responsive"
+    description: "Responsive design considerations"
+    severity: "warn"
+    weight: 1
+    "phase": "A"
+    check: "verify media queries or responsive classes"
+    check_type: "content"
+
+  - id: "accessibility.alt_text"
+    description: "Alt text for images"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify alt attributes on img tags"
+    check_type: "content"
+
+  - id: "performance.lazy_loading"
+    description: "Code splitting and lazy loading"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify React.lazy() or dynamic imports for large components"
+    check_type: "content"
+
+  - id: "quality.semantic_html"
+    description: "Semantic HTML elements used"
+    severity: "warn"
+    phase: "B"
+    check: "verify header, nav, main, footer elements instead of div soup"
+    check_type: "content"
+
+  - id: "security.xss_prevention"
+    description: "XSS prevention measures"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify dangerouslySetInnerHTML is avoided, React auto-escapes"
+    check_type: "content"
+
+  - id: "quality.css_organization"
+    description: "CSS properly organized"
+    severity: "warn"
+    phase: "B"
+    check: "verify CSS modules, no global style pollution"
+    check_type: "content"

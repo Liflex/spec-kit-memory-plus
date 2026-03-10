@@ -1,0 +1,91 @@
+name: "Database Schema"
+version: 1.0
+description: "Quality rules for database schema definitions (SQL, migrations, models)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.primary_key"
+    description: "All tables have primary key defined"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify PRIMARY KEY constraint in table definitions"
+    check_type: "content"
+
+  - id: "correctness.foreign_keys"
+    description: "Foreign keys properly defined with constraints"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify FOREIGN KEY references with ON DELETE/UPDATE"
+    check_type: "content"
+
+  -id: "correctness.indexes"
+    description: "Indexes on frequently queried columns"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify INDEX statements for search columns"
+    check_type: "content"
+
+  - id: "correctness.data_types"
+    description: "Appropriate data types for columns"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify VARCHAR sizes, INT/DECIMAL precision, TEXT vs JSON"
+    check_type: "content"
+
+  - id: "correctness.not_null"
+    description: "NOT NULL constraints on required fields"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify NOT NULL on important fields (id, created_at, etc.)"
+    check_type: "content"
+
+  - id: "security.sql_injection"
+    description: "No SQL injection vulnerabilities"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify parameterized queries, no string concatenation"
+    check_type: "content"
+
+  - id: "performance.denormalization"
+    description: "Appropriate denormalization for performance"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify read-heavy queries have denormalized joins"
+    check_type: "content"
+
+  - id: "correctness.timestamps"
+    description: "created_at/updated_at timestamps"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify timestamp columns for tracking"
+    check_type: "content"
+
+  - id: "quality.migrations"
+    description: "Migration files ordered and reversible"
+    severity: "warn"
+    phase: "B"
+    check: "verify migrations have up/down methods"
+    check_type: "content"
+
+  - id: "quality.constraints"
+    description: "Constraints named and documented"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify CHECK constraints have descriptive names"
+    check_type: "content"

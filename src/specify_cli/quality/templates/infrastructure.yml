@@ -1,0 +1,90 @@
+name: "Infrastructure"
+version: 1.0
+description: "Quality rules for DevOps and Infrastructure as Code"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.dockerfile"
+    description: "Dockerfile follows best practices"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify multi-stage build, non-root user, .dockerignore"
+    check_type: "content"
+
+  - id: "correctness.environment_variables"
+    description: "Environment variables documented"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify ENV instructions in Dockerfile or docker-compose"
+    check_type: "content"
+
+  - id: "security.secrets_management"
+    description: "No hardcoded secrets in infrastructure"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify no passwords, keys, tokens in configs"
+    check_type: "content"
+
+  - id: "correctness.health_checks"
+    description: "Health check endpoints defined"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify /health or /readiness endpoints"
+    check_type: "content"
+
+  - id: "quality.resource_limits"
+    description: "Resource limits configured"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify memory/CPU limits in deployment"
+    check_type: "content"
+
+  - id: "correctness.persistent_storage"
+    description: "Persistent volumes defined"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify volume mounts for data persistence"
+    check_type: "content"
+
+  - id: "performance.scaling"
+    description: "Horizontal scaling support"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify HPA (Horizontal Pod Autoscaler) or similar"
+    check_type: "content"
+
+  - id: "quality.monitoring"
+    description: "Monitoring and metrics configured"
+    severity: "warn"
+    phase: "B"
+    check: "verify Prometheus/metrics endpoints or logging"
+    check_type: "content"
+
+  - id: "security.network_policies"
+    description: "Network policies defined"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify NetworkPolicy or firewall rules"
+    check_type: "content"
+
+  - id: "quality.restart_policy"
+    description: "Restart policies configured"
+    severity: "warn"
+    phase: "B"
+    check: "verify restart: always/never/on-failure policies"
+    check_type: "content"

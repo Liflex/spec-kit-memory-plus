@@ -29,14 +29,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Modes: new, resume, status, stop, list, history, clean
   - `/speckit.implement` — Обновлён с рекомендацией Quality Loop в конце
 
-- **Criteria Templates** — 4 встроенных шаблона правил качества:
-  - `api-spec.yml` — для API спецификаций (CRUD, status codes, auth)
-  - `code-gen.yml` — для кода (tests, error handling, types, structure)
-  - `docs.yml` — для документации (title, installation, usage)
-  - `config.yml` — для конфигурации (syntax, types, paths, secrets)
+- **Criteria Templates** — 12 встроенных шаблонов правил качества:
+  - `api-spec.yml` — для API спецификаций (10 правил: CRUD, status codes, auth)
+  - `code-gen.yml` — для кода (11 правил: tests, error handling, types, structure)
+  - `docs.yml` — для документации (10 правил: title, installation, usage)
+  - `config.yml` — для конфигурации (9 правил: syntax, types, paths, secrets)
+  - `database.yml` — для баз данных (10 правил: primary/foreign keys, indexes, SQLi)
+  - `frontend.yml` — для frontend кода (10 правил: components, state management, routing)
+  - `backend.yml` — для backend сервисов (10 правил: API structure, service layer, DI)
+  - `infrastructure.yml` — для DevOps и IaC (10 правил: Dockerfile, health checks, scaling)
+  - `testing.yml` — для тестовых файлов (10 правил: AAA pattern, assertions, isolation)
+  - `security.yml` — для безопасности (10 правил: secrets, validation, auth, XSS/SQLi)
+  - `performance.yml` — для производительности (10 правил: caching, async, queries)
+  - `ui-ux.yml` — для UI/UX дизайна (10 правил: accessibility, responsive, states)
+
+- **Auto-detection критериев** — Automatic detection по ключевым словам:
+  - "api", "endpoint", "rest" → `api-spec`
+  - "database", "sql", "schema" → `database`
+  - "frontend", "react", "component" → `frontend`
+  - "backend", "service", "middleware" → `backend`
+  - "docker", "kubernetes", "deploy" → `infrastructure`
+  - "test", "testing", "unit" → `testing`
+  - "security", "auth", "authorization" → `security`
+  - "performance", "cache", "optimization" → `performance`
+  - "ux", "accessibility", "responsive" → `ui-ux`
 
 - **Quality Loop Components**:
-  - `RuleManager` — управление criteria templates
+  - `RuleManager` — управление criteria templates с auto-detection
   - `Scorer` — расчёт score с weighted formula
   - `Evaluator` — оценка артефактов против правил
   - `Critique` — генерация targeted feedback
@@ -100,6 +119,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Новые секции для Security Scanning (как работает, угрозы, защита)
   - Обновлён список команд SpecKit с новыми командами
   - Обновлён статус проекта с фазами Quality Loop и Security
+  - Добавлена таблица всех 12 criteria templates
+
+- **docs/quality-loop.md** — расширена документация по Quality Loop
+  - Детальное описание всех 12 criteria templates
+  - Объяснение как severity влияет на loop (fail блокирует, warn снижает)
+  - Примеры score calculation и phase transitions
+  - Таблица auto-detection keywords
 
 ### Dependencies
 
@@ -110,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **[Quality Loop Documentation](docs/quality-loop.md)** — полное руководство по Quality Loop
   - Architecture, components, data flow
+  - Все 12 criteria templates детально описаны
   - API reference, usage examples
   - Troubleshooting, performance metrics
 
@@ -144,17 +171,25 @@ src/specify_cli/
 │   ├── __init__.py
 │   ├── models.py              # Data models
 │   ├── state.py               # Loop state manager
-│   ├── rules.py               # Rule manager
+│   ├── rules.py               # Rule manager с auto-detection
 │   ├── scorer.py              # Score calculator
 │   ├── evaluator.py           # Evaluator
 │   ├── critique.py            # Critique generator
 │   ├── refiner.py             # Refiner
 │   ├── loop.py                # Quality loop orchestrator
-│   └── templates/             # Built-in criteria
-│       ├── api-spec.yml
-│       ├── code-gen.yml
-│       ├── docs.yml
-│       └── config.yml
+│   └── templates/             # Built-in criteria (12 шаблонов)
+│       ├── api-spec.yml       # API спецификации
+│       ├── code-gen.yml       # Генерация кода
+│       ├── docs.yml           # Документация
+│       ├── config.yml         # Конфигурация
+│       ├── database.yml       # Базы данных 🆕
+│       ├── frontend.yml       # Frontend код 🆕
+│       ├── backend.yml        # Backend сервисы 🆕
+│       ├── infrastructure.yml # DevOps & IaC 🆕
+│       ├── testing.yml        # Тестовые файлы 🆕
+│       ├── security.yml       # Безопасность 🆕
+│       ├── performance.yml    # Производительность 🆕
+│       └── ui-ux.yml          # UI/UX дизайн 🆕
 ├── security/                   # 🆕 Security Module
 │   ├── __init__.py
 │   ├── scanner.py              # Level 1 scanner wrapper

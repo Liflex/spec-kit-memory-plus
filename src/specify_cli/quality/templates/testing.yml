@@ -1,0 +1,90 @@
+name: "Test Files"
+version: 1.0
+description: "Правила качества для тестовых файлов (unit tests, integration tests, e2e)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.test_structure"
+    description: "Тесты следуют структуре Arrange-Act-Assert"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify given/when/then or arrange/act/assert pattern"
+    check_type: "content"
+
+  - id: "correctness.assertions"
+    description: "Тесты имеют assertions с понятными сообщениями"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify assert statements with descriptive messages"
+    check_type: "content"
+
+  - id: "quality.test_isolation"
+    description: "Тесты изолированы и не зависят от порядка выполнения"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify setup/teardown or beforeEach/afterEach for isolation"
+    check_type: "content"
+
+  - id: "correctness.edge_cases"
+    description: "Тесты покрывают граничные случаи"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify tests for null, empty, negative values, boundaries"
+    check_type: "content"
+
+  - id: "quality.mocks_usage"
+    description: "Mocks и stubs используются правильно"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify mocks for external dependencies, not for code under test"
+    check_type: "content"
+
+  - id: "correctness.error_tests"
+    description: "Тесты проверяют обработку ошибок"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify tests for exception handling and error cases"
+    check_type: "content"
+
+  - id: "quality.coverage"
+    description: "Покрытие кода тестами не менее 80%"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify coverage reports or comprehensive test cases"
+    check_type: "content"
+
+  - id: "performance.test_speed"
+    description: "Тесты выполняются быстро (unit < 100ms)"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify tests complete quickly, no unnecessary waits"
+    check_type: "content"
+
+  - id: "quality.integration_tests"
+    description: "Интеграционные тесты покрывают ключевые сценарии"
+    severity: "warn"
+    phase: "B"
+    check: "verify integration tests for API endpoints, database operations"
+    check_type: "content"
+
+  - id: "quality.test_naming"
+    description: "Названия тестов описывают что и что проверяют"
+    severity: "warn"
+    phase: "B"
+    check: "verify test names follow pattern: should_returnX_whenY"
+    check_type: "content"

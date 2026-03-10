@@ -1,0 +1,92 @@
+name: "Backend Services"
+version: 1.0
+description: "Quality rules for backend services (API, business logic, services)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.api_structure"
+    description: "RESTful API structure followed"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify proper HTTP method mapping (GET/POST/PUT/DELETE)"
+    check_type: "content"
+
+  - id: "correctness.service_layer"
+    description: "Business logic in service layer"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify service classes separate from controllers"
+    check_type: "content"
+
+  - id: "correctness.dependency_injection"
+    description: "Dependency injection used"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify DI container or constructor injection patterns"
+    check_type: "content"
+
+  - id: "quality.error_responses"
+    description: "Proper error responses"
+    severity: "fail"
+    weight: 2
+    "phase": "A"
+    check: "verify error responses with status codes and messages"
+    check_type: "content"
+
+  - id: "correctness.validation"
+    description: "Input validation on all inputs"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "validate request parameters before processing"
+    check_type: "content"
+
+  - id: "quality.logging"
+    description: "Structured logging for debugging"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify log statements with context and levels"
+    check_type: "content"
+
+  - id: "security.authentication"
+    description: "Authentication on all endpoints"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify auth decorators or middleware on endpoints"
+    check_type: "content"
+
+  - id: "security.authorization"
+    description: "Authorization checks implemented"
+    severity: "fail"
+    weight: "2"
+    phase: "A"
+    check: "verify permission checks before resource access"
+    check_type: "content"
+
+  - id: "performance.caching"
+    description: "Caching for expensive operations"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify cache decorators or caching layer"
+    check_type: "content"
+
+  - id: "performance.async_operations"
+    description: "Async/await for I/O operations"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify async/await for database and external calls"
+    check_type: "content"

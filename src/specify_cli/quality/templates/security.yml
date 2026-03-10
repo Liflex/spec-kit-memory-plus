@@ -1,0 +1,91 @@
+name: "Security Review"
+version: 1.0
+description: "Правила безопасности для кода и конфигураций (auth, encryption, input validation)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "security.no_hardcoded_secrets"
+    description: "Отсутствие хардкодных секретов (пароли, ключи, токены)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify no passwords, API keys, tokens in source code"
+    check_type: "content"
+
+  - id: "security.input_validation"
+    description: "Валидация входных данных от пользователя"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify sanitization of user input, parameterized queries"
+    check_type: "content"
+
+  - id: "security.sql_injection_prevention"
+    description: "Защита от SQL-инъекций"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify parameterized queries or ORM usage, no string concatenation"
+    check_type: "content"
+
+  - id: "security.xss_prevention"
+    description: "Защита от XSS (Cross-Site Scripting)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify output encoding, CSP headers, no unsafe innerHTML"
+    check_type: "content"
+
+  - id: "security.authentication"
+    description: "Аутентификация реализована для защищённых ресурсов"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify auth middleware, decorators, or guards on endpoints"
+    check_type: "content"
+
+  - id: "security.authorization"
+    description: "Проверка прав доступа (authorization checks)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify permission checks before resource access"
+    check_type: "content"
+
+  - id: "security.https_only"
+    description: "Принудительное использование HTTPS"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify HTTPS redirect, secure cookies, HSTS headers"
+    check_type: "content"
+
+  - id: "security.csrf_protection"
+    description: "Защита от CSRF (Cross-Site Request Forgery)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify CSRF tokens, SameSite cookies, origin checks"
+    check_type: "content"
+
+  - id: "security.error_handling"
+    description: "Безопасная обработка ошибок (без утечки информации)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify generic error messages, no stack traces to client"
+    check_type: "content"
+
+  - id: "security.dependencies"
+    description: "Зависимости обновлены, нет известных уязвимостей"
+    severity: "warn"
+    phase: "B"
+    check: "verify package audit results, dependency updates"
+    check_type: "content"

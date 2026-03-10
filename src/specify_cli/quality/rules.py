@@ -46,6 +46,43 @@ class RuleManager:
         "config": "config",
         "settings": "config",
         "configuration": "config",
+        "database": "database",
+        "db": "database",
+        "sql": "database",
+        "schema": "database",
+        "migration": "database",
+        "frontend": "frontend",
+        "ui": "frontend",
+        "react": "frontend",
+        "vue": "frontend",
+        "angular": "frontend",
+        "component": "frontend",
+        "backend": "backend",
+        "service": "backend",
+        "controller": "backend",
+        "middleware": "backend",
+        "infrastructure": "infrastructure",
+        "devops": "infrastructure",
+        "docker": "infrastructure",
+        "kubernetes": "infrastructure",
+        "deploy": "infrastructure",
+        "test": "testing",
+        "testing": "testing",
+        "unit": "testing",
+        "integration": "testing",
+        "e2e": "testing",
+        "security": "security",
+        "auth": "security",
+        "authentication": "security",
+        "authorization": "security",
+        "performance": "performance",
+        "optimization": "performance",
+        "cache": "performance",
+        "scalability": "performance",
+        "ux": "ui-ux",
+        "accessibility": "ui-ux",
+        "responsive": "ui-ux",
+        "design": "ui-ux",
     }
 
     def __init__(self, criteria_root: Optional[Path] = None):
@@ -53,11 +90,11 @@ class RuleManager:
 
         Args:
             criteria_root: Root directory for user-defined criteria templates
-                          (default: .speckit/criteria/)
+                          (default: .speckit/criteria/ in current project)
         """
         if criteria_root is None:
-            from specify_cli.cli_config import get_project_dir
-            project_dir = get_project_dir()
+            # Use current working directory for project-specific criteria
+            project_dir = Path.cwd()
             criteria_root = project_dir / ".speckit" / "criteria"
 
         self.criteria_root = Path(criteria_root)

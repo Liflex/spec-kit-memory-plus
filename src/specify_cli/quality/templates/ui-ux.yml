@@ -1,0 +1,90 @@
+name: "UI/UX Design"
+version: 1.0
+description: "Правиля для UI/UX дизайна (accessibility, responsive, usability)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "accessibility.alt_text"
+    description: "Alt-текст для изображений"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify alt attributes on img tags"
+    check_type: "content"
+
+  - id: "accessibility.keyboard_navigation"
+    description: "Навигация с клавиатуры поддерживается"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify focus indicators, tab order, keyboard shortcuts"
+    check_type: "content"
+
+  - id: "accessibility.contrast"
+    description: "Контраст цветов соответствует WCAG AA"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify text contrast ratio >= 4.5:1 for normal text"
+    check_type: "content"
+
+  - id: "accessibility.aria_labels"
+    description: "ARIA-метки для интерактивных элементов"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify aria-label, aria-describedby for accessibility"
+    check_type: "content"
+
+  - id: "quality.responsive_design"
+    description: "Адаптивный дизайн для разных экранов"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify media queries, responsive breakpoints, mobile-first"
+    check_type: "content"
+
+  - id: "quality.loading_states"
+    description: "Состояния загрузки (loading indicators)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify spinners, skeletons, or progress indicators"
+    check_type: "content"
+
+  - id: "quality.empty_states"
+    description: "Состояния пустого контента"
+    severity: "warn"
+    phase: "A"
+    check: "verify empty state messages, illustrations, actions"
+    check_type: "content"
+
+  - id: "quality.error_states"
+    description: "Состояния ошибок с понятными сообщениями"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify error messages with next steps, not just error codes"
+    check_type: "content"
+
+  - id: "quality.consistent_spacing"
+    description: "Консистентные отступы (design tokens)"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify consistent padding, margins, spacing scale"
+    check_type: "content"
+
+  - id: "quality.feedback_timing"
+    description: "Быстрый отзыв на действия пользователя"
+    severity: "warn"
+    phase: "B"
+    check: "verify immediate feedback for buttons, forms, interactions"
+    check_type: "content"
