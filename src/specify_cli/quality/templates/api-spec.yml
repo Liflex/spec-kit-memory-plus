@@ -1,0 +1,92 @@
+name: "API Specification"
+version: 1.0
+description: "Quality rules for API specifications (OpenAPI, REST, GraphQL)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.endpoints"
+    description: "All CRUD endpoints defined"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify GET, POST, PUT, DELETE endpoints present"
+    check_type: "content"
+
+  - id: "correctness.status_codes"
+    description: "Proper HTTP status codes defined"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify 200, 201, 204, 400, 404, 500 codes present"
+    check_type: "content"
+
+  - id: "correctness.content_types"
+    description: "Content-Type headers specified"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify application/json, text/html content types"
+    check_type: "content"
+
+  - id: "quality.descriptions"
+    description: "Endpoints have descriptions"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify each endpoint has a description field"
+    check_type: "content"
+
+  - id: "correctness.auth"
+    description: "Authentication requirements documented"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify auth methods (Bearer, API key, etc.) documented"
+    check_type: "content"
+
+  - id: "quality.parameters"
+    description: "Request parameters documented"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify query, path, body parameters listed"
+    check_type: "content"
+
+  - id: "quality.responses"
+    description: "Response schemas documented"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify response body schemas defined"
+    check_type: "content"
+
+  - id: "performance.pagination"
+    description: "Pagination support for list endpoints"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify page, limit parameters for list operations"
+    check_type: "content"
+
+  - id: "security.rate_limiting"
+    description: "Rate limiting documentation"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify rate limits documented"
+    check_type: "content"
+
+  - id: "quality.versioning"
+    description: "API versioning strategy"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify /v1/ or version header mentioned"
+    check_type: "content"

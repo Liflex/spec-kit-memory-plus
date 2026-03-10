@@ -1,0 +1,108 @@
+name: "Code Generation"
+version: 1.0
+description: "Quality rules for generated code implementations"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.tests"
+    description: "Unit tests present"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify test files or test functions exist"
+    check_type: "content"
+
+  - id: "quality.error_handling"
+    description: "Error handling implemented"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify try/except or error handling patterns"
+    check_type: "content"
+
+  - id: "quality.readability"
+    description: "Code has comments or docstrings"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify comments or docstrings present"
+    check_type: "content"
+
+  - id: "correctness.types"
+    description: "Type hints or annotations present"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify type hints for function parameters"
+    check_type: "content"
+
+  - id: "correctness.structure"
+    description: "Proper code structure (classes, modules)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify classes or modules defined"
+    check_type: "content"
+
+  - id: "quality.naming"
+    description: "Clear naming conventions"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify snake_case or camelCase consistency"
+    check_type: "content"
+
+  - id: "security.input_validation"
+    description: "Input validation present"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify parameter validation or sanitization"
+    check_type: "content"
+
+  - id: "performance.complexity"
+    description: "No excessive complexity"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify no deeply nested loops (>3 levels)"
+    check_type: "content"
+
+  - id: "quality.logging"
+    description: "Logging for debugging"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify log statements or print debugging"
+    check_type: "content"
+
+  - id: "security.secrets"
+    description: "No hardcoded secrets"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    check: "verify no passwords, API keys, tokens in code"
+    check_type: "content"
+
+  - id: "correctness.imports"
+    description: "Proper imports and dependencies"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify imports are organized and necessary"
+    check_type: "content"
+
+  - id: "performance.caching"
+    description: "Caching for expensive operations"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify caching decorators or patterns"
+    check_type: "content"

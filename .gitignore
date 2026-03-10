@@ -50,3 +50,7 @@ docs/dev
 .specify/extensions/.cache/
 .specify/extensions/.backup/
 .specify/extensions/*/local-config.yml
+
+# Quality Loop - Evolution state (user-specific, not versioned)
+.speckit/evolution/
+.speckit/criteria/

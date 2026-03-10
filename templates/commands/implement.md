@@ -199,3 +199,65 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
         EXECUTE_COMMAND: {command}
         ```
     - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+
+11. **Show Quality Loop Recommendation**:
+
+After implementation is complete and all hooks are executed, show a recommendation for the Quality Loop feature:
+
+```
+---
+## 🔄 Quality Loop Available
+
+Implementation complete! You can further improve code quality with the **Quality Loop** feature.
+
+### What is Quality Loop?
+
+Quality Loop automatically evaluates your code against explicit rules, generates targeted feedback, and refines the implementation through multiple iterations.
+
+**Benefits**:
+- ✅ **Score-based evaluation**: Quantifiable quality metrics (0-1.0)
+- ✅ **Automatic refinements**: Targeted fixes for failed rules
+- ✅ **Iterative improvement**: Cycle continues until threshold reached
+- ✅ **Stagnation detection**: Stops when quality plateaus
+
+### How to Use
+
+Run quality loop on the implemented code:
+
+```bash
+/speckit.loop --criteria code-gen --max-iterations 4
+```
+
+**Arguments explained**:
+- `--criteria <template>`: Rule set (api-spec, code-gen, docs, config)
+- `--max-iterations <N>`: Maximum cycles (default: 4)
+- `--threshold-a <0.0-1.0>`: Phase A threshold (default: 0.8)
+- `--threshold-b <0.0-1.0>`: Phase B threshold (default: 0.9)
+
+**Auto-detect criteria**:
+```bash
+/speckit.loop
+```
+
+**Or combine implementation + quality loop**:
+```bash
+/speckit.implementloop
+```
+
+### Example Output
+
+```
+Iteration 1/4 | Phase A | Score: 0.72 | FAIL
+Failed: correctness.tests, quality.error_handling
+
+Iteration 2/4 | Phase A | Score: 0.84 | PASS (Phase A → B)
+
+Iteration 3/4 | Phase B | Score: 0.92 | PASS
+
+=== Quality Loop Complete ===
+Stop Reason: threshold_reached
+Score: 0.92
+```
+
+For more information, see the quickstart guide in your feature specification.
+```

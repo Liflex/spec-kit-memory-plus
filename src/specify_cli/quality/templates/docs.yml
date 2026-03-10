@@ -1,0 +1,92 @@
+name: "Documentation"
+version: 1.0
+description: "Quality rules for documentation files (README, guides, etc.)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.title"
+    description: "Document has a title or heading"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify # Title or ## Heading present"
+    check_type: "content"
+
+  - id: "correctness.purpose"
+    description: "Purpose or overview section"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify introduction or overview section exists"
+    check_type: "content"
+
+  - id: "quality.installation"
+    description: "Installation instructions"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify install, setup, or getting started section"
+    check_type: "content"
+
+  - id: "quality.usage"
+    description: "Usage examples"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify usage examples or code snippets present"
+    check_type: "content"
+
+  - id: "correctness.links"
+    description: "Links are valid format"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify markdown link format [text](url)"
+    check_type: "content"
+
+  - id: "quality.structure"
+    description: "Proper heading hierarchy"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify headings follow hierarchy (h1 -> h2 -> h3)"
+    check_type: "content"
+
+  - id: "correctness.spelling"
+    description: "No obvious spelling errors"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify common words spelled correctly"
+    check_type: "content"
+
+  - id: "quality.code_blocks"
+    description: "Code blocks properly formatted"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify ``` language for code blocks"
+    check_type: "content"
+
+  - id: "quality.see_also"
+    description: "Related documentation links"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify see also, references, or further reading"
+    check_type: "content"
+
+  - id: "correctness.contact"
+    description: "Contact or support information"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify support, contact, or issue tracker link"
+    check_type: "content"

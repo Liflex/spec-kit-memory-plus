@@ -1,0 +1,84 @@
+name: "Configuration"
+version: 1.0
+description: "Quality rules for configuration files (YAML, JSON, TOML, etc.)"
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "correctness.syntax"
+    description: "Valid file syntax"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify file parses without syntax errors"
+    check_type: "executable"
+
+  - id: "correctness.required_fields"
+    description: "Required fields present"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify all required configuration keys exist"
+    check_type: "content"
+
+  - id: "correctness.types"
+    description: "Field values match expected types"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify strings, numbers, booleans are correct types"
+    check_type: "content"
+
+  - id: "quality.comments"
+    description: "Comments for complex settings"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify comments explain non-obvious settings"
+    check_type: "content"
+
+  - id: "security.secrets"
+    description: "No hardcoded secrets"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: "verify no passwords, API keys in plain text"
+    check_type: "content"
+
+  - id: "correctness.paths"
+    description: "File paths are valid"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: "verify referenced files and directories exist"
+    check_type: "executable"
+
+  - id: "quality.defaults"
+    description: "Sensible default values"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify optional fields have default values"
+    check_type: "content"
+
+  - id: "performance.optimizations"
+    description: "Performance-related settings"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    check: "verify timeout, cache, pool settings configured"
+    check_type: "content"
+
+  - id: "quality.environment_vars"
+    description: "Environment variable references"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: "verify ${VAR} or ${VAR:-default} patterns"
+    check_type: "content"
