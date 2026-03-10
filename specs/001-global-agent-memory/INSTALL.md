@@ -2,7 +2,7 @@
 
 > **AI-Executable Installation Instructions**
 > This document is written for execution by AI assistants (Claude, ChatGPT, etc.)
-> Last updated: 2025-03-11 (Added Docker Compose + Command Sync Instructions)
+> Last updated: 2025-03-11 (Added SkillsMP API Key Setup Step)
 
 ---
 
@@ -184,7 +184,56 @@ if docker ps --format '{{.Names}}' | grep -q "^ollama$"; then
 fi
 ```
 
-### Step 7: Verify Installation
+### Step 7: Optional - Setup SkillsMP API Key
+
+> **SkillsMP provides access to 425K+ agent skills from the community.**
+>
+> This step is **optional**. Without an API key, the system will use GitHub fallback search.
+
+```bash
+# Navigate to .claude directory
+cd "$HOME/.claude"
+
+# Run SkillsMP API key setup
+python spec-kit/scripts/memory/setup_skillsmp_key.py
+```
+
+**What the script does:**
+
+1. **Prompts for API key** (optional - press Enter to skip)
+2. **Validates format** (checks for `sk_live_*` or `sk_test_*` prefix)
+3. **Tests API key** with a real search request
+4. **Stores securely** using system keyring or encrypted file
+
+**Get your API key:** https://skillsmp.com/api-keys
+
+**If skipped:**
+- GitHub fallback will be used for skill search
+- You can add API key later by running the script again
+
+**Verification:**
+
+After setup, verify SkillsMP status:
+
+```python
+# Test from Python
+from specify_cli.memory.skillsmp.integration import SkillsMPIntegration
+
+integration = SkillsMPIntegration()
+status = integration.get_status()
+
+print(f"SkillsMP configured: {status['skillsmp']['configured']}")
+print(f"API key stored: {status['skillsmp']['api_key_stored']}")
+
+# Test search
+results = integration.search_skills("react development", limit=3)
+for r in results:
+    print(f"  - {r.get('title', 'N/A')}")
+```
+
+---
+
+### Step 8: Verify Installation
 
 ```bash
 echo "=== Installation Verification ==="
@@ -249,10 +298,21 @@ if [ "$OLLAMA_FOUND" = false ]; then
     echo "  Install via Docker: See Step 6B in INSTALL.md"
 fi
 
+# Check SkillsMP (optional - requires Python)
+if command -v python &> /dev/null; then
+    # Try to check SkillsMP status
+    if python -c "from specify_cli.memory.skillsmp.integration import SkillsMPIntegration; i = SkillsMPIntegration(); print('✓' if i.has_api_key() else '⚠')" 2>/dev/null | grep -q "✓"; then
+        echo "✓ SkillsMP API key configured"
+    else
+        echo "⚠ SkillsMP API key not configured (optional)"
+        echo "  Setup later: python ~/.claude/spec-kit/scripts/memory/setup_skillsmp_key.py"
+    fi
+fi
+
 echo "=== Verification Complete ==="
 ```
 
-### Step 8: Update SpecKit Commands (CRITICAL)
+### Step 9: Update SpecKit Commands (CRITICAL)
 
 > **IMPORTANT**: Always keep SpecKit commands synchronized with the latest version!
 >
@@ -431,5 +491,5 @@ After successful installation:
 
 ---
 
-*Installation Guide v3.2 - AI-Executable*
+*Installation Guide v3.3 - AI-Executable*
 *Compatible with: SpecKit, AgentMemory-MCP, Ollama (Native & Docker)*
