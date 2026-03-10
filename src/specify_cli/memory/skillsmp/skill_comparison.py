@@ -113,12 +113,10 @@ class SkillComparator:
             is_duplicate = False
 
             for existing in unique:
-                # Check title similarity
-                title_sim = SequenceMatcher(
-                    None,
-                    skill.get("title", ""),
-                    existing.get("title", "")
-                ).ratio()
+                # Check title/name similarity (SkillsMP uses 'name', GitHub uses 'title')
+                skill_title = skill.get("name") or skill.get("title", "")
+                existing_title = existing.get("name") or existing.get("title", "")
+                title_sim = SequenceMatcher(None, skill_title, existing_title).ratio()
 
                 # Check repository similarity
                 repo_a = skill.get("github_repo", "")

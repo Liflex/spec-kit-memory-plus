@@ -55,7 +55,7 @@ def prompt_for_api_key() -> str:
     print("-" * 60)
     print("\nSkillsMP provides access to 425K+ agent skills from the community.")
     print("Without an API key, the system will use GitHub fallback search.")
-    print("\nGet your API key at: https://skillsmp.com/api-keys")
+    print("\nGet your API key at: https://skillsmp.com/docs/api")
     print("\nPress Enter to skip (GitHub fallback will be used)")
 
     try:
@@ -155,7 +155,7 @@ def main():
     if not validate_api_key_format(api_key):
         print_error("Invalid API key format")
         print("\nExpected format: sk_live_* or sk_test_*")
-        print("Get your API key at: https://skillsmp.com/api-keys")
+        print("Get your API key at: https://skillsmp.com/docs/api")
         return 1
 
     # Test API key

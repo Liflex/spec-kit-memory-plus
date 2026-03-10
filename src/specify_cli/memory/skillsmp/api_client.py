@@ -199,7 +199,13 @@ class SkillsMPAPIClient:
         if not response:
             return []
 
-        skills = response.get("skills", [])
+        # Parse response - API returns {success: true, data: {skills: [...], pagination: {...}}}
+        if response.get("success") and "data" in response:
+            data = response["data"]
+            skills = data.get("skills", [])
+        else:
+            # Fallback for old API format
+            skills = response.get("skills", [])
 
         # Cache results (shorter TTL for keyword search)
         self._set_cache(cache_key, skills, ttl=1800)  # 30 min
@@ -236,7 +242,13 @@ class SkillsMPAPIClient:
         if not response:
             return []
 
-        skills = response.get("skills", [])
+        # Parse response - API returns {success: true, data: {skills: [...]}}
+        if response.get("success") and "data" in response:
+            data = response["data"]
+            skills = data.get("skills", [])
+        else:
+            # Fallback for old API format
+            skills = response.get("skills", [])
 
         # Cache AI search results longer (more expensive)
         self._set_cache(cache_key, skills, ttl=7200)  # 2 hours

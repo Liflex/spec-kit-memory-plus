@@ -83,8 +83,7 @@ class SkillsMPIntegration:
             try:
                 skillsmp_results = self.skillsmp_client.search_skills(
                     query=query,
-                    limit=limit,
-                    category=category
+                    limit=limit
                 )
 
                 if skillsmp_results:

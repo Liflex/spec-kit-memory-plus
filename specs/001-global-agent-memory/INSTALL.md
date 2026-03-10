@@ -205,7 +205,7 @@ python spec-kit/scripts/memory/setup_skillsmp_key.py
 3. **Tests API key** with a real search request
 4. **Stores securely** using system keyring or encrypted file
 
-**Get your API key:** https://skillsmp.com/api-keys
+**Get your API key:** https://skillsmp.com/docs/api
 
 **If skipped:**
 - GitHub fallback will be used for skill search
