@@ -26,13 +26,18 @@
 | v0.1.0 | **4-Level Memory** | Файловая, Векторная, Контекстная и Идентификационная память |
 | v0.1.0 | **SkillsMP Integration** | Доступ к 425K+ навыкам агентов из сообщества с auto-security scanning |
 
-### Новые команды SpecKit
+### Новые команды (добавлено в форке)
+
+| Команда | Описание |
+|---------|----------|
+| `/speckit.loop` | 🔄 Quality Loop на существующем коде - итеративное улучшение качества |
+| `/speckit.implementloop` | 🔄 Реализация задач + Quality Loop в одной команде |
+
+### Команды SpecKit (базовые)
 
 | Команда | Описание |
 |---------|----------|
 | `/speckit.features` | 🚀 Быстрое создание фич (< 4 часов) - минимальный spec, plan, tasks |
-| `/speckit.loop` | 🔄 Quality Loop на существующем коде |
-| `/speckit.implementloop` | 🔄 Реализация + Quality Loop в одной команде |
 | `/speckit.specify` | 📝 Создание спецификации фичи |
 | `/speckit.plan` | 📋 Планирование архитектуры |
 | `/speckit.tasks` | ✅ Генерация задач из плана |
@@ -403,13 +408,18 @@ AI-помощник:
 | v0.1.0 | **4-Level Memory** | File, Vector, Context, and Identity memory layers |
 | v0.1.0 | **SkillsMP Integration** | Access to 425K+ agent skills from community with auto-security scanning |
 
-### New SpecKit Commands
+### New Commands (added in fork)
+
+| Command | Description |
+|---------|-------------|
+| `/speckit.loop` | 🔄 Quality Loop on existing code - iterative quality improvement |
+| `/speckit.implementloop` | 🔄 Implement tasks + Quality Loop in one command |
+
+### SpecKit Commands (base)
 
 | Command | Description |
 |---------|-------------|
 | `/speckit.features` | 🚀 Quick feature generation (< 4 hours) - minimal spec, plan, tasks |
-| `/speckit.loop` | 🔄 Quality Loop on existing code |
-| `/speckit.implementloop` | 🔄 Implement + Quality Loop in one command |
 | `/speckit.specify` | 📝 Create feature specification |
 | `/speckit.plan` | 📋 Architecture planning |
 | `/speckit.tasks` | ✅ Generate tasks from plan |
