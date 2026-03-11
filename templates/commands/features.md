@@ -68,10 +68,9 @@ The text the user typed after `/speckit.features` in the triggering message **is
    - Project architecture
    - Coding conventions
 
-2. **`.claude/memory/lessons.md`** (if exists) - Learn from past:
-   - Previous bugs in similar areas
-   - Solutions that worked
-   - Patterns to follow
+2. **`.claude/memory/lessons.md`** (if exists) - Learn from past bugs, solutions that worked
+   **`.claude/memory/patterns.md`** (if exists) - Proven implementation patterns
+   **`.claude/memory/architecture.md`** (if exists) - Key technical decisions
 
 3. **`CLAUDE.md`** (if exists) - Check:
    - Project-specific rules
@@ -280,9 +279,19 @@ Would you like me to create the test?
 
 ### Step 6: Create Learning Artifact
 
-**ALWAYS create a learning entry** after implementing:
+**ALWAYS create a learning entry** after implementing (only if the insight is non-trivial and reusable):
 
-**If this was a bug fix:** Create lesson in `.claude/memory/lessons.md`
+**Auto-create rule:** If `.claude/memory/` directory or the target file does not exist, create it with a header:
+```markdown
+# {Lessons | Patterns | Architecture}: {Project Name}
+
+> Auto-created by Claude Agent Memory
+> Project: {project path}
+
+---
+```
+
+**If this was a bug fix or revealed a non-obvious lesson:** Append to `.claude/memory/lessons.md`
 
 ```markdown
 ## {Bug/Issue Title}
@@ -296,14 +305,10 @@ Would you like me to create the test?
 **Solution:**
 {How it was fixed - key insight}
 
-**Impact:**
-{Result or benefit}
-
-**Tags:**
-{#tag1} {#tag2}
+**Tags:** {#tag1} {#tag2}
 ```
 
-**If this revealed a pattern:** Add to `.claude/memory/patterns.md`
+**If this revealed a reusable pattern:** Append to `.claude/memory/patterns.md`
 
 ```markdown
 ## {Pattern Name}
@@ -313,9 +318,17 @@ Would you like me to create the test?
 
 **How to implement:**
 {Code or approach}
+```
 
-**Example:**
-{Brief example}
+**If this involved an architecture decision:** Append to `.claude/memory/architecture.md`
+
+```markdown
+## {Decision Title}
+
+**Date:** {YYYY-MM-DD}
+**Context:** {Why this decision was needed}
+**Decision:** {What was chosen}
+**Rationale:** {Why this over alternatives}
 ```
 
 ### Step 7: Cleanup

@@ -27,6 +27,12 @@ The text the user typed after `/speckit.specify` in the triggering message **is*
 
 Given that feature description, do this:
 
+0. **Memory Context** (silent, do not output to user):
+   - Read `.claude/memory/lessons.md` (if exists) — scan headers for relevant past mistakes
+   - Read `.claude/memory/patterns.md` (if exists) — check for proven approaches to similar features
+   - Read `.claude/memory/architecture.md` (if exists) — understand key technical decisions
+   - Apply any relevant context when writing the specification (e.g., avoid repeating past mistakes, use proven patterns)
+
 1. **Generate a concise short name** (2-4 words) for the branch:
    - Analyze the feature description and extract the most meaningful keywords
    - Create a 2-4 word short name that captures the essence of the feature
@@ -174,7 +180,12 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
+7. **Save to Memory** (silent):
+   - If the spec revealed important architectural constraints or domain-specific rules — append to `.claude/memory/architecture.md`
+   - If creating this spec required resolving a non-obvious ambiguity — append to `.claude/memory/lessons.md`
+   - Auto-create the memory file with a header if it does not exist yet
+
+8. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
 
 **NOTE:** The script creates and checks out the new branch and initializes the spec file before writing.
 

@@ -30,6 +30,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 2. **Load context**: Read FEATURE_SPEC and `/memory/constitution.md`. Load IMPL_PLAN template (already copied).
 
+3. **Memory Context** (silent, do not output to user):
+   - Read `.claude/memory/lessons.md` (if exists) — check for past mistakes with similar tech/architecture
+   - Read `.claude/memory/patterns.md` (if exists) — look for proven implementation patterns
+   - Read `.claude/memory/architecture.md` (if exists) — review prior architecture decisions in this project
+   - Apply relevant context when making technical choices and filling the plan
+
 3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
    - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
    - Fill Constitution Check section from constitution
@@ -39,7 +45,12 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
-4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
+4. **Save to Memory** (silent):
+   - If significant architecture decisions were made — append to `.claude/memory/architecture.md` with context, decision, rationale, and alternatives considered
+   - If research uncovered important patterns or pitfalls — append to `.claude/memory/patterns.md` or `.claude/memory/lessons.md`
+   - Auto-create the memory file with a header if it does not exist yet
+
+5. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
 
 ## Phases
 

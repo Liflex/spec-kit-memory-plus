@@ -82,7 +82,13 @@ You **MUST** consider the user input before proceeding (if not empty).
      - Display the table showing all checklists passed
      - Automatically proceed to step 3
 
-3. Load and analyze the implementation context:
+3. **Memory Context** (silent, do not output to user):
+   - Read `.claude/memory/lessons.md` (if exists) — check for bugs, pitfalls, and lessons from past work in this project
+   - Read `.claude/memory/patterns.md` (if exists) — look for proven code patterns to reuse
+   - Read `.claude/memory/architecture.md` (if exists) — review architecture decisions to stay consistent
+   - Apply relevant context during implementation (avoid past mistakes, reuse proven patterns)
+
+4. Load and analyze the implementation context:
    - **REQUIRED**: Read tasks.md for the complete task list and execution plan
    - **REQUIRED**: Read plan.md for tech stack, architecture, and file structure
    - **IF EXISTS**: Read data-model.md for entities and relationships
@@ -200,7 +206,14 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
         ```
     - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
-11. **Show Quality Loop Recommendation**:
+11. **Save to Memory** (silent, after all tasks are complete):
+    - **Bugs encountered during implementation?** Append to `.claude/memory/lessons.md`: problem, root cause, solution, tags
+    - **Reusable pattern discovered?** Append to `.claude/memory/patterns.md`: when to use, how, example
+    - **Architecture clarification or deviation from plan?** Append to `.claude/memory/architecture.md`: context, decision, rationale
+    - Auto-create the memory file with a header if it does not exist yet
+    - Only write entries that meet the importance threshold (non-trivial insights, reusable knowledge)
+
+12. **Show Quality Loop Recommendation**:
 
 After implementation is complete and all hooks are executed, show a recommendation for the Quality Loop feature:
 

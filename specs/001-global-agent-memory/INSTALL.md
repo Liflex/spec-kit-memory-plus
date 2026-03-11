@@ -312,9 +312,82 @@ fi
 echo "=== Verification Complete ==="
 ```
 
-### Step 9: Update SpecKit Commands (CRITICAL)
+### Step 9: Install Vector Memory Tool (Level 3)
+
+> **Requires**: Ollama running with `mxbai-embed-large` model (Step 6)
+
+```bash
+# Create scripts directory
+mkdir -p "$HOME/.claude/scripts"
+
+# Copy vector memory CLI tool
+cp spec-kit/scripts/memory/vector_memory.py "$HOME/.claude/scripts/vector_memory.py"
+
+# Verify installation
+python "$HOME/.claude/scripts/vector_memory.py" status
+```
+
+**Expected output:**
+```json
+{
+  "ollama": true,
+  "model": true,
+  "entries": 0,
+  "store_path": "~/.claude/memory/vector/embeddings.json"
+}
+```
+
+**If `ollama: false`**: Start Ollama/Docker first (see Step 6).
+**If `model: false`**: Pull the model: `ollama pull mxbai-embed-large` or `docker exec ollama ollama pull mxbai-embed-large`
+
+**Usage (Claude will call these automatically per CLAUDE.md instructions):**
+```bash
+# Store a memory entry
+python ~/.claude/scripts/vector_memory.py store \
+  --content "lesson or pattern text" \
+  --type episodic \
+  --project "my-project"
+
+# Semantic search
+python ~/.claude/scripts/vector_memory.py search \
+  --query "search query" \
+  --limit 5
+
+# Re-index file memory (lessons.md, patterns.md) into vector store
+python ~/.claude/scripts/vector_memory.py reindex --project "my-project"
+```
+
+### Step 10: Configure Global Claude Memory (CRITICAL)
+
+> **IMPORTANT**: This step configures Claude itself to use the memory system globally — not just in SpecKit commands, but in ALL interactions.
+
+Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` (create the file if it doesn't exist). This goes **after any existing rules**.
+
+**The section must include these key components:**
+
+1. **3-level memory** (Session context, File memory, Vector memory via `vector_memory.py`)
+2. **Level 2 (File)**: read/write `lessons.md`, `patterns.md`, `architecture.md` in `.claude/memory/`
+3. **Level 3 (Vector)**: call `python ~/.claude/scripts/vector_memory.py` for semantic store/search
+4. **Auto-Create Rule**: create memory files with headers when missing
+5. **When to READ**: at task start — check file memory headers + vector search
+6. **When to WRITE**: at task end — dual write to file memory + vector store
+7. **Importance Threshold**: only non-trivial, reusable insights
+8. **Health-Check**: Ollama + vector status at session start, warn user once if unavailable
+
+**Reference file**: After installation, the full prompt is in `~/.claude/CLAUDE.md`.
+
+**Verification:**
+```bash
+grep -c "vector_memory.py" ~/.claude/CLAUDE.md
+# Expected: 3 or more
+grep -c "Memory Health-Check" ~/.claude/CLAUDE.md
+# Expected: 1
+```
+
+### Step 11: Update SpecKit Commands (CRITICAL)
 
 > **IMPORTANT**: Always keep SpecKit commands synchronized with the latest version!
+> Commands now include memory integration instructions (read/write `.claude/memory/` files).
 >
 > SpecKit is under active development. Commands in `~/.claude/commands/` can become outdated,
 > causing issues with workflows. Always update them after installing or updating SpecKit.
@@ -491,5 +564,6 @@ After successful installation:
 
 ---
 
-*Installation Guide v3.3 - AI-Executable*
-*Compatible with: SpecKit, AgentMemory-MCP, Ollama (Native & Docker)*
+*Installation Guide v4.0 - AI-Executable*
+*Compatible with: SpecKit, Ollama (Native & Docker), Vector Memory CLI*
+*Memory levels: Session (native) | File (markdown) | Vector (Ollama embeddings)*
