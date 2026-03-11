@@ -30,6 +30,7 @@
 
 | Команда | Описание |
 |---------|----------|
+| `/speckit.features` | 🚀 Быстрое создание фич (< 4 часов) - минимальный spec, plan, tasks |
 | `/speckit.loop` | 🔄 Quality Loop на существующем коде - итеративное улучшение качества |
 | `/speckit.implementloop` | 🔄 Реализация задач + Quality Loop в одной команде |
 
@@ -37,7 +38,6 @@
 
 | Команда | Описание |
 |---------|----------|
-| `/speckit.features` | 🚀 Быстрое создание фич (< 4 часов) - минимальный spec, plan, tasks |
 | `/speckit.specify` | 📝 Создание спецификации фичи |
 | `/speckit.plan` | 📋 Планирование архитектуры |
 | `/speckit.tasks` | ✅ Генерация задач из плана |
@@ -412,6 +412,7 @@ AI-помощник:
 
 | Command | Description |
 |---------|-------------|
+| `/speckit.features` | 🚀 Quick feature generation (< 4 hours) - minimal spec, plan, tasks |
 | `/speckit.loop` | 🔄 Quality Loop on existing code - iterative quality improvement |
 | `/speckit.implementloop` | 🔄 Implement tasks + Quality Loop in one command |
 
@@ -419,7 +420,6 @@ AI-помощник:
 
 | Command | Description |
 |---------|-------------|
-| `/speckit.features` | 🚀 Quick feature generation (< 4 hours) - minimal spec, plan, tasks |
 | `/speckit.specify` | 📝 Create feature specification |
 | `/speckit.plan` | 📋 Architecture planning |
 | `/speckit.tasks` | ✅ Generate tasks from plan |
