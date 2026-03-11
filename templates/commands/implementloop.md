@@ -48,10 +48,21 @@ Time: {duration}
 ### Phase 2: Quality Loop (automatic)
 
 **Parse Arguments**:
-- `--criteria <name>`: Criteria template (default: auto-detect from task description)
+- `--criteria <name>[,<name>,...]`: One or more criteria templates, comma-separated (default: auto-detect from task description).
+  Examples: `--criteria backend`, `--criteria backend,live-test`, `--criteria frontend,security,live-test`
+  When multiple criteria are specified, their rules are merged (deduplicated by rule_id, last wins)
+  and the strictest thresholds are used.
 - `--max-iterations <N>`: Max iterations (default: 4)
 - `--threshold-a <0.0-1.0>`: Phase A threshold (default: 0.8)
 - `--threshold-b <0.0-1.0>`: Phase B threshold (default: 0.9)
+
+**Available Criteria Templates (13 built-in)**:
+`api-spec`, `code-gen`, `docs`, `config`, `database`, `frontend`, `backend`,
+`infrastructure`, `testing`, `security`, `performance`, `ui-ux`, `live-test`
+
+**`live-test` — Physical Verification**: When included, the evaluator MUST actually run the code,
+send real requests, launch browsers, and verify observable results. No mocks, no assumptions.
+Designed to be combined: `--criteria backend,live-test`
 
 **Step 1: Detect Artifact**
 
@@ -85,10 +96,11 @@ loop = QualityLoop(rule_manager, evaluator, scorer, critique, refiner, state_man
 **Step 4: Run Quality Loop**
 
 ```python
+# criteria_name supports comma-separated: "backend,live-test"
 result = loop.run(
     artifact=artifact,
     task_alias=task_alias,
-    criteria_name=criteria_name,
+    criteria_name=criteria_name,  # e.g., "backend,live-test"
     max_iterations=max_iterations,
     threshold_a=threshold_a,
     threshold_b=threshold_b,
@@ -169,7 +181,7 @@ Time: 12m 30s
 ## Starting Quality Loop...
 
 Detected artifact: 12 files changed
-Auto-detected criteria: code-gen
+Auto-detected criteria: code-gen,live-test
 Task alias: user-auth-jwt
 
 === Quality Loop Started ===

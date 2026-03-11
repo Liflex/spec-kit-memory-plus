@@ -62,6 +62,7 @@ rules:
   - id: "quality.empty_states"
     description: "Состояния пустого контента"
     severity: "warn"
+    weight: 1
     phase: "A"
     check: "verify empty state messages, illustrations, actions"
     check_type: "content"
@@ -85,6 +86,7 @@ rules:
   - id: "quality.feedback_timing"
     description: "Быстрый отзыв на действия пользователя"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify immediate feedback for buttons, forms, interactions"
     check_type: "content"

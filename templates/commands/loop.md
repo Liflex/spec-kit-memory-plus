@@ -123,10 +123,13 @@ Parse arguments to determine mode:
 
 ### Mode: New Loop
 
-**Usage**: `/speckit.loop [--criteria <name>] [--max-iterations <N>] [--threshold-a <0.0-1.0>] [--threshold-b <0.0-1.0>] [--artifact <path>]`
+**Usage**: `/speckit.loop [--criteria <name>[,<name>,...]] [--max-iterations <N>] [--threshold-a <0.0-1.0>] [--threshold-b <0.0-1.0>] [--artifact <path>]`
 
 **Parse Arguments**:
-- `--criteria`: Criteria template (default: auto-detect)
+- `--criteria`: One or more criteria templates, comma-separated (default: auto-detect).
+  Examples: `--criteria backend`, `--criteria backend,live-test`, `--criteria frontend,security,live-test`
+  When multiple criteria are specified, their rules are merged (deduplicated by rule_id, last wins)
+  and the strictest thresholds are used.
 - `--max-iterations`: Max iterations (default: 4)
 - `--threshold-a`: Phase A threshold (default: 0.8)
 - `--threshold-b`: Phase B threshold (default: 0.9)
@@ -151,6 +154,21 @@ If `--criteria` not provided:
 1. Read tasks.md first task description
 2. Use RuleManager.auto_detect_criteria()
 
+**Available Criteria Templates (13 built-in)**:
+`api-spec`, `code-gen`, `docs`, `config`, `database`, `frontend`, `backend`,
+`infrastructure`, `testing`, `security`, `performance`, `ui-ux`, `live-test`
+
+**`live-test` — Physical Verification Criteria**:
+When `live-test` is included in `--criteria`, the evaluator MUST perform real execution:
+- **Backend**: Start the server, send actual HTTP requests to endpoints, verify responses and DB writes
+- **Frontend**: Launch a real browser via Playwright/Selenium, navigate pages, click buttons, fill forms, verify renders
+- **Database**: Run real migrations, insert data, verify constraints and indexes
+- **API**: Call real endpoints with synthetic payloads, assert full request-response-storage chain
+- **CLI**: Execute real commands, verify output and side effects
+
+"Looks correct in code" is NOT a passing check. Only "executed and produced expected result" passes.
+`live-test` is designed to be combined with other criteria: `--criteria backend,live-test`
+
 **Step 4: Run Quality Loop**
 
 1. Initialize components:
@@ -164,12 +182,14 @@ If `--criteria` not provided:
    loop = QualityLoop(rule_manager, evaluator, scorer, critique, refiner, state_manager)
    ```
 
-2. Run loop:
+2. Run loop (criteria_name supports comma-separated values):
    ```python
+   # Single criteria: "backend"
+   # Multiple criteria: "backend,live-test" — rules merged, strictest thresholds
    result = loop.run(
        artifact=artifact,
        task_alias=task_alias,
-       criteria_name=criteria_name,
+       criteria_name=criteria_name,  # e.g., "backend,live-test"
        max_iterations=max_iterations,
        threshold_a=threshold_a,
        threshold_b=threshold_b,
@@ -218,7 +238,7 @@ Next Steps:
 | Error | Action |
 |-------|--------|
 | No tasks.md | Error: "No tasks.md found. Run `/speckit.tasks` first." |
-| Criteria not found | Error: "Criteria '{name}' not found. Available: {list}" |
+| Criteria not found | Error: "Criteria '{name}' not found. Available: {list}". If comma-separated, shows which specific name failed. |
 | Git not detected | Warning: "Git not detected. Artifact detection will use all source files." |
 | Loop already running | Error: "Loop '{alias}' is already running. Stop it first." |
 | LLM unavailable | Warning: "LLM not available. Refinements will be limited." |

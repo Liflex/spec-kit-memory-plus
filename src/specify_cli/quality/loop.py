@@ -67,7 +67,7 @@ class QualityLoop:
         Args:
             artifact: Initial artifact content
             task_alias: Task alias for the loop
-            criteria_name: Criteria template name
+            criteria_name: Criteria template name (supports comma-separated: "backend,live-test")
             max_iterations: Maximum iterations
             threshold_a: Phase A threshold
             threshold_b: Phase B threshold
@@ -76,8 +76,11 @@ class QualityLoop:
         Returns:
             Final result with score, status, changes
         """
-        # Load criteria
-        criteria = self.rule_manager.load_criteria(criteria_name)
+        # Load criteria (supports comma-separated merge)
+        if "," in criteria_name:
+            criteria = self.rule_manager.load_merged_criteria(criteria_name)
+        else:
+            criteria = self.rule_manager.load_criteria(criteria_name)
 
         # Update thresholds if custom
         if threshold_a != 0.8:

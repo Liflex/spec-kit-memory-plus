@@ -78,6 +78,7 @@ rules:
   - id: "quality.integration_tests"
     description: "Интеграционные тесты покрывают ключевые сценарии"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify integration tests for API endpoints, database operations"
     check_type: "content"
@@ -85,6 +86,7 @@ rules:
   - id: "quality.test_naming"
     description: "Названия тестов описывают что и что проверяют"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify test names follow pattern: should_returnX_whenY"
     check_type: "content"

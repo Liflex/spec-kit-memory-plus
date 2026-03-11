@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Modes: new, resume, status, stop, list, history, clean
   - `/speckit.implement` — Обновлён с рекомендацией Quality Loop в конце
 
-- **Criteria Templates** — 12 встроенных шаблонов правил качества:
+- **Criteria Templates** — 13 встроенных шаблонов правил качества (поддержка нескольких через запятую: `--criteria backend,live-test`):
   - `api-spec.yml` — для API спецификаций (10 правил: CRUD, status codes, auth)
   - `code-gen.yml` — для кода (11 правил: tests, error handling, types, structure)
   - `docs.yml` — для документации (10 правил: title, installation, usage)
@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `security.yml` — для безопасности (10 правил: secrets, validation, auth, XSS/SQLi)
   - `performance.yml` — для производительности (10 правил: caching, async, queries)
   - `ui-ux.yml` — для UI/UX дизайна (10 правил: accessibility, responsive, states)
+  - `live-test.yml` — физическое тестирование (10 правил: реальные HTTP запросы, браузер, БД, полная цепочка)
 
 - **Auto-detection критериев** — Automatic detection по ключевым словам:
   - "api", "endpoint", "rest" → `api-spec`
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - "security", "auth", "authorization" → `security`
   - "performance", "cache", "optimization" → `performance`
   - "ux", "accessibility", "responsive" → `ui-ux`
+  - "live", "physical", "runtime", "smoke" → `live-test`
 
 - **Quality Loop Components**:
   - `RuleManager` — управление criteria templates с auto-detection
@@ -119,10 +121,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Новые секции для Security Scanning (как работает, угрозы, защита)
   - Обновлён список команд SpecKit с новыми командами
   - Обновлён статус проекта с фазами Quality Loop и Security
-  - Добавлена таблица всех 12 criteria templates
+  - Добавлена таблица всех 13 criteria templates
 
 - **docs/quality-loop.md** — расширена документация по Quality Loop
-  - Детальное описание всех 12 criteria templates
+  - Детальное описание всех 13 criteria templates
   - Объяснение как severity влияет на loop (fail блокирует, warn снижает)
   - Примеры score calculation и phase transitions
   - Таблица auto-detection keywords
@@ -136,7 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **[Quality Loop Documentation](docs/quality-loop.md)** — полное руководство по Quality Loop
   - Architecture, components, data flow
-  - Все 12 criteria templates детально описаны
+  - Все 13 criteria templates детально описаны
   - API reference, usage examples
   - Troubleshooting, performance metrics
 
@@ -189,7 +191,8 @@ src/specify_cli/
 │       ├── testing.yml        # Тестовые файлы 🆕
 │       ├── security.yml       # Безопасность 🆕
 │       ├── performance.yml    # Производительность 🆕
-│       └── ui-ux.yml          # UI/UX дизайн 🆕
+│       ├── ui-ux.yml          # UI/UX дизайн 🆕
+│       └── live-test.yml      # Физическое тестирование 🆕
 ├── security/                   # 🆕 Security Module
 │   ├── __init__.py
 │   ├── scanner.py              # Level 1 scanner wrapper

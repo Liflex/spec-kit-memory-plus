@@ -1,0 +1,140 @@
+name: "Live Test (Physical Verification)"
+version: 1.0
+description: >
+  Physical, real-world verification of functionality. NOT synthetic/hypothetical checks.
+  This criteria requires actually running the code, sending real requests, clicking real buttons,
+  and verifying real results. No mocks, no stubs, no assumptions — only actual execution and
+  observable outcomes.
+
+  IMPORTANT FOR EVALUATOR: Every rule in this template MUST be verified by EXECUTING real actions:
+  - For backend: start the server, send actual HTTP requests, check responses and database state
+  - For frontend: launch a real browser (Playwright/Selenium), navigate pages, click buttons, fill forms
+  - For database: run actual migrations, insert real data, verify constraints
+  - For APIs: call real endpoints with synthetic payloads and assert the full request-response cycle
+  "Looks correct in code" is NOT a passing check. Only "executed and produced expected result" passes.
+
+phases:
+  a:
+    threshold: 0.8
+    active_levels: ["A"]
+  b:
+    threshold: 0.9
+    active_levels: ["A", "B"]
+
+rules:
+  - id: "live.entrypoints_reachable"
+    description: "All entry points (endpoints, pages, CLI commands) are reachable and respond"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Send a real request to every exposed entry point (HTTP endpoint, page URL, CLI command).
+      Verify each one returns a valid response (not 404, not 500, not connection refused).
+      List every entry point tested and its actual response status.
+    check_type: "executable"
+
+  - id: "live.happy_path_works"
+    description: "Primary use case (happy path) completes successfully end-to-end"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Run the main user scenario from start to finish with valid input data.
+      For backend: send a valid request, verify response body and status code match expectations.
+      For frontend: complete the primary user flow (e.g., fill form, submit, see result).
+      Capture actual output/response as proof.
+    check_type: "executable"
+
+  - id: "live.data_persistence"
+    description: "Data is actually written to and readable from the storage layer"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Perform a create/write operation, then read back the data from the actual storage
+      (database, file system, cache). Verify the written data matches what was sent.
+      If no persistence layer exists, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.error_responses_real"
+    description: "Invalid inputs produce correct error responses (not crashes or 500s)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Send at least 3 invalid/malformed requests (missing required fields, wrong types,
+      out-of-range values). Verify each returns a proper error response (4xx, validation message)
+      and does NOT crash the server or produce an unhandled exception.
+    check_type: "executable"
+
+  - id: "live.auth_enforced"
+    description: "Authentication/authorization is actually enforced at runtime"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Attempt to access protected resources WITHOUT valid credentials.
+      Verify the request is rejected (401/403). Then authenticate and verify access is granted.
+      If no auth exists, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.navigation_works"
+    description: "All navigation paths and links lead to correct destinations"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    check: >
+      EXECUTE: For frontend — use browser automation to click every navigation link, button,
+      and menu item. Verify each leads to the expected page/view without errors.
+      For backend — verify all documented routes are registered and respond.
+      For CLI — verify all subcommands execute without crashing.
+    check_type: "executable"
+
+  - id: "live.full_chain_verified"
+    description: "Complete data chain verified: input -> processing -> storage -> output"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    check: >
+      EXECUTE: Trace a single operation through the entire stack:
+      1. Send input (HTTP request / form submission / CLI args)
+      2. Verify processing occurred (logs, intermediate state)
+      3. Verify data reached storage (query DB / check file)
+      4. Verify output is correct (response body / rendered page / CLI output)
+      All 4 steps must produce actual observable evidence.
+    check_type: "executable"
+
+  - id: "live.concurrent_safe"
+    description: "System handles concurrent requests without data corruption"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: >
+      EXECUTE: Send 3-5 simultaneous requests to the same endpoint/operation.
+      Verify no race conditions, no duplicate entries, no data corruption.
+      If the system is single-user by design, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.startup_clean"
+    description: "Application starts cleanly and becomes ready to serve"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    check: >
+      EXECUTE: Start the application from a clean state.
+      Verify it boots without errors, binds to expected port/address,
+      and responds to a health check or first request within reasonable time.
+    check_type: "executable"
+
+  - id: "live.cleanup_no_leaks"
+    description: "No resource leaks after test execution"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    check: >
+      EXECUTE: After running all tests, verify:
+      - No orphaned server processes still running
+      - No unclosed database connections
+      - Temporary test data is cleaned up (or cleanup instructions provided)
+      - No port conflicts left behind
+    check_type: "executable"

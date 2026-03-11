@@ -70,6 +70,7 @@ rules:
   - id: "quality.monitoring"
     description: "Monitoring and metrics configured"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify Prometheus/metrics endpoints or logging"
     check_type: "content"
@@ -85,6 +86,7 @@ rules:
   - id: "quality.restart_policy"
     description: "Restart policies configured"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify restart: always/never/on-failure policies"
     check_type: "content"

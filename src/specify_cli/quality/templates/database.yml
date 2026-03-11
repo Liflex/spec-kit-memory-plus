@@ -27,7 +27,7 @@ rules:
     check: "verify FOREIGN KEY references with ON DELETE/UPDATE"
     check_type: "content"
 
-  -id: "correctness.indexes"
+  - id: "correctness.indexes"
     description: "Indexes on frequently queried columns"
     severity: "warn"
     weight: 1
@@ -78,6 +78,7 @@ rules:
   - id: "quality.migrations"
     description: "Migration files ordered and reversible"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify migrations have up/down methods"
     check_type: "content"

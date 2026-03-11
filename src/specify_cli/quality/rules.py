@@ -9,7 +9,7 @@ import yaml
 from pathlib import Path
 from typing import List, Optional
 
-from specify_cli.quality.models import CriteriaTemplate, QualityRule, Phase
+from specify_cli.quality.models import CriteriaTemplate, QualityRule, Phase, PhaseConfig
 
 
 class CriteriaNotFound(Exception):
@@ -21,6 +21,11 @@ class CriteriaNotFound(Exception):
             f"Criteria template '{name}' not found. "
             f"Available: {', '.join(available)}"
         )
+
+
+class InvalidCriteriaSpec(Exception):
+    """Raised when criteria spec string is malformed"""
+    pass
 
 
 class RuleManager:
@@ -83,6 +88,12 @@ class RuleManager:
         "accessibility": "ui-ux",
         "responsive": "ui-ux",
         "design": "ui-ux",
+        "live": "live-test",
+        "physical": "live-test",
+        "runtime": "live-test",
+        "smoke": "live-test",
+        "real-test": "live-test",
+        "e2e-run": "live-test",
     }
 
     def __init__(self, criteria_root: Optional[Path] = None):
@@ -143,6 +154,63 @@ class RuleManager:
             data = yaml.safe_load(f)
 
         return CriteriaTemplate.from_dict(data)
+
+    def load_merged_criteria(self, criteria_spec: str) -> CriteriaTemplate:
+        """Load one or more criteria templates, merging rules if multiple specified.
+
+        Accepts comma-separated names: "backend,security,live-test"
+        Rules are merged with deduplication by rule id (last wins).
+
+        Args:
+            criteria_spec: Single name or comma-separated names
+
+        Returns:
+            CriteriaTemplate (merged if multiple)
+
+        Raises:
+            CriteriaNotFound: If any template not found
+            InvalidCriteriaSpec: If spec is empty
+        """
+        names = [n.strip() for n in criteria_spec.split(",") if n.strip()]
+
+        if not names:
+            raise InvalidCriteriaSpec("Criteria spec is empty")
+
+        if len(names) == 1:
+            return self.load_criteria(names[0])
+
+        # Load all templates
+        templates = [self.load_criteria(name) for name in names]
+
+        # Merge: use first template as base, add rules from others
+        merged_rules: dict = {}  # rule_id -> QualityRule (last wins)
+        for tpl in templates:
+            for rule in tpl.rules:
+                merged_rules[rule.id] = rule
+
+        # Use the strictest thresholds across all templates
+        threshold_a = max(
+            tpl.phases.get("a", PhaseConfig(threshold=0.8)).threshold
+            for tpl in templates
+        )
+        threshold_b = max(
+            tpl.phases.get("b", PhaseConfig(threshold=0.9)).threshold
+            for tpl in templates
+        )
+
+        merged_name = " + ".join(tpl.name for tpl in templates)
+        merged_desc = f"Merged criteria: {', '.join(names)}"
+
+        return CriteriaTemplate(
+            name=merged_name,
+            version=1.0,
+            description=merged_desc,
+            phases={
+                "a": PhaseConfig(threshold=threshold_a, active_levels=["A"]),
+                "b": PhaseConfig(threshold=threshold_b, active_levels=["A", "B"]),
+            },
+            rules=list(merged_rules.values()),
+        )
 
     def list_criteria(self) -> List[str]:
         """List available criteria templates

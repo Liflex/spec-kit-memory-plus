@@ -70,6 +70,7 @@ rules:
   - id: "quality.semantic_html"
     description: "Semantic HTML elements used"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify header, nav, main, footer elements instead of div soup"
     check_type: "content"
@@ -85,6 +86,7 @@ rules:
   - id: "quality.css_organization"
     description: "CSS properly organized"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify CSS modules, no global style pollution"
     check_type: "content"

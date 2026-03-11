@@ -86,6 +86,7 @@ rules:
   - id: "security.dependencies"
     description: "Зависимости обновлены, нет известных уязвимостей"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify package audit results, dependency updates"
     check_type: "content"

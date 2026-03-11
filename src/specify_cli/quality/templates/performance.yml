@@ -70,6 +70,7 @@ rules:
   - id: "performance.batch_operations"
     description: "Пакетные операции вместо множественных одиночных"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify bulk insert, batch processing, or bulk API calls"
     check_type: "content"
@@ -85,6 +86,7 @@ rules:
   - id: "performance.monitoring"
     description: "Мониторинг производительности (metrics, APM)"
     severity: "warn"
+    weight: 1
     phase: "B"
     check: "verify performance metrics collection or APM integration"
     check_type: "content"
