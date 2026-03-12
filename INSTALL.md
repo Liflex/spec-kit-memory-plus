@@ -1,8 +1,17 @@
 # Global Agent Memory Integration - Installation Guide
 
 > **AI-Executable Installation Instructions**
-> This document is written for execution by AI assistants (Claude, ChatGPT, etc.)
-> Last updated: 2025-03-11 (Added SkillsMP API Key Setup Step)
+> This document is written for execution by AI assistants (Claude Code, Cursor, Windsurf, etc.)
+> Last updated: 2026-03-12
+
+---
+
+## Supported AI Editors
+
+| Editor | Instructions file | Commands | Notes |
+|--------|------------------|----------|-------|
+| **Claude Code** | `~/.claude/CLAUDE.md` | `~/.claude/commands/speckit.*.md` | Full support: slash commands, memory, vector search |
+| **Cursor** | `.cursorrules` or `.cursor/rules/*.mdc` | No native commands — use rules + @-mentions | Memory via file rules, vector via terminal |
 
 ---
 
@@ -13,8 +22,9 @@ Before installation, verify:
 1. **Operating System**: Windows 11, Linux, or macOS
 2. **Git installed**: Run `git --version`
 3. **Python 3.11+**: Run `python --version`
-4. **SpecKit repository**: Located at `F:\IdeaProjects\spec-kit`
-5. **Write permissions**: Access to `C:\Users\{username}\.claude`
+4. **SpecKit repository**: Cloned locally (e.g. `F:\IdeaProjects\spec-kit`)
+5. **Write permissions**: Access to home config directory
+6. **requests library**: Run `python -m pip install requests` (required for vector memory)
 
 **If any prerequisite is missing, install it first before proceeding.**
 
@@ -25,9 +35,12 @@ Before installation, verify:
 ### Step 1: Prepare Target Directory
 
 ```bash
-# Create global .claude directory if it doesn't exist
+# For Claude Code
 mkdir -p "$HOME/.claude"
 cd "$HOME/.claude"
+
+# For Cursor — no global config dir needed,
+# rules live in project root or ~/.cursor/rules/
 ```
 
 ### Step 2: Backup Existing Configurations
@@ -53,6 +66,7 @@ echo "Backup created: $BACKUP_DIR"
 # Create memory directories
 mkdir -p memory/projects
 mkdir -p memory/backups
+mkdir -p memory/vector
 
 # Create skills directory
 mkdir -p skills
@@ -60,17 +74,17 @@ mkdir -p skills
 echo "Directory structure created"
 ```
 
-### Step 4: Create SpecKit Symlink
+### Step 4: Copy SpecKit Repository
 
 ```bash
-# Remove existing symlink if present
-if [ -L "spec-kit" ]; then rm spec-kit; fi
+# Remove existing if present
+if [ -d "spec-kit" ]; then rm -rf spec-kit; fi
 
-# Create symlink to SpecKit repository
-ln -s "F:/IdeaProjects/spec-kit" spec-kit
-
-echo "SpecKit symlink created"
+# Copy SpecKit repository
+cp -r "F:/IdeaProjects/spec-kit" spec-kit
 ```
+
+> After pulling updates to spec-kit, re-run this step to sync.
 
 ### Step 5: Create Project Config Template
 
@@ -238,31 +252,44 @@ for r in results:
 ```bash
 echo "=== Installation Verification ==="
 
-# Check symlink
-if [ -L "spec-kit" ]; then
-    echo "✓ SpecKit symlink exists"
+# Check spec-kit directory
+if [ -d "spec-kit" ]; then
+    echo "OK: SpecKit copied"
 else
-    echo "✗ SpecKit symlink missing"
+    echo "FAIL: SpecKit not found"
 fi
 
 # Check directories
 if [ -d "memory/projects" ]; then
-    echo "✓ Memory directory exists"
+    echo "OK: Memory directory exists"
 else
-    echo "✗ Memory directory missing"
+    echo "FAIL: Memory directory missing"
+fi
+
+if [ -d "memory/vector" ]; then
+    echo "OK: Vector memory directory exists"
+else
+    echo "FAIL: Vector memory directory missing"
 fi
 
 if [ -d "skills" ]; then
-    echo "✓ Skills directory exists"
+    echo "OK: Skills directory exists"
 else
-    echo "✗ Skills directory missing"
+    echo "FAIL: Skills directory missing"
 fi
 
 # Check config template
 if [ -f ".spec-kit/project.json" ]; then
-    echo "✓ Project config template exists"
+    echo "OK: Project config template exists"
 else
-    echo "✗ Project config template missing"
+    echo "FAIL: Project config template missing"
+fi
+
+# Check Python + requests
+if python -c "import requests" 2>/dev/null; then
+    echo "OK: Python requests library available"
+else
+    echo "WARN: requests not installed. Run: python -m pip install requests"
 fi
 
 # Check Ollama (optional)
@@ -270,30 +297,30 @@ OLLAMA_FOUND=false
 
 # Check native installation
 if command -v ollama &> /dev/null; then
-    echo "✓ Ollama installed: $(ollama --version)"
+    echo "OK: Ollama installed: $(ollama --version)"
     OLLAMA_FOUND=true
     if ollama list 2>/dev/null | grep -q "mxbai-embed-large"; then
-        echo "✓ mxbai-embed-large model available (native)"
+        echo "OK: mxbai-embed-large model available (native)"
     else
-        echo "⚠ mxbai-embed-large not found. Run: ollama pull mxbai-embed-large"
+        echo "WARN: mxbai-embed-large not found. Run: ollama pull mxbai-embed-large"
     fi
 fi
 
 # Check Docker installation
 if command -v docker &> /dev/null; then
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^ollama$"; then
-        echo "✓ Ollama running in Docker container"
+        echo "OK: Ollama running in Docker container"
         OLLAMA_FOUND=true
         if docker exec ollama ollama list 2>/dev/null | grep -q "mxbai-embed-large"; then
-            echo "✓ mxbai-embed-large model available (Docker)"
+            echo "OK: mxbai-embed-large model available (Docker)"
         else
-            echo "⚠ mxbai-embed-large not found in Docker. Run: docker exec -it ollama ollama pull mxbai-embed-large"
+            echo "WARN: mxbai-embed-large not found in Docker. Run: docker exec -it ollama ollama pull mxbai-embed-large"
         fi
     fi
 fi
 
 if [ "$OLLAMA_FOUND" = false ]; then
-    echo "⚠ Ollama not installed (optional)"
+    echo "WARN: Ollama not installed (optional)"
     echo "  Install natively: https://ollama.com/download"
     echo "  Install via Docker: See Step 6B in INSTALL.md"
 fi
@@ -301,10 +328,10 @@ fi
 # Check SkillsMP (optional - requires Python)
 if command -v python &> /dev/null; then
     # Try to check SkillsMP status
-    if python -c "from specify_cli.memory.skillsmp.integration import SkillsMPIntegration; i = SkillsMPIntegration(); print('✓' if i.has_api_key() else '⚠')" 2>/dev/null | grep -q "✓"; then
-        echo "✓ SkillsMP API key configured"
+    if python -c "from specify_cli.memory.skillsmp.integration import SkillsMPIntegration; i = SkillsMPIntegration(); print('OK' if i.has_api_key() else 'WARN')" 2>/dev/null | grep -q "OK"; then
+        echo "OK: SkillsMP API key configured"
     else
-        echo "⚠ SkillsMP API key not configured (optional)"
+        echo "WARN: SkillsMP API key not configured (optional)"
         echo "  Setup later: python ~/.claude/spec-kit/scripts/memory/setup_skillsmp_key.py"
     fi
 fi
@@ -322,6 +349,9 @@ mkdir -p "$HOME/.claude/scripts"
 
 # Copy vector memory CLI tool
 cp spec-kit/scripts/memory/vector_memory.py "$HOME/.claude/scripts/vector_memory.py"
+
+# Ensure requests is installed
+python -m pip install requests 2>/dev/null || echo "WARN: pip not available, install requests manually"
 
 # Verify installation
 python "$HOME/.claude/scripts/vector_memory.py" status
@@ -357,9 +387,13 @@ python ~/.claude/scripts/vector_memory.py search \
 python ~/.claude/scripts/vector_memory.py reindex --project "my-project"
 ```
 
-### Step 10: Configure Global Claude Memory (CRITICAL)
+### Step 10: Configure Agent Instructions (CRITICAL)
 
-> **IMPORTANT**: This step configures Claude itself to use the memory system globally — not just in SpecKit commands, but in ALL interactions.
+This step differs by editor. The memory system instructions must be injected into the AI agent's system prompt.
+
+---
+
+#### Step 10a: Claude Code
 
 Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` (create the file if it doesn't exist). This goes **after any existing rules**.
 
@@ -369,8 +403,8 @@ Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` 
 2. **Level 2 (File)**: read/write `lessons.md`, `patterns.md`, `architecture.md` in `.claude/memory/`
 3. **Level 3 (Vector)**: call `python ~/.claude/scripts/vector_memory.py` for semantic store/search
 4. **Auto-Create Rule**: create memory files with headers when missing
-5. **When to READ**: at task start — check file memory headers + vector search
-6. **When to WRITE**: at task end — dual write to file memory + vector store
+5. **When to READ**: at task start -- check file memory headers + vector search
+6. **When to WRITE**: at task end -- dual write to file memory + vector store
 7. **Importance Threshold**: only non-trivial, reusable insights
 8. **Health-Check**: Ollama + vector status at session start, warn user once if unavailable
 
@@ -384,33 +418,155 @@ grep -c "Memory Health-Check" ~/.claude/CLAUDE.md
 # Expected: 1
 ```
 
-### Step 11: Update SpecKit Commands (CRITICAL)
+---
+
+#### Step 10b: Cursor
+
+Cursor uses a different rules system. There are two levels:
+
+**1. Global rules** (apply to all projects):
+- Open Cursor Settings > General > Rules for AI
+- Paste the memory system instructions there (same content as CLAUDE.md section)
+
+**2. Project rules** (per-project, version-controlled):
+- Create `.cursor/rules/memory.mdc` in your project root
+
+```bash
+mkdir -p .cursor/rules
+```
+
+Create `.cursor/rules/memory.mdc` with the following content:
+
+````markdown
+---
+description: Global Agent Memory System for cross-session knowledge accumulation
+globs:
+alwaysApply: true
+---
+
+# Agent Memory System
+
+You have a 3-level memory system. Use it to accumulate knowledge across sessions.
+
+## Memory levels
+
+- **Level 1 (Session)**: Your natural conversation context -- no action needed
+- **Level 2 (File)**: Markdown files in `.claude/memory/` -- read/write directly
+- **Level 3 (Vector)**: Semantic search via embeddings -- use `vector_memory.py` CLI tool
+
+## Memory locations
+
+- **Project memory**: `.claude/memory/` in project root
+- **Global memory**: `~/.claude/memory/projects/{project-id}/`
+
+## Level 2: File Memory
+
+| File | Purpose | When to write |
+|------|---------|---------------|
+| `lessons.md` | Bugs fixed, mistakes learned from | After fixing a non-trivial bug |
+| `patterns.md` | Reusable solutions, proven approaches | When discovering a reusable pattern |
+| `architecture.md` | Key technical decisions, rationale | After significant architecture choices |
+
+**Auto-Create Rule:** If a memory file does not exist when you need to write to it, create it with:
+
+```markdown
+# {Type}: {Project Name}
+> Auto-created by Agent Memory
+> Project: {project path}
+---
+```
+
+## Level 3: Vector Memory
+
+**Tool:** Run in terminal: `python ~/.claude/scripts/vector_memory.py`
+
+Commands:
+```bash
+# Status check
+python ~/.claude/scripts/vector_memory.py status
+
+# Store insight
+python ~/.claude/scripts/vector_memory.py store \
+  --content "Description" --type episodic --project "project-name"
+
+# Semantic search
+python ~/.claude/scripts/vector_memory.py search \
+  --query "question" --limit 5
+
+# Re-index file memory
+python ~/.claude/scripts/vector_memory.py reindex --project "project-name"
+```
+
+Memory types: `episodic` (bugs/lessons), `procedural` (patterns/how-tos), `semantic` (architecture/domain knowledge).
+
+## When to READ memory
+
+At the START of any significant task:
+1. Check `.claude/memory/lessons.md` -- read headers
+2. Check `.claude/memory/patterns.md` -- read headers
+3. Check `.claude/memory/architecture.md` -- read headers
+4. If vector store has entries -- run semantic search for the task topic
+5. Apply relevant knowledge silently
+
+## When to WRITE memory
+
+After completing a task:
+- **Bug fix?** -> `lessons.md` + vector store (type=episodic)
+- **New pattern?** -> `patterns.md` + vector store (type=procedural)
+- **Architecture decision?** -> `architecture.md` + vector store (type=semantic)
+
+## Importance Threshold
+
+Only save when:
+- Bug had non-obvious root cause
+- Pattern is reusable across tasks
+- Decision affects future development
+````
+
+**Cursor-specific differences from Claude Code:**
+
+| Feature | Claude Code | Cursor |
+|---------|------------|--------|
+| Instructions file | `~/.claude/CLAUDE.md` | Settings > Rules + `.cursor/rules/*.mdc` |
+| Slash commands | `~/.claude/commands/speckit.*.md` | Not supported natively -- use Notepad commands or @-file references |
+| Terminal access | Built-in Bash tool | Built-in terminal (Composer agent mode) |
+| File operations | Dedicated Read/Edit/Write tools | Built-in file tools |
+| Memory read | Automatic at task start | Must reference `.claude/memory/` files via rules |
+| Vector memory | Runs via Bash tool | Runs via terminal in agent mode |
+
+**Cursor: Workaround for slash commands**
+
+Cursor doesn't have Claude Code's `/command` system. Instead:
+
+1. **Use @-file references**: Tell Cursor to read `@.claude/commands/speckit.specify.md` as a prompt
+2. **Notepad commands**: Save SpecKit prompts as Cursor Notepad entries, then reference them with `@notepad-name`
+3. **Composer custom instructions**: Add frequently used commands to Composer rules
+
+---
+
+### Step 11: Update SpecKit Commands (Claude Code only)
 
 > **IMPORTANT**: Always keep SpecKit commands synchronized with the latest version!
-> Commands now include memory integration instructions (read/write `.claude/memory/` files).
->
-> SpecKit is under active development. Commands in `~/.claude/commands/` can become outdated,
-> causing issues with workflows. Always update them after installing or updating SpecKit.
+> Cursor users: skip this step, see Step 10b for alternatives.
 
 ```bash
 # Navigate to .claude directory
 cd "$HOME/.claude"
 
 # Backup existing commands before updating
-mkdir -p commands/.backup.$(date +%Y%m%d_%H%M%S)
-cp commands/speckit.*.md commands/.backup.$(date +%Y%m%d_%H%M%S)/
+BACKUP_TS=$(date +%Y%m%d_%H%M%S)
+mkdir -p "commands/.backup.$BACKUP_TS"
+cp commands/speckit.*.md "commands/.backup.$BACKUP_TS/" 2>/dev/null
 
-# Update commands from latest SpecKit templates
-# Commands are sourced from spec-kit/templates/commands/ in the symlinked repository
-for cmd in specify plan tasks clarify analyze implement checklist constitution taskstoissues; do
-  # Skip custom commands not in templates (e.g., features)
-  [ -f "spec-kit/templates/commands/$cmd.md" ] || continue
-  cp "spec-kit/templates/commands/$cmd.md" "commands/speckit.$cmd.md"
-  echo "✓ Updated speckit.$cmd.md"
+# Update ALL commands from latest SpecKit templates
+for cmd in spec-kit/templates/commands/*.md; do
+  BASENAME=$(basename "$cmd" .md)
+  cp "$cmd" "commands/speckit.$BASENAME.md"
+  echo "OK: Updated speckit.$BASENAME.md"
 done
 
-# Preserve custom commands not in templates (e.g., tobeads.md)
-echo "Custom commands preserved"
+# Preserve custom commands not in templates (e.g., tobeads.md, push.md)
+echo "Custom commands preserved (not overwritten)"
 
 echo "=== Commands updated ==="
 ls -la commands/speckit.*.md
@@ -420,8 +576,7 @@ ls -la commands/speckit.*.md
 
 - SpecKit commands receive regular updates and bug fixes
 - Outdated commands may use deprecated APIs or incorrect workflows
-- The symlink ensures commands always use the latest templates from the repository
-- Updates are safe - they only replace command definitions, not your data
+- Updates are safe -- they only replace command definitions, not your data
 
 **When to update:**
 
@@ -452,13 +607,22 @@ bash spec-kit/.specify/scripts/install/update.sh
 
 ## Troubleshooting
 
-### Issue: Symlink creation fails on Windows
+### Issue: spec-kit copy fails or is outdated
 
-**Solution**: Run as Administrator or use Git Bash:
+**Solution**: Re-copy from source repository:
 
 ```bash
-# In Git Bash
-ln -s "F:/IdeaProjects/spec-kit" spec-kit
+cd "$HOME/.claude"
+rm -rf spec-kit
+cp -r "F:/IdeaProjects/spec-kit" spec-kit
+```
+
+### Issue: `pip` not found
+
+**Solution**: Use `python -m pip` instead:
+
+```bash
+python -m pip install requests
 ```
 
 ### Issue: Ollama not accessible
@@ -525,6 +689,13 @@ ls -la .backup.*
 cp -r .backup.TIMESTAMP/memory/* memory/
 ```
 
+### Issue: Cursor doesn't pick up .cursor/rules/*.mdc
+
+**Solution**:
+- Ensure `alwaysApply: true` is in the YAML frontmatter
+- Restart Cursor after adding new rule files
+- Check that the file extension is `.mdc` (not `.md`)
+
 ---
 
 ## Rollback
@@ -550,8 +721,8 @@ echo "Rolled back to $LATEST_BACKUP"
 After successful installation:
 
 1. **Initialize project memory**: Run `.spec-kit/scripts/init-memory.sh` in your project
-2. **Test memory search**: `memory_search("test query")`
-3. **Try /speckit.features**: Quick fix workflow
+2. **Test vector memory**: `python ~/.claude/scripts/vector_memory.py status`
+3. **Try /speckit.features** (Claude Code) or reference `@.claude/commands/speckit.features.md` (Cursor)
 4. **Read project README**: For unique features
 
 ---
@@ -564,6 +735,6 @@ After successful installation:
 
 ---
 
-*Installation Guide v4.0 - AI-Executable*
-*Compatible with: SpecKit, Ollama (Native & Docker), Vector Memory CLI*
+*Installation Guide v5.0 - AI-Executable, Multi-Editor*
+*Compatible with: Claude Code, Cursor | Ollama (Native & Docker) | Vector Memory CLI*
 *Memory levels: Session (native) | File (markdown) | Vector (Ollama embeddings)*

@@ -276,18 +276,20 @@ Criteria можно комбинировать через запятую: `--cri
 
 ## Установка
 
-### Через AI-помощника
+### Через AI-помощника (Claude Code, Cursor, Windsurf)
 
 ```
-Выполни инструкции по установке из specs/001-global-agent-memory/INSTALL.md
+Выполни инструкции по установке из INSTALL.md
 ```
 
 AI-помощник:
 - Создаст структуру директорий `~/.claude/memory/`
-- Настроит символическую ссылку SpecKit
+- Скопирует SpecKit в `~/.claude/spec-kit/`
 - Сконфигурирует шаблоны проектов
 - Опционально установит Ollama для векторного поиска
-- Установит зависимости для Quality Loop: `jsonlines`, `pyyaml`
+- Установит зависимости: `requests`, `jsonlines`, `pyyaml`
+
+> Поддерживаются: **Claude Code** (полная интеграция), **Cursor** (через `.cursor/rules/`). См. [INSTALL.md](INSTALL.md) для деталей по каждому редактору.
 
 ---
 
@@ -309,7 +311,7 @@ AI-помощник:
 ### Memory System
 - **[Quickstart Guide](docs/memory/quickstart.md)** - Начните работу за 5 минут
 - **[Полная документация](docs/memory/README.md)** - Полный справочник API
-- **[Руководство по установке](specs/001-global-agent-memory/INSTALL.md)** - AI-executable инструкции
+- **[Руководство по установке](INSTALL.md)** - AI-executable инструкции (Claude Code + Cursor)
 
 ### Quality Loop
 - **[Quality Loop Documentation](docs/quality-loop.md)** - Полное руководство
@@ -615,18 +617,20 @@ Skill/Agent → Level 1 Scan → CLEAN → ✅ SAFE
 
 ## Installation
 
-### Via AI Assistant
+### Via AI Assistant (Claude Code, Cursor, Windsurf)
 
 ```
-Execute the installation instructions from specs/001-global-agent-memory/INSTALL.md
+Execute the installation instructions from INSTALL.md
 ```
 
 The AI assistant will:
 - Create `~/.claude/memory/` directory structure
-- Set up SpecKit symlink
+- Copy SpecKit to `~/.claude/spec-kit/`
 - Configure project templates
 - Optionally install Ollama for vector search
-- Install Quality Loop dependencies: `jsonlines`, `pyyaml`
+- Install dependencies: `requests`, `jsonlines`, `pyyaml`
+
+> Supported editors: **Claude Code** (full integration), **Cursor** (via `.cursor/rules/`). See [INSTALL.md](INSTALL.md) for editor-specific details.
 
 ---
 
@@ -648,7 +652,7 @@ The AI assistant will:
 ### Memory System
 - **[Quickstart Guide](docs/memory/quickstart.md)** - Get started in 5 minutes
 - **[Full Documentation](docs/memory/README.md)** - Complete API reference
-- **[Installation Guide](specs/001-global-agent-memory/INSTALL.md)** - AI-executable instructions
+- **[Installation Guide](INSTALL.md)** - AI-executable instructions (Claude Code + Cursor)
 
 ### Quality Loop
 - **[Quality Loop Documentation](docs/quality-loop.md)** - Complete guide
