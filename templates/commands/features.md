@@ -68,9 +68,11 @@ The text the user typed after `/speckit.features` in the triggering message **is
    - Project architecture
    - Coding conventions
 
-2. **`.claude/memory/lessons.md`** (if exists) - Learn from past bugs, solutions that worked
-   **`.claude/memory/patterns.md`** (if exists) - Proven implementation patterns
-   **`.claude/memory/architecture.md`** (if exists) - Key technical decisions
+2. **`.claude/memory/`** directory — check if exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading. If exists — read:
+   - **`lessons.md`** - Learn from past bugs, solutions that worked
+   - **`patterns.md`** - Proven implementation patterns
+   - **`architecture.md`** - Key technical decisions
+   - If Ollama is configured and vector memory has entries — run semantic search for similar past solutions. If not configured — skip entirely, do not check or ask.
 
 3. **`CLAUDE.md`** (if exists) - Check:
    - Project-specific rules
@@ -277,21 +279,13 @@ Would you like me to create the test?
 - [ ] No, skip for now
 ```
 
-### Step 6: Create Learning Artifact
+### Step 6: Create Learning Artifact (inline, as discovered)
 
-**ALWAYS create a learning entry** after implementing (only if the insight is non-trivial and reusable):
+**Save insights immediately when recognized** — do not wait for task completion. The session may end at any moment.
 
-**Auto-create rule:** If `.claude/memory/` directory or the target file does not exist, create it with a header:
-```markdown
-# {Lessons | Patterns | Architecture}: {Project Name}
+Only save if the insight is non-trivial and reusable. Memory directory and stub files should already exist (created during Memory Context step). If not — create them now.
 
-> Auto-created by Claude Agent Memory
-> Project: {project path}
-
----
-```
-
-**If this was a bug fix or revealed a non-obvious lesson:** Append to `.claude/memory/lessons.md`
+**If this was a bug fix or revealed a non-obvious lesson:** Immediately append to `.claude/memory/lessons.md`
 
 ```markdown
 ## {Bug/Issue Title}
@@ -330,6 +324,8 @@ Would you like me to create the test?
 **Decision:** {What was chosen}
 **Rationale:** {Why this over alternatives}
 ```
+
+**Vector memory:** For high-importance insights (cross-project relevance, major pattern or architecture decision) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip silently.
 
 ### Step 7: Cleanup
 

@@ -31,9 +31,9 @@ You **MUST** consider the user input before proceeding (if not empty).
 2. **Load context**: Read FEATURE_SPEC and `/memory/constitution.md`. Load IMPL_PLAN template (already copied).
 
 3. **Memory Context** (silent, do not output to user):
-   - Read `.claude/memory/lessons.md` (if exists) — check for past mistakes with similar tech/architecture
-   - Read `.claude/memory/patterns.md` (if exists) — look for proven implementation patterns
-   - Read `.claude/memory/architecture.md` (if exists) — review prior architecture decisions in this project
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `lessons.md`, `patterns.md`, `architecture.md` and scan headers for relevant context
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for the current feature context. If not configured — skip entirely, do not check or ask.
    - Apply relevant context when making technical choices and filling the plan
 
 3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
@@ -45,10 +45,11 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
-4. **Save to Memory** (silent):
-   - If significant architecture decisions were made — append to `.claude/memory/architecture.md` with context, decision, rationale, and alternatives considered
-   - If research uncovered important patterns or pitfalls — append to `.claude/memory/patterns.md` or `.claude/memory/lessons.md`
-   - Auto-create the memory file with a header if it does not exist yet
+4. **Save to Memory** (inline, as discovered — do not wait for completion):
+   - If significant architecture decisions were made — **immediately** append to `.claude/memory/architecture.md` with context, decision, rationale, and alternatives considered
+   - If research uncovered important patterns or pitfalls — **immediately** append to `.claude/memory/patterns.md` or `.claude/memory/lessons.md`
+   - For high-importance insights (cross-project relevance, major architecture decision) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
+   - The session may end at any moment; save insights as soon as they are recognized
 
 5. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
 

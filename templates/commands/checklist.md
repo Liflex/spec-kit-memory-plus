@@ -36,6 +36,12 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Execution Steps
 
+0. **Memory Context** (silent, do not output to user):
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `patterns.md` headers for proven checklist patterns and `lessons.md` for past quality issues
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for relevant domain checklists. If not configured — skip entirely, do not check or ask.
+   - Apply relevant context when generating checklist items (e.g., include checks for issues that were missed in past projects)
+
 1. **Setup**: Run `{SCRIPT}` from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS list.
    - All file paths must be absolute.
    - For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").

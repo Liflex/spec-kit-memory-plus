@@ -83,9 +83,9 @@ You **MUST** consider the user input before proceeding (if not empty).
      - Automatically proceed to step 3
 
 3. **Memory Context** (silent, do not output to user):
-   - Read `.claude/memory/lessons.md` (if exists) — check for bugs, pitfalls, and lessons from past work in this project
-   - Read `.claude/memory/patterns.md` (if exists) — look for proven code patterns to reuse
-   - Read `.claude/memory/architecture.md` (if exists) — review architecture decisions to stay consistent
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `lessons.md`, `patterns.md`, `architecture.md` and scan headers for relevant context
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for the current implementation context. If not configured — skip entirely, do not check or ask.
    - Apply relevant context during implementation (avoid past mistakes, reuse proven patterns)
 
 4. Load and analyze the implementation context:
@@ -210,6 +210,7 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
     - **Bugs encountered during implementation?** Append to `.claude/memory/lessons.md`: problem, root cause, solution, tags
     - **Reusable pattern discovered?** Append to `.claude/memory/patterns.md`: when to use, how, example
     - **Architecture clarification or deviation from plan?** Append to `.claude/memory/architecture.md`: context, decision, rationale
+    - For high-importance insights (cross-project relevance, major pattern or architecture decision) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip silently.
     - Auto-create the memory file with a header if it does not exist yet
     - Only write entries that meet the importance threshold (non-trivial insights, reusable knowledge)
 

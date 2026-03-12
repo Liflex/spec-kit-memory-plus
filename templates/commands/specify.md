@@ -28,9 +28,9 @@ The text the user typed after `/speckit.specify` in the triggering message **is*
 Given that feature description, do this:
 
 0. **Memory Context** (silent, do not output to user):
-   - Read `.claude/memory/lessons.md` (if exists) — scan headers for relevant past mistakes
-   - Read `.claude/memory/patterns.md` (if exists) — check for proven approaches to similar features
-   - Read `.claude/memory/architecture.md` (if exists) — understand key technical decisions
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `lessons.md`, `patterns.md`, `architecture.md` and scan headers for relevant context
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for the current feature context. If not configured — skip entirely, do not check or ask.
    - Apply any relevant context when writing the specification (e.g., avoid repeating past mistakes, use proven patterns)
 
 1. **Generate a concise short name** (2-4 words) for the branch:
@@ -180,10 +180,11 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. **Save to Memory** (silent):
-   - If the spec revealed important architectural constraints or domain-specific rules — append to `.claude/memory/architecture.md`
-   - If creating this spec required resolving a non-obvious ambiguity — append to `.claude/memory/lessons.md`
-   - Auto-create the memory file with a header if it does not exist yet
+7. **Save to Memory** (inline, as discovered — do not wait for completion):
+   - If the spec revealed important architectural constraints or domain-specific rules — **immediately** append to `.claude/memory/architecture.md`
+   - If creating this spec required resolving a non-obvious ambiguity — **immediately** append to `.claude/memory/lessons.md`
+   - For high-importance insights (cross-project relevance, significant architecture constraint) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
+   - The session may end at any moment; save insights as soon as they are recognized
 
 8. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
 

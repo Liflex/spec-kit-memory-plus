@@ -61,8 +61,9 @@ You **MUST** consider the user input before proceeding (if not empty).
 1. **Setup**: Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Memory Context** (silent, do not output to user):
-   - Read `.claude/memory/patterns.md` (if exists) — check for proven task breakdown patterns
-   - Read `.claude/memory/lessons.md` (if exists) — check for past issues with similar implementations (e.g., missed dependencies, underestimated tasks)
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `patterns.md`, `lessons.md`, `architecture.md` and scan headers for relevant context
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for task breakdown best practices. If not configured — skip entirely, do not check or ask.
    - Apply relevant context when generating tasks (e.g., add extra validation tasks if past lessons indicate fragility in similar areas)
 
 3. **Load design documents**: Read from FEATURE_DIR:
@@ -94,7 +95,13 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Parallel execution examples per story
    - Implementation strategy section (MVP first, incremental delivery)
 
-5. **Report**: Output path to generated tasks.md and summary:
+5. **Save to Memory** (inline, as discovered — do not wait for completion):
+   - If task breakdown revealed a **reusable decomposition pattern** (e.g., a specific approach to breaking down auth, API, or migration tasks) — **immediately** append to `.claude/memory/patterns.md`
+   - If dependencies analysis uncovered a **non-obvious ordering constraint** — **immediately** append to `.claude/memory/lessons.md`
+   - Before appending, scan existing headers for duplicates — do not save if a similar insight already exists
+   - For high-importance insights (cross-project relevance) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
+
+6. **Report**: Output path to generated tasks.md and summary:
    - Total task count
    - Task count per user story
    - Parallel opportunities identified
@@ -102,7 +109,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Suggested MVP scope (typically just User Story 1)
    - Format validation: Confirm ALL tasks follow the checklist format (checkbox, ID, labels, file paths)
 
-6. **Check for extension hooks**: After tasks.md is generated, check if `.specify/extensions.yml` exists in the project root.
+7. **Check for extension hooks**: After tasks.md is generated, check if `.specify/extensions.yml` exists in the project root.
    - If it exists, read it and look for entries under the `hooks.after_tasks` key
    - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
    - Filter to only hooks where `enabled: true`

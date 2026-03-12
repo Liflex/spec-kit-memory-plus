@@ -403,8 +403,8 @@ Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` 
 2. **Level 2 (File)**: read/write `lessons.md`, `patterns.md`, `architecture.md` in `.claude/memory/`
 3. **Level 3 (Vector)**: call `python ~/.claude/scripts/vector_memory.py` for semantic store/search
 4. **Auto-Create Rule**: create memory files with headers when missing
-5. **When to READ**: at task start -- check file memory headers + vector search
-6. **When to WRITE**: at task end -- dual write to file memory + vector store
+5. **When to READ**: at task start -- check directory, create stubs if missing, read headers + vector search
+6. **When to WRITE**: immediately as discovered -- dual write to file memory + vector store (do not wait for task completion)
 7. **Importance Threshold**: only non-trivial, reusable insights
 8. **Health-Check**: Ollama + vector status at session start, warn user once if unavailable
 
@@ -502,18 +502,19 @@ Memory types: `episodic` (bugs/lessons), `procedural` (patterns/how-tos), `seman
 ## When to READ memory
 
 At the START of any significant task:
-1. Check `.claude/memory/lessons.md` -- read headers
-2. Check `.claude/memory/patterns.md` -- read headers
-3. Check `.claude/memory/architecture.md` -- read headers
-4. If vector store has entries -- run semantic search for the task topic
-5. Apply relevant knowledge silently
+1. Check if `.claude/memory/` directory exists
+   - **If missing**: create it with stub files (`lessons.md`, `patterns.md`, `architecture.md`) using Auto-Create headers, then skip reading
+   - **If exists**: read all `.md` files -- scan headers for relevant context
+2. If Ollama is configured and vector memory has entries -- run semantic search for the task topic. If not configured -- skip entirely, do not check or ask.
+3. Apply relevant knowledge silently
 
-## When to WRITE memory
+## When to WRITE memory (immediately, as discovered)
 
-After completing a task:
-- **Bug fix?** -> `lessons.md` + vector store (type=episodic)
-- **New pattern?** -> `patterns.md` + vector store (type=procedural)
-- **Architecture decision?** -> `architecture.md` + vector store (type=semantic)
+Do NOT wait for task completion -- the session may end at any moment. Save important knowledge as soon as you recognize it:
+- **Bug fix?** -> immediately append to `lessons.md`
+- **New pattern?** -> immediately append to `patterns.md`
+- **Architecture decision?** -> immediately append to `architecture.md`
+- For high-importance insights (cross-project relevance, major decisions) -- also store in vector memory via `vector_memory.py`. If Ollama is not configured -- skip entirely.
 
 ## Importance Threshold
 

@@ -25,6 +25,12 @@ Note: This clarification workflow is expected to run (and be completed) BEFORE i
 
 Execution steps:
 
+0. **Memory Context** (silent, do not output to user):
+   - Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+   - If directory exists — read `lessons.md`, `patterns.md` headers for past clarification patterns and ambiguity lessons
+   - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for similar past clarifications. If not configured — skip entirely, do not check or ask.
+   - Apply relevant context when generating clarification questions (e.g., prioritize areas that caused issues in past projects)
+
 1. Run `{SCRIPT}` from repo root **once** (combined `--json --paths-only` mode / `-Json -PathsOnly`). Parse minimal JSON payload fields:
    - `FEATURE_DIR`
    - `FEATURE_SPEC`
@@ -162,6 +168,11 @@ Execution steps:
    - Terminology consistency: same canonical term used across all updated sections.
 
 7. Write the updated spec back to `FEATURE_SPEC`.
+
+7a. **Save to Memory** (inline, as discovered — do not wait for completion):
+   - If clarifications revealed non-obvious domain rules or recurring ambiguity patterns — **immediately** append to `.claude/memory/lessons.md`
+   - Before appending, scan existing headers for duplicates — do not save if a similar insight already exists
+   - For high-importance insights (cross-project relevance) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
 
 8. Report completion (after questioning loop ends or early termination):
    - Number of questions asked & answered.

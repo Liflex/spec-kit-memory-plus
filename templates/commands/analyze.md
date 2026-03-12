@@ -25,6 +25,13 @@ Identify inconsistencies, duplications, ambiguities, and underspecified items ac
 
 ## Execution Steps
 
+### 0. Memory Context (silent, do not output to user)
+
+- Check if `.claude/memory/` directory exists. If missing — create it with stub files using Auto-Create Rule (see CLAUDE.md), then skip reading.
+- If directory exists — read `lessons.md` headers for past consistency issues and analysis patterns
+- If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for similar past analysis findings. If not configured — skip entirely, do not check or ask.
+- Apply relevant context during analysis (e.g., check for issues similar to past findings)
+
 ### 1. Initialize Analysis Context
 
 Run `{SCRIPT}` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
@@ -152,6 +159,12 @@ Output a Markdown report (no file writes) with the following structure:
 - Ambiguity Count
 - Duplication Count
 - Critical Issues Count
+
+### 6a. Save to Memory (inline, as discovered)
+
+- If analysis revealed **recurring consistency patterns** (same type of issue found across multiple specs) — **immediately** append to `.claude/memory/lessons.md`
+- Before appending, scan existing headers for duplicates — do not save if a similar insight already exists
+- For high-importance insights (cross-project relevance) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
 
 ### 7. Provide Next Actions
 
