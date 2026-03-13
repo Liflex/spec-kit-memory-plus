@@ -6,6 +6,51 @@
 
 ---
 
+## 🤖 For AI Agents: Installation vs Update
+
+**Before proceeding, check if this is an initial installation or an update:**
+
+```bash
+# Quick check: Is SpecKit already installed?
+if [ -d "$HOME/.claude/spec-kit" ]; then
+    echo "⚠️  SpecKit is already installed. This is likely an UPDATE request."
+    echo ""
+    echo "As an AI agent, you should:"
+    echo "  1. Inform the user that this appears to be an update"
+    echo "  2. Ask for confirmation before proceeding"
+    echo "  3. If confirmed, re-run the installation steps to:"
+    echo "     - Update spec-kit/ directory with latest templates"
+    echo "     - Update commands/ (speckit.*.md) with latest versions"
+    echo "     - Update scripts/ with latest tools"
+    echo "     - Preserve existing memory, configs, and user data"
+    echo "  4. All existing backups will be preserved"
+    echo ""
+    read -p "Proceed with updating SpecKit? (y/n): " update_confirm
+    if [ "$update_confirm" != "y" ]; then
+        echo "Update cancelled. Installation instructions remain available for reference."
+        exit 0
+    fi
+    echo ""
+    echo "=== Running SpecKit Update ==="
+else
+    echo "=== New Installation ==="
+fi
+```
+
+**Key differences between installation and update:**
+
+| Action | Installation | Update |
+|--------|--------------|--------|
+| spec-kit/ | Copy from repository | Re-copy from repository |
+| commands/ | Create new | Overwrite with latest |
+| memory/ | Create new structure | Preserve existing data |
+| CLAUDE.md | Add memory section | Preserve (don't duplicate) |
+| Backup | Create `.backup.*` | Create new backup timestamp |
+
+---
+
+---
+
 ## Supported AI Editors
 
 | Editor | Instructions file | Commands | Notes |
@@ -391,11 +436,234 @@ python ~/.claude/scripts/vector_memory.py reindex --project "my-project"
 
 This step differs by editor. The memory system instructions must be injected into the AI agent's system prompt.
 
+> **🤔 Important Decision**
+>
+> SpecKit proposes not just a set of commands, but a **global memory system** that enhances ALL AI assistant interactions — not just SpecKit commands.
+>
+> **What this means:**
+> - Your AI assistant will remember lessons, patterns, and architecture decisions across ALL sessions
+> - Memory is read at the start of ANY significant task (bug fixes, refactors, features)
+> - Insights are saved immediately when discovered — not waiting for task completion
+> - Works with your existing workflow, commands, and conversations
+>
+> **Your choice:**
+> - ✅ **Install** — Inject memory instructions into your global config (recommended)
+> - ❌ **Skip** — SpecKit commands will work, but without cross-session memory
+
 ---
 
 #### Step 10a: Claude Code
 
-Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` (create the file if it doesn't exist). This goes **after any existing rules**.
+**Option 1: Interactive Installation (Recommended)**
+
+The AI assistant will ask for your consent before modifying your global config:
+
+```bash
+cd "$HOME/.claude"
+
+# Check if CLAUDE.md exists
+if [ -f "CLAUDE.md" ]; then
+    echo "=== Global Memory Integration ==="
+    echo ""
+    echo "SpecKit offers to add a global memory system to your AI assistant."
+    echo "This will enhance ALL commands and conversations, not just SpecKit."
+    echo ""
+    echo "What will be added to ~/.claude/CLAUDE.md:"
+    echo "  - 3-level memory system (Session + File + Vector)"
+    echo "  - Auto-creation of memory files (lessons.md, patterns.md, architecture.md)"
+    echo "  - Memory read/write rules for all tasks"
+    echo "  - Optional vector search via Ollama"
+    echo ""
+    echo "Your existing CLAUDE.md will be preserved. Memory instructions will be appended."
+    echo ""
+    read -p "Add global memory system to your AI assistant? (y/n): " consent
+
+    if [ "$consent" != "y" ]; then
+        echo ""
+        echo "⚠️  Skipped: Global memory integration"
+        echo ""
+        echo "SpecKit commands will still work, but:"
+        echo "  - Memory will NOT be available for non-SpecKit tasks"
+        echo "  - Each session starts without past context"
+        echo "  - You can add memory later by re-running Step 10a"
+        echo ""
+        read -p "Continue installation without memory? (y/n): " continue_install
+        if [ "$continue_install" != "y" ]; then
+            echo "Installation cancelled. Add memory later when ready."
+            exit 0
+        fi
+    else
+        # Backup existing CLAUDE.md
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        cp CLAUDE.md "CLAUDE.md.backup.$TIMESTAMP"
+        echo "✓ Backed up existing CLAUDE.md"
+
+        # Append memory system instructions
+        cat >> CLAUDE.md << 'MEMORY_EOF'
+
+## Global Agent Memory System
+
+### Overview
+
+You have a 3-level memory system. Use it to accumulate knowledge across sessions and projects.
+
+**Memory levels:**
+- **Level 1 (Session)**: Your natural conversation context — no action needed
+- **Level 2 (File)**: Markdown files in `.claude/memory/` — read/write directly
+- **Level 3 (Vector)**: Semantic search via embeddings — use `vector_memory.py` CLI tool
+
+**Memory locations:**
+- **Project memory**: `.claude/memory/` in each project root (lessons, patterns, architecture for THIS project)
+- **Global memory**: `~/.claude/memory/projects/{project-id}/` (cross-project knowledge)
+
+### Level 2: File Memory
+
+| File | Purpose | When to write |
+|------|---------|---------------|
+| `lessons.md` | Bugs fixed, mistakes learned from | After fixing a non-trivial bug or error |
+| `patterns.md` | Reusable solutions, proven approaches | When discovering a pattern used 2+ times |
+| `architecture.md` | Key technical decisions, rationale | After significant architecture choices |
+
+**Auto-Create Rule:** If a memory file does not exist when you need to write to it — create it with a proper header:
+```markdown
+# {Type}: {Project Name}
+
+> Auto-created by Claude Agent Memory
+> Project: {project path}
+
+---
+```
+
+### Level 3: Vector Memory (Semantic Search)
+
+**Tool:** `python ~/.claude/scripts/vector_memory.py`
+
+**Commands:**
+```bash
+# Check status (Ollama, model, entries count)
+python ~/.claude/scripts/vector_memory.py status
+
+# Store important insight immediately when discovered
+python ~/.claude/scripts/vector_memory.py store \
+  --content "Description of lesson/pattern/decision" \
+  --type episodic|procedural|semantic \
+  --project "project-name" \
+  --tags "tag1,tag2"
+
+# Search before starting a task (semantic similarity)
+python ~/.claude/scripts/vector_memory.py search \
+  --query "relevant question" \
+  --limit 5 \
+  --project "project-name"
+
+# Re-index file memory into vector store (after manual edits)
+python ~/.claude/scripts/vector_memory.py reindex --project "project-name"
+```
+
+**Memory types:**
+- `episodic` — bugs, incidents, lessons learned (what happened)
+- `procedural` — patterns, how-tos, solutions (how to do)
+- `semantic` — architecture decisions, domain knowledge (what is)
+
+**When to use vector search:**
+- When file memory (Level 2) has many entries and keyword search is insufficient
+- When looking for similar past experiences across projects
+- When the query is conceptual, not exact (e.g., "performance issues with database" vs "PostgreSQL index")
+
+### When to READ memory (beginning of work)
+
+At the START of any significant task (feature, bug fix, refactoring):
+
+1. Check if `.claude/memory/` directory exists in the project
+   - **If missing**: create it immediately along with stub files (`lessons.md`, `patterns.md`, `architecture.md`) using the Auto-Create header template. Then skip reading (files are empty).
+   - **If exists**: read all `.md` files in it — scan headers for relevant context
+2. If Ollama is available and vector store has entries — run semantic search for the task topic
+3. Apply relevant knowledge to the current task silently (don't dump the full memory to user)
+
+### When to WRITE memory (immediately, as discovered)
+
+Do NOT wait for task completion — the session may end at any moment. Save important knowledge **as soon as you recognize it**:
+
+- **Found a non-obvious bug or pitfall?** Immediately append to `lessons.md`
+- **Discovered a reusable pattern?** Immediately append to `patterns.md`
+- **Made or encountered an architecture decision?** Immediately append to `architecture.md`
+- **High-importance insights** (cross-project relevance, major architecture decisions, reusable cross-project patterns) — also store in vector memory via `vector_memory.py`. If Ollama is not configured for this session — skip entirely, do not check or ask.
+
+**Trigger:** Save right after the insight occurs (e.g., after fixing a bug, after resolving an ambiguity, after choosing a technical approach) — not at the end of the session.
+
+**Exception:** `/speckit.implement` uses deferred writes (after all tasks complete) because implementation is a long multi-step process where interrupting to write memory mid-task can break execution flow. This is an intentional design choice.
+
+**Format for file memory entries:**
+```markdown
+## {Title}
+
+**Date:** {YYYY-MM-DD}
+**Type:** {Bug Fix | Pattern | Architecture | Lesson}
+
+**Problem/Context:**
+{What happened or what situation this applies to}
+
+**Solution/Decision:**
+{What was done and why}
+
+**Tags:** {#tag1} {#tag2} {#tag3}
+```
+
+### Deduplication Rule
+
+Before appending to any memory file, **scan existing `##` headers** for similar entries. If a similar insight already exists — update it instead of creating a duplicate. Compare by topic, not exact wording.
+
+### Importance Threshold
+
+Not everything should be saved. Write to memory ONLY when:
+- The bug took more than a trivial fix (non-obvious root cause)
+- The pattern is reusable across tasks (not a one-off hack)
+- The decision affects future development (not a cosmetic choice)
+
+### Memory Health-Check
+
+At the START of the first task in a session, silently run a quick diagnostic:
+
+1. **Ollama check** (for vector memory): check if `vector_memory.py` script exists at `~/.claude/scripts/vector_memory.py`
+   - If script does NOT exist: Ollama is not configured. Set `vector_memory = disabled` for this session. Do NOT attempt any vector operations, do not check Ollama, do not ask the user.
+   - If script exists: run `python ~/.claude/scripts/vector_memory.py status` to check Ollama and model availability.
+     - If Ollama is NOT responding: inform user once — "Ollama not running. Vector memory disabled for this session." Do not repeat.
+     - If responding: note entries count; if 0 and file memory has entries, suggest once: "Run reindex to sync file memory to vector store."
+2. **Memory directory check**: Verify `.claude/memory/` exists in current project
+   - If missing: **create immediately** — the directory and all three stub files (`lessons.md`, `patterns.md`, `architecture.md`) with Auto-Create headers. This prevents repeated "file not found" errors during reads.
+
+**Show health warning ONCE per session, not on every command.**
+MEMORY_EOF
+
+        echo "✓ Global memory system added to CLAUDE.md"
+        echo "✓ Your AI assistant will now remember across all sessions"
+    fi
+else
+    # Create new CLAUDE.md with memory system
+    cat > CLAUDE.md << 'CLAUDE_EOF'
+# Claude Code Configuration
+
+[Add your custom rules here]
+
+## Global Agent Memory System
+
+[Full memory system instructions will be added here]
+
+See: ~/.claude/spec-kit/CLAUDE.md for reference
+CLAUDE_EOF
+
+    echo "Created new CLAUDE.md (add your custom rules at the top)"
+fi
+```
+
+**Option 2: Manual Installation**
+
+If you prefer to add memory instructions manually, see the reference file:
+```bash
+cat ~/.claude/spec-kit/CLAUDE.md
+```
+
+Copy the **Global Agent Memory System** section to your `~/.claude/CLAUDE.md`.
 
 **The section must include these key components:**
 
@@ -407,8 +675,6 @@ Copy the full **Global Agent Memory System** section into `~/.claude/CLAUDE.md` 
 6. **When to WRITE**: immediately as discovered -- dual write to file memory + vector store (do not wait for task completion)
 7. **Importance Threshold**: only non-trivial, reusable insights
 8. **Health-Check**: Ollama + vector status at session start, warn user once if unavailable
-
-**Reference file**: After installation, the full prompt is in `~/.claude/CLAUDE.md`.
 
 **Verification:**
 ```bash

@@ -1,5 +1,5 @@
 name: "Live Test (Physical Verification)"
-version: 1.0
+version: 1.2
 description: >
   Physical, real-world verification of functionality. NOT synthetic/hypothetical checks.
   This criteria requires actually running the code, sending real requests, clicking real buttons,
@@ -12,6 +12,144 @@ description: >
   - For database: run actual migrations, insert real data, verify constraints
   - For APIs: call real endpoints with synthetic payloads and assert the full request-response cycle
   "Looks correct in code" is NOT a passing check. Only "executed and produced expected result" passes.
+
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      correctness: 1.0
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+  web-app:
+    multipliers:
+      web: 2.0
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 0.5
+      graphql: 1.2
+      microservices: 1.0
+      async: 1.2
+      auth: 1.5
+    category_multipliers:
+      correctness: 1.5
+      security: 1.3
+      performance: 1.2
+      testing: 1.5
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 2.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.2
+      auth: 1.5
+    category_multipliers:
+      correctness: 1.5
+      security: 1.3
+      performance: 1.3
+      testing: 1.5
+  ml-service:
+    multipliers:
+      web: 0.3
+      api: 1.2
+      data: 1.5
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.3
+      auth: 1.0
+    category_multipliers:
+      correctness: 1.5
+      security: 1.0
+      performance: 1.2
+      testing: 1.3
+  data-pipeline:
+    multipliers:
+      web: 0.2
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.3
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.5
+      auth: 0.8
+    category_multipliers:
+      correctness: 1.8
+      security: 1.0
+      performance: 1.5
+      testing: 1.3
+  graphql-api:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.3
+      infrastructure: 0.8
+      mobile: 1.0
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.2
+      async: 1.2
+      auth: 1.3
+    category_multipliers:
+      correctness: 1.5
+      security: 1.3
+      performance: 1.2
+      testing: 1.5
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.3
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.2
+      microservices: 2.0
+      async: 1.5
+      auth: 1.3
+    category_multipliers:
+      correctness: 1.8
+      security: 1.3
+      performance: 1.3
+      testing: 1.5
+  live-test-focused:
+    multipliers:
+      web: 1.5
+      api: 2.0
+      data: 1.8
+      infrastructure: 1.5
+      mobile: 1.5
+      ml: 1.2
+      graphql: 1.5
+      microservices: 1.5
+      async: 1.5
+      auth: 1.5
+    category_multipliers:
+      correctness: 3.0
+      security: 2.0
+      performance: 1.5
+      testing: 2.5
 
 phases:
   a:
@@ -27,6 +165,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "correctness"
+    domain_tags: ["web", "api", "mobile"]
     check: >
       EXECUTE: Send a real request to every exposed entry point (HTTP endpoint, page URL, CLI command).
       Verify each one returns a valid response (not 404, not 500, not connection refused).
@@ -38,6 +178,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "correctness"
+    domain_tags: ["web", "api", "mobile", "graphql"]
     check: >
       EXECUTE: Run the main user scenario from start to finish with valid input data.
       For backend: send a valid request, verify response body and status code match expectations.
@@ -50,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "correctness"
+    domain_tags: ["api", "data", "web", "mobile"]
     check: >
       EXECUTE: Perform a create/write operation, then read back the data from the actual storage
       (database, file system, cache). Verify the written data matches what was sent.
@@ -61,6 +205,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "testing"
+    domain_tags: ["web", "api", "mobile", "graphql"]
     check: >
       EXECUTE: Send at least 3 invalid/malformed requests (missing required fields, wrong types,
       out-of-range values). Verify each returns a proper error response (4xx, validation message)
@@ -72,6 +218,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["web", "api", "mobile", "graphql", "auth"]
     check: >
       EXECUTE: Attempt to access protected resources WITHOUT valid credentials.
       Verify the request is rejected (401/403). Then authenticate and verify access is granted.
@@ -83,6 +231,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "correctness"
+    domain_tags: ["web", "mobile"]
     check: >
       EXECUTE: For frontend — use browser automation to click every navigation link, button,
       and menu item. Verify each leads to the expected page/view without errors.
@@ -95,6 +245,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "B"
+    category: "correctness"
+    domain_tags: ["web", "api", "data", "mobile"]
     check: >
       EXECUTE: Trace a single operation through the entire stack:
       1. Send input (HTTP request / form submission / CLI args)
@@ -109,6 +261,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "testing"
+    domain_tags: ["api", "data", "async"]
     check: >
       EXECUTE: Send 3-5 simultaneous requests to the same endpoint/operation.
       Verify no race conditions, no duplicate entries, no data corruption.
@@ -120,6 +274,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "correctness"
+    domain_tags: ["web", "api", "mobile", "infrastructure"]
     check: >
       EXECUTE: Start the application from a clean state.
       Verify it boots without errors, binds to expected port/address,
@@ -131,10 +287,199 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "testing"
+    domain_tags: ["web", "api", "infrastructure"]
     check: >
       EXECUTE: After running all tests, verify:
       - No orphaned server processes still running
       - No unclosed database connections
       - Temporary test data is cleaned up (or cleanup instructions provided)
       - No port conflicts left behind
+    check_type: "executable"
+
+  - id: "live.http_methods_correct"
+    description: "HTTP methods match operation semantics (GET=read, POST=create, PUT/PATCH=update, DELETE=delete)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "correctness"
+    domain_tags: ["api"]
+    check: >
+      EXECUTE: For each CRUD operation, verify the HTTP method is semantically correct:
+      - GET requests do not modify state (verify before/after state is identical)
+      - POST creates new resources (verify new ID returned, resource persists)
+      - PUT/PATCH updates existing resources (verify changes applied, old state replaced)
+      - DELETE removes resources (verify resource no longer accessible)
+      List each operation tested with actual HTTP method and outcome.
+    check_type: "executable"
+
+  - id: "live.db_transactions_atomic"
+    description: "Database operations are atomic (all-or-nothing, rollback on error)"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    category: "testing"
+    domain_tags: ["data", "api"]
+    check: >
+      EXECUTE: Test transaction boundaries by triggering a mid-transaction failure:
+      1. Begin a multi-step operation (e.g., create parent + child records)
+      2. Force failure on second step (invalid data, constraint violation)
+      3. Verify first step is rolled back (no partial data in database)
+      4. Verify database is in consistent state (no orphans, no dangling references)
+      Capture actual database queries and state before/after failure.
+    check_type: "executable"
+
+  - id: "live.async_operations_complete"
+    description: "Async operations complete successfully and produce expected results"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["async", "api"]
+    check: >
+      EXECUTE: For async endpoints/background jobs:
+      1. Trigger async operation (submit request, enqueue job)
+      2. Verify immediate response indicates operation started (202 Accepted, job ID)
+      3. Poll/wait for operation completion (check status endpoint, job status)
+      4. Verify final result matches expected outcome
+      5. Verify no race conditions or partial completions
+      If no async operations exist, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.error_recovery_works"
+    description: "System recovers gracefully after transient errors"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["api", "infrastructure", "async"]
+    check: >
+      EXECUTE: Simulate transient failures and verify recovery:
+      1. Temporarily break dependency (database disconnect, external API timeout)
+      2. Send requests during failure window, verify proper error responses (503, retryable)
+      3. Restore dependency, verify system recovers automatically
+      4. Verify no corrupted state, no stuck requests
+      5. Send new requests after recovery, verify normal operation resumes
+      List each failure scenario tested and recovery behavior observed.
+    check_type: "executable"
+
+  - id: "live.performance_thresholds_met"
+    description: "Response times meet acceptable thresholds (p95 < 1s for typical operations)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["web", "api", "mobile"]
+    check: >
+      EXECUTE: Measure actual response times for main operations:
+      1. Send 10-20 requests to primary endpoints
+      2. Record response time for each (use browser DevTools or timing library)
+      3. Calculate p50, p95, p99 latencies
+      4. Verify p95 latency is under acceptable threshold (typically 1s for user-facing ops)
+      5. Identify any operations exceeding thresholds
+      Report actual metrics: p50={X}ms, p95={Y}ms, p99={Z}ms.
+    check_type: "executable"
+
+  - id: "live.idempotency_holds"
+    description: "Idempotent operations (PUT, DELETE) produce same result on repeated calls"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "correctness"
+    domain_tags: ["api"]
+    check: >
+      EXECUTE: Test idempotency for safe operations:
+      1. Send PUT request to update resource, capture response
+      2. Send identical PUT request again, capture response
+      3. Verify both responses have same status (200/204) and same final state
+      4. For DELETE: delete resource, send same DELETE again, verify 404 or same success
+      5. Verify no duplicate entries, no side effects from repeated calls
+      If idempotency is not applicable, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.response_schema_valid"
+    description: "Response bodies match documented schema (correct fields, types, structure)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["api", "graphql"]
+    check: >
+      EXECUTE: For each endpoint, validate response structure:
+      1. Send real request and capture actual response JSON/body
+      2. Verify all documented fields are present (no missing required fields)
+      3. Verify field types match schema (string is string, number is number, etc.)
+      4. Verify nested objects/arrays have correct structure
+      5. Verify no extra undocumented fields (or documented as optional)
+      List each endpoint tested with schema validation result (pass/fail per field).
+    check_type: "executable"
+
+  - id: "live.rate_limiting_enforced"
+    description: "Rate limiting is enforced when thresholds are exceeded"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["api"]
+    check: >
+      EXECUTE: Test rate limiting behavior:
+      1. Identify documented rate limit (e.g., 100 requests/minute)
+      2. Send requests rapidly to exceed the limit
+      3. Verify requests beyond limit are rejected (429 Too Many Requests)
+      4. Verify Retry-After header is present
+      5. Wait for rate limit window to expire, verify requests succeed again
+      If no rate limiting exists, mark as N/A with justification.
+      Report actual limit tested and behavior observed.
+    check_type: "executable"
+
+  - id: "live.session_state_persists"
+    description: "Session/state is maintained correctly across requests"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["web", "api", "mobile", "auth"]
+    check: >
+      EXECUTE: Test session management for stateful operations:
+      1. Authenticate/login, capture session token/cookie
+      2. Make authenticated request, verify session recognized (profile data, protected resource)
+      3. Make second authenticated request with same session, verify state persists
+      4. Test session expiry: wait for timeout or invalidate session, verify rejection
+      5. Test session refresh: re-authenticate, verify new session works
+      If stateless (e.g., JWT with no server session), mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.file_operations_work"
+    description: "File upload/download/delete operations work correctly"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "correctness"
+    domain_tags: ["web", "api", "mobile"]
+    check: >
+      EXECUTE: For applications with file handling:
+      1. Upload test file (image, document, etc.), verify success response
+      2. Download uploaded file, verify content matches original (checksum, size)
+      3. Verify file is stored in expected location (check file system or storage service)
+      4. Delete file, verify removal (404 on subsequent access, file gone from storage)
+      5. Test edge cases: oversized file, invalid type, malformed content
+      If no file operations exist, mark as N/A with justification.
+    check_type: "executable"
+
+  - id: "live.edge_cases_covered"
+    description: "Edge cases and boundary conditions are tested"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["web", "api", "mobile", "data"]
+    check: >
+      EXECUTE: Test edge cases specific to the application:
+      1. Empty inputs (empty string, zero, empty array)
+      2. Boundary values (max length, min/max numeric limits)
+      3. Special characters (Unicode, emojis, SQL injection patterns, XSS payloads)
+      4. Null/undefined values where not expected
+      5. Concurrent modification (edit same resource from two sessions)
+      Verify each edge case produces appropriate response (validation error, graceful handling)
+      List each edge case tested and actual result.
     check_type: "executable"

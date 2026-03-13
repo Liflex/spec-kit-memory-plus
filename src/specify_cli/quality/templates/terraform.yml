@@ -1,0 +1,988 @@
+name: Terraform & IaC
+version: 1.0
+description: Quality rules for Terraform and Infrastructure as Code (state management, security, modules, drift detection)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.0
+      grpc: 1.0
+      messaging: 1.0
+      caching: 1.0
+      gateway: 1.0
+      mesh: 1.0
+      container: 1.0
+      migration: 1.0
+      iac: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  iac-first:
+    description: Infrastructure as Code focused projects with Terraform/CloudFormation
+    multipliers:
+      web: 0.8
+      api: 1.0
+      data: 1.2
+      infrastructure: 2.0
+      mobile: 0.5
+      ml: 0.8
+      graphql: 0.8
+      microservices: 1.2
+      async: 1.0
+      auth: 1.0
+      serverless: 1.5
+      realtime: 0.8
+      grpc: 0.8
+      messaging: 1.0
+      caching: 1.0
+      gateway: 1.2
+      mesh: 1.2
+      container: 1.3
+      migration: 1.0
+      iac: 2.0
+    category_multipliers: *id001
+  cloud-native:
+    description: Cloud-native infrastructure with heavy IaC usage
+    multipliers:
+      web: 1.0
+      api: 1.2
+      data: 1.2
+      infrastructure: 2.2
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 1.5
+      async: 1.2
+      auth: 1.2
+      serverless: 1.8
+      realtime: 1.0
+      grpc: 1.0
+      messaging: 1.3
+      caching: 1.2
+      gateway: 1.5
+      mesh: 1.5
+      container: 1.5
+      migration: 1.0
+      iac: 2.2
+    category_multipliers: *id001
+  devops-platform:
+    description: DevOps platform teams managing IaC at scale
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 1.0
+      infrastructure: 2.5
+      mobile: 0.3
+      ml: 0.5
+      graphql: 0.8
+      microservices: 1.2
+      async: 1.0
+      auth: 1.0
+      serverless: 1.5
+      realtime: 0.8
+      grpc: 0.8
+      messaging: 1.2
+      caching: 1.0
+      gateway: 1.2
+      mesh: 1.3
+      container: 1.5
+      migration: 1.2
+      iac: 2.5
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: terraform.state_remote
+  description: Terraform state stored in remote backend (not local)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform { backend "s3"|"gcs"|"azurerm" } configuration, no local state files in production
+  check_type: content
+  category: infrastructure
+- id: terraform.state_locked
+  description: Terraform state configured with locking mechanism
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify DynamoDB, GCS locking, or Azure Blob locking enabled in backend config
+  check_type: content
+  category: infrastructure
+- id: terraform.state_encrypted
+  description: Terraform state encrypted at rest
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify S3 SSE-S3/SSE-KMS, GCS default encryption, or Azure Blob encryption enabled
+  check_type: content
+  category: security
+- id: terraform.state_versioned
+  description: Terraform state has versioning enabled
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify S3 versioning, GCS versioning, or Azure Blob versioning enabled for state rollback
+  check_type: content
+  category: infrastructure
+- id: terraform.state_isolated
+  description: Terraform state isolated per environment (dev/stage/prod)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify separate state files or key prefixes per environment (e.g., env:/prod/terraform.tfstate)
+  check_type: content
+  category: infrastructure
+- id: terraform.module_source_pinned
+  description: Terraform module sources pinned to specific versions
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify module sources use ref=tags/v1.0.0 or ?ref=1.2.3, not 'main' or 'latest'
+  check_type: content
+  category: infrastructure
+- id: terraform.provider_pinned
+  description: Terraform provider versions pinned
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform { required_providers { aws = "~> 5.0" } } with version constraints
+  check_type: content
+  category: infrastructure
+- id: terraform.required_version
+  description: Terraform version constraint specified
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform { required_version = ">= 1.0" } for compatibility
+  check_type: content
+  category: infrastructure
+- id: terraform.resource_naming
+  description: Resources follow consistent naming convention
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify resource names follow pattern (e.g., {env}-{service}-{type}-{region} or local.name convention)
+  check_type: content
+  category: code_quality
+- id: terraform.required_tags
+  description: Resources have mandatory tags (Environment, Owner, CostCenter)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify tags module or default_tags applied to all taggable resources (Environment, ManagedBy, Team)
+  check_type: content
+  category: infrastructure
+- id: terraform.cost_tags
+  description: Resources tagged for cost allocation and tracking
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify cost allocation tags (CostCenter, Project, BillingCode) on AWS/GCP/Azure resources
+  check_type: content
+  category: infrastructure
+- id: terraform.no_hardcoded_secrets
+  description: No hardcoded secrets or credentials in Terraform code
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify no plaintext passwords, API keys, or tokens; use variables, SSM Parameter Store, Secrets Manager, Vault
+  check_type: content
+  category: security
+- id: terraform.sensitive_vars
+  description: Sensitive variables marked as sensitive in Terraform
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify sensitive = true defined on variables for secrets (passwords, keys, tokens)
+  check_type: content
+  category: security
+- id: terraform.secrets_manager
+  description: Secrets retrieved from secure store at runtime
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify data.aws_secretsmanager_secret, data.vault_generic_secret, or similar for secrets injection
+  check_type: content
+  category: security
+- id: terraform.no_secrets_in_state
+  description: Secrets not stored in Terraform state (use sensitive outputs or references)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify outputs with sensitive=true for secrets; consider state encryption
+  check_type: content
+  category: security
+- id: terraform.var_descriptions
+  description: Variables have descriptions for documentation
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify variable blocks include description field for all user inputs
+  check_type: content
+  category: documentation
+- id: terraform.var_types
+  description: Variables have explicit type definitions
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify variable blocks define type (string, number, bool, list, map, object)
+  check_type: content
+  category: infrastructure
+- id: terraform.var_validation
+  description: Critical variables have validation rules
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify validation { condition { ... } error_message { ... } } for important inputs
+  check_type: content
+  category: security
+- id: terraform.var_defaults
+  description: Variables have sensible default values where appropriate
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify default values for non-required variables (e.g., instance_type, region)
+  check_type: content
+  category: infrastructure
+- id: terraform.output_documented
+  description: Outputs have descriptions for documentation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify output blocks include description field for all exported values
+  check_type: content
+  category: documentation
+- id: terraform.output_useful
+  description: Outputs expose useful information (IPs, ARNs, endpoints)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify outputs for resource IDs, endpoints, connection strings for consumers
+  check_type: content
+  category: code_quality
+- id: terraform.readme_exists
+  description: Module has README.md with usage examples
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify README.md in module root with inputs, outputs, and example usage
+  check_type: content
+  category: documentation
+- id: terraform.license_file
+  description: Module includes LICENSE file for open-source usage
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify LICENSE file present if module is shared or open-source
+  check_type: content
+  category: infrastructure
+- id: terraform.s3_bucket_encryption
+  description: S3 buckets have encryption enabled
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_s3_bucket.server_side_encryption_configuration or default encryption rule
+  check_type: content
+  category: security
+- id: terraform.s3_bucket_public_blocked
+  description: S3 buckets block public access
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_s3_bucket_public_access_block with block_public_acls=true
+  check_type: content
+  category: security
+- id: terraform.s3_versioning
+  description: S3 buckets have versioning enabled for data protection
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify aws_s3_bucket.versioning.enabled=true for production buckets
+  check_type: content
+  category: infrastructure
+- id: terraform.rds_encrypted
+  description: RDS/Aurora databases have encryption enabled
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  - data
+  check: verify aws_db_instance.storage_encrypted=true and kms_key_id specified
+  check_type: content
+  category: security
+- id: terraform.rds_public_access
+  description: RDS instances not publicly accessible
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_db_instance.publicly_accessible=false (default)
+  check_type: content
+  category: security
+- id: terraform.security_group_restricted
+  description: Security groups restrict ingress (no 0.0.0.0/0 for sensitive ports)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify security group rules not allowing 0.0.0.0/0 for SSH (22), RDP (3389), database ports
+  check_type: content
+  category: security
+- id: terraform.iam_policy_least_privilege
+  description: IAM policies follow least privilege principle
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify IAM policies limited to specific resources and actions, no "*" actions
+  check_type: content
+  category: security
+- id: terraform.kms_customer_managed
+  description: KMS keys use customer-managed keys for control
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_kms_key resources for encryption key management
+  check_type: content
+  category: security
+- id: terraform.cloudtrail_enabled
+  description: CloudTrail enabled for audit logging
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_cloudtrail resource for API logging and compliance
+  check_type: content
+  category: security
+- id: terraform.multi_az
+  description: Resources deployed across multiple AZs for HA
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - microservices
+  check: verify availability_zone or subnet distribution across multiple AZs
+  check_type: content
+  category: infrastructure
+- id: terraform.autoscaling_enabled
+  description: Auto Scaling configured for dynamic resources
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - microservices
+  check: verify aws_autoscaling_group or cloudwatch alarm-based scaling
+  check_type: content
+  category: infrastructure
+- id: terraform.health_checks
+  description: Resources have health check configurations
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - iac
+  - infrastructure
+  - api
+  check: verify health_check for ALB, target groups, and ASG
+  check_type: content
+  category: infrastructure
+- id: terraform.backup_enabled
+  description: Critical resources have backup configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - data
+  check: verify aws_backup_plan, RDS backup retention, or snapshot schedules
+  check_type: content
+  category: infrastructure
+- id: terraform.cost_tagging
+  description: Resources tagged for cost center allocation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify cost allocation tags applied for billing and chargeback
+  check_type: content
+  category: infrastructure
+- id: terraform.graviton_arm
+  description: Consider Graviton/ARM instances for cost savings
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify arm-based instance types considered for applicable workloads
+  check_type: content
+  category: infrastructure
+- id: terraform.reserved_instances
+  description: Reserved/Committed use for long-running resources
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify Reserved Instances, Savings Plans, or Committed Use Discounts for steady-state workloads
+  check_type: content
+  category: infrastructure
+- id: terraform.s3_lifecycle
+  description: S3 lifecycle policies for cost optimization
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify aws_s3_bucket_lifecycle_configuration for tiering to IA/Glacier
+  check_type: content
+  category: performance
+- id: terraform.format_check
+  description: Terraform format check enforced in CI
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform fmt -check in CI pipeline
+  check_type: content
+  category: code_quality
+- id: terraform.validate_check
+  description: Terraform validate run before apply
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform validate in CI pipeline before apply
+  check_type: content
+  category: infrastructure
+- id: terraform.tflint
+  description: TFLint used for additional linting
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify TFLint in CI for best practices and deprecation checks
+  check_type: content
+  category: code_quality
+- id: terraform.checkov_security
+  description: Security scanning with Checkov or tfsec
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify Checkov, tfsec, or Trivy for security policy scanning in CI
+  check_type: content
+  category: security
+- id: terraform.terraform_docs
+  description: Terraform docs auto-generated from inputs/outputs
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform-docs or similar tool for auto-generated README
+  check_type: content
+  category: documentation
+- id: terraform.drift_detection
+  description: Drift detection configured for state monitoring
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify drift detection in CI (terraform plan -refresh-only) or external tools (Spacelift, Scalr)
+  check_type: content
+  category: infrastructure
+- id: terraform.state_importing
+  description: Existing resources imported into Terraform state
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify legacy resources imported via terraform import for full state coverage
+  check_type: content
+  category: infrastructure
+- id: terraform.state_refresh
+  description: State refresh interval configured appropriately
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify -refresh=false or refresh interval for large state optimizations
+  check_type: content
+  category: infrastructure
+- id: terraform.state_backup
+  description: State backup strategy in place
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify state backup via versioning, terraform state pull automation, or backend snapshots
+  check_type: content
+  category: infrastructure
+- id: terraform.module_reusable
+  description: Modules are reusable across environments
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify modules accept environment via variables, not hardcoded values
+  check_type: content
+  category: infrastructure
+- id: terraform.module_composable
+  description: Small, focused modules following single responsibility
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify modules are small and focused (e.g., vpc, db, app layer separately)
+  check_type: content
+  category: infrastructure
+- id: terraform.module_examples
+  description: Modules include examples directory
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify examples/ directory with complete usage examples
+  check_type: content
+  category: documentation
+- id: terraform.lifecycle_ignore_changes
+  description: Lifecycle ignore_changes for auto-generated attributes
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify lifecycle { ignore_changes = [tags, autoscaling_group_desired_capacity] } where appropriate
+  check_type: content
+  category: infrastructure
+- id: terraform.lifecycle_prevent_destroy
+  description: Critical resources have prevent_destroy safeguard
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - data
+  check: verify lifecycle { prevent_destroy = true } on production databases, S3 buckets with data
+  check_type: content
+  category: infrastructure
+- id: terraform.create_before_destroy
+  description: Zero-downtime updates with create_before_destroy
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - microservices
+  check: verify lifecycle { create_before_destroy = true } for ASG, RDS, etc.
+  check_type: content
+  category: infrastructure
+- id: terraform.workspaces_or_directories
+  description: Workspaces or directory-per-env strategy defined
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform workspace usage or directory structure (envs/dev, envs/prod) for separation
+  check_type: content
+  category: infrastructure
+- id: terraform.env_isolation
+  description: Environments isolated (accounts, projects, or subscriptions)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify separate AWS accounts, GCP projects, or Azure subscriptions for dev/stage/prod
+  check_type: content
+  category: security
+- id: aws.vpc_endpoints
+  description: VPC endpoints for AWS services (no NAT costs)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify vpc_endpoint for S3, DynamoDB, Secrets Manager to avoid NAT gateway costs
+  check_type: content
+  category: infrastructure
+- id: aws.sns_topics_encrypted
+  description: SNS topics have encryption enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_sns_topic with kms_key_id
+  check_type: content
+  category: security
+- id: aws.sqs_queues_encrypted
+  description: SQS queues have encryption enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify aws_sqs_queue with kms_master_key_id or sqs_managed_sse_enabled
+  check_type: content
+  category: security
+- id: aws.lambda_in_vpc
+  description: Lambda functions in VPC for private resource access
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify aws_lambda_function with vpc_config for RDS/ElastiCache access
+  check_type: content
+  category: infrastructure
+- id: gcp.service_accounts
+  description: GCP service accounts used, not user accounts
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify google_service_account resources, no user account credentials
+  check_type: content
+  category: security
+- id: gcp.private_clusters
+  description: GKE clusters are private
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify google_container_cluster.private_cluster_config.enabled=true
+  check_type: content
+  category: security
+- id: gcp.buckets_uniform_access
+  description: GCS buckets use uniform access control
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify google_storage_bucket.uniform_bucket_level_access=true
+  check_type: content
+  category: security
+- id: azure.managed_identities
+  description: Azure managed identities used instead of service principals
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify azurerm_managed_identity or user_assigned_identity for resources
+  check_type: content
+  category: security
+- id: azure.sql_auditing
+  description: Azure SQL has auditing enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify azurerm_mssql_server_extended_auditing_policy
+  check_type: content
+  category: security
+- id: azure.keyvault_soft_delete
+  description: Azure Key Vault has soft delete enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  - auth
+  check: verify azurerm_key_vault with soft_delete_retention_days
+  check_type: content
+  category: security
+- id: terraform.plan_output
+  description: Terraform plan output saved for review
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform plan -out=tfplan saved and displayed in PR
+  check_type: content
+  category: infrastructure
+- id: terraform.apply_manual_approval
+  description: Terraform apply requires manual approval
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify CI/CD job requires approval before apply (GitHub environment, manual trigger)
+  check_type: content
+  category: infrastructure
+- id: terraform.pr_comment_output
+  description: Plan output posted as PR comment
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify terraform-plan-comment action or similar posting plan diff to PR
+  check_type: content
+  category: documentation
+- id: terraform.opa_policies
+  description: OPA/Rego policies for governance
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify OPA Sentinel, Conftest, or OPA policies for compliance rules
+  check_type: content
+  category: infrastructure
+- id: terraform.sentinel_policies
+  description: Sentinel policies for Terraform Enterprise/Cloud
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify Sentinel policies if using Terraform Cloud/Enterprise
+  check_type: content
+  category: infrastructure
+- id: terraform.remote_executions
+  description: Terraform runs in remote execution environment
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify Terraform Cloud, Spacelift, Scalr, or Atlantis for remote runs
+  check_type: content
+  category: infrastructure
+- id: terraform.vcs_integration
+  description: VCS integration configured for automated runs
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify GitHub/GitLab/Bitbucket integration triggering Terraform runs on PR/merge
+  check_type: content
+  category: infrastructure
+- id: terraform.terraform_dependency_lockfile
+  description: Terraform dependency lockfile (.terraform.lock.hcl) committed
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify .terraform.lock.hcl in version control for provider hashing
+  check_type: content
+  category: infrastructure
+- id: terraform.terragrunt_used
+  description: Terragrunt used for DRY and dependency management
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - iac
+  - infrastructure
+  check: verify Terragrunt for multi-module state management and DRY
+  check_type: content
+  category: infrastructure

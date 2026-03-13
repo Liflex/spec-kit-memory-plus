@@ -1,35 +1,19 @@
-# Documentation
+# Spec Kit Documentation
 
-This folder contains the documentation source files for Spec Kit, built using [DocFX](https://dotnet.github.io/docfx/).
+## Guides
 
-## Building Locally
+| Document | Description |
+|----------|-------------|
+| [Quality Loop](quality-loop.md) | Architecture, components, how the loop works |
+| [Quality Subsystems](subsystems.md) | Goals, History, Insights, Alerts, Benchmarks, Plans, and more |
+| [CLI Reference](cli-reference.md) | All commands with usage examples |
+| [Configuration](configuration.md) | Config files, profiles, gate policies, alerts |
+| [Templates & Blending](templates.md) | Template registry, blending modes, presets |
+| [Optimization](optimization.md) | Optimization methods, Pareto analysis, simulation |
+| [Installation](../INSTALL.md) | Full installation guide |
 
-To build the documentation locally:
+## Quick Links
 
-1. Install DocFX:
-
-   ```bash
-   dotnet tool install -g docfx
-   ```
-
-2. Build the documentation:
-
-   ```bash
-   cd docs
-   docfx docfx.json --serve
-   ```
-
-3. Open your browser to `http://localhost:8080` to view the documentation.
-
-## Structure
-
-- `docfx.json` - DocFX configuration file
-- `index.md` - Main documentation homepage
-- `toc.yml` - Table of contents configuration
-- `installation.md` - Installation guide
-- `quickstart.md` - Quick start guide
-- `_site/` - Generated documentation output (ignored by git)
-
-## Deployment
-
-Documentation is automatically built and deployed to GitHub Pages when changes are pushed to the `main` branch. The workflow is defined in `.github/workflows/docs.yml`.
+- [Quick Start](../README.md#quick-start)
+- [Criteria Templates](../README.md#criteria-templates)
+- [Project Structure](../README.md#project-structure)

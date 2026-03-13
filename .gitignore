@@ -54,3 +54,11 @@ docs/dev
 # Quality Loop - Evolution state (user-specific, not versioned)
 .speckit/evolution/
 .speckit/criteria/
+.speckit/experiments/
+.speckit/logs/
+
+# AutoResearch backups
+*.bak
+
+# AutoResearch experiment triggers
+.speckit/experiments/.experiment_running

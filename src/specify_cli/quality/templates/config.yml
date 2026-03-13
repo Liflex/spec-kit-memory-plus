@@ -1,6 +1,142 @@
 name: "Configuration"
-version: 1.0
-description: "Quality rules for configuration files (YAML, JSON, TOML, etc.)"
+version: 1.3
+description: "Quality rules for configuration files (YAML, JSON, TOML, etc.) with category-based prioritization (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.3
+      api: 1.2
+      data: 1.0
+      infrastructure: 1.2
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.5  # Config security critical
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3  # Config quality important
+
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.2
+      mobile: 1.3
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.5  # Mobile config security critical
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3
+
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 1.5
+      infrastructure: 1.3
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.2
+      auth: 1.0
+    category_multipliers:
+      security: 1.3  # ML config security important
+      performance: 1.2  # Config performance important
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.2
+
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.5
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.3
+      auth: 0.8
+    category_multipliers:
+      security: 1.5  # Data pipeline config security critical
+      performance: 1.3
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.2
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.2
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.2
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.5  # GraphQL config security critical
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3
+
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.2
+      infrastructure: 1.5
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.3
+      auth: 1.2
+    category_multipliers:
+      security: 1.5  # Microservice config security critical
+      performance: 1.2
+      testing: 1.0
+      documentation: 1.2
+      code_quality: 1.3
 
 phases:
   a:
@@ -16,6 +152,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify file parses without syntax errors"
     check_type: "executable"
 
@@ -24,6 +162,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify all required configuration keys exist"
     check_type: "content"
 
@@ -32,6 +172,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify strings, numbers, booleans are correct types"
     check_type: "content"
 
@@ -40,6 +182,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "documentation"  # Exp 47
     check: "verify comments explain non-obvious settings"
     check_type: "content"
 
@@ -48,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices", "auth"]
+    category: "security"  # Exp 47
     check: "verify no passwords, API keys in plain text"
     check_type: "content"
 
@@ -56,6 +202,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify referenced files and directories exist"
     check_type: "executable"
 
@@ -64,6 +212,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify optional fields have default values"
     check_type: "content"
 
@@ -72,6 +222,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "performance"  # Exp 47
     check: "verify timeout, cache, pool settings configured"
     check_type: "content"
 
@@ -80,5 +232,87 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
     check: "verify ${VAR} or ${VAR:-default} patterns"
+    check_type: "content"
+
+  - id: "correctness.schema_validation"
+    description: "Schema validation defined"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify JSON Schema, Pydantic, Cerberus, or custom validator present"
+    check_type: "content"
+
+  - id: "correctness.value_ranges"
+    description: "Numeric values within valid ranges"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify min/max constraints for ports, timeouts, limits (e.g., port 1-65535, timeout > 0)"
+    check_type: "content"
+
+  - id: "correctness.enum_validation"
+    description: "String values match allowed choices"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify enum fields (log_level, environment, mode) use only allowed values"
+    check_type: "content"
+
+  - id: "quality.env_separation"
+    description: "Environment-specific configuration files"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify separate config files or profiles for dev/staging/production (e.g., config.dev.yml, config.prod.yml, environment: production)"
+    check_type: "content"
+
+  - id: "security.secret_references"
+    description: "Secret manager references instead of plaintext"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices", "auth"]
+    category: "security"  # Exp 47
+    check: "verify secrets use ${SECRET_NAME}, !vault, ssm::/, or secret manager references (not plaintext passwords/keys)"
+    check_type: "content"
+
+  - id: "security.sensitive_fields"
+    description: "Sensitive fields marked or encrypted"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices", "auth"]
+    category: "security"  # Exp 47
+    check: "verify sensitive fields (passwords, keys, tokens) are marked, encrypted, or externalized (e.g., encrypted:, secret:, REDACTED)"
+    check_type: "content"
+
+  - id: "quality.immutability"
+    description: "Immutable or critical fields protected"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify immutable fields (environment, region, cluster_id) are marked read-only or protected"
+    check_type: "content"
+
+  - id: "quality.validation_precommit"
+    description: "Pre-commit validation hooks configured"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "code_quality"  # Exp 47
+    check: "verify pre-commit hooks, CI validation, or schema tests enforce config validity (e.g., yamllint, kubeval, custom validators)"
     check_type: "content"

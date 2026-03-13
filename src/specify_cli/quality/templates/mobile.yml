@@ -1,0 +1,1633 @@
+# Mobile Application Quality Rules (React Native/Flutter/Cordova)
+# Comprehensive quality criteria for cross-platform mobile applications
+
+version: 1.0.0
+criteria_name: Mobile Application Quality
+domain: mobile
+
+priority_profiles:
+  default:
+    weight: 1.0
+    description: Standard mobile application quality requirements
+
+  mobile-first:
+    weight: 2.2
+    description: Projects focused primarily on mobile applications
+    multipliers:
+      mobile: 2.5
+      frontend: 1.8
+      security: 1.5
+
+  cross-platform-mobile:
+    weight: 2.0
+    description: Cross-platform mobile apps (iOS + Android)
+    multipliers:
+      mobile: 2.5
+      testing: 2.0
+      infrastructure: 1.3
+
+  react-native-app:
+    weight: 2.0
+    description: React Native-based mobile applications
+    multipliers:
+      mobile: 2.5
+      frontend: 2.2
+      performance: 1.5
+
+  flutter-app:
+    weight: 2.0
+    description: Flutter-based mobile applications (Dart)
+    multipliers:
+      mobile: 2.5
+      frontend: 2.0
+      performance: 1.8
+
+  hybrid-app:
+    weight: 1.8
+    description: Hybrid mobile apps (Cordova, Ionic, Capacitor)
+    multipliers:
+      mobile: 2.0
+      frontend: 1.8
+      security: 1.5
+
+# ============================================================================
+# PHASE A: Critical Security & Architecture (must-pass)
+# ============================================================================
+
+phase_a:
+  # -------------------------------------------------------------------------
+  # Security: App Permissions & Data Protection
+  # -------------------------------------------------------------------------
+  - id: MOBILE_A001
+    severity: fail
+    category: Security
+    title: Minimize App Permissions to Only What's Necessary
+    description: |
+      Request only the minimum permissions required for app functionality.
+      Each additional permission increases security risk and user privacy concerns.
+    rationale: |
+      Over-permissioned apps are a major security risk. Users are increasingly
+      privacy-conscious, and app stores scrutinize permission requests.
+    check: |
+      - Are all declared permissions in AndroidManifest.xml / Info.plist justified?
+      - Is each permission requested at runtime with clear user explanation?
+      - Are there any unused permissions that should be removed?
+    references:
+      - https://developer.android.com/training/permissions/requesting
+      - https://developer.apple.com/documentation/bundleresources/entitlements
+
+  - id: MOBILE_A002
+    severity: fail
+    category: Security
+    title: Encrypt Sensitive Data at Rest
+    description: |
+      Use platform-provided encryption (Keychain on iOS, EncryptedSharedPreferences/
+      Keystore on Android) for sensitive data stored locally.
+    rationale: |
+      Mobile devices are easily lost or stolen. Local data encryption prevents
+      unauthorized access to sensitive user information.
+    check: |
+      - Are sensitive data (tokens, credentials, personal info) encrypted?
+      - Is platform Keychain/Keystore used instead of plain SharedPreferences/NSUserDefaults?
+      - Are encryption keys managed securely (not hardcoded)?
+    references:
+      - https://developer.apple.com/documentation/security/keychain_services
+      - https://developer.android.com/training/articles/keystore
+
+  - id: MOBILE_A003
+    severity: fail
+    category: Security
+    title: Implement Certificate Pinning for API Calls
+    description: |
+      Implement certificate pinning to prevent man-in-the-middle attacks
+      on API communication, especially for sensitive operations.
+    rationale: |
+      Mobile apps are particularly vulnerable to network attacks on public WiFi.
+      Certificate pinning ensures the app communicates only with legitimate servers.
+    check: |
+      - Is certificate pinning implemented for production API endpoints?
+      - Is there a fallback mechanism for certificate rotation?
+      - Is pinning properly tested for both iOS and Android?
+    references:
+      - https://owasp.org/www-project-mobile-security-testing-guide/
+
+  - id: MOBILE_A004
+    severity: fail
+    category: Security
+    title: Prevent Screen Recording and Screenshots in Sensitive Views
+    description: |
+      Disable screen recording and screenshots for views displaying sensitive
+      information (authentication, financial data, personal info).
+    rationale: |
+      Malicious apps can record screen content or capture screenshots to steal
+      sensitive information displayed in your app.
+    check: |
+      - Are sensitive views protected from screen capture on Android (FLAG_SECURE)?
+      - Is screen recording prevented for sensitive views on iOS?
+      - Is there a visual indicator when sensitive content is displayed?
+    references:
+      - https://developer.android.com/reference/android/view/Display#FLAG_SECURE
+
+  - id: MOBILE_A005
+    severity: fail
+    category: Security
+    title: Use Secure Storage for Authentication Tokens
+    description: |
+      Store authentication tokens in secure platform storage (Keychain/Keystore),
+      not in AsyncStorage, localStorage, or plain files.
+    rationale: |
+      Insecure token storage allows attackers with device access to hijack
+      user sessions and access sensitive data.
+    check: |
+      - Are auth tokens stored in Keychain (iOS) or EncryptedSharedPreferences (Android)?
+      - Are tokens never logged or included in crash reports?
+      - Is there proper token revocation on logout?
+    references:
+      - https://auth0.com/docs/security/store-tokens
+
+  # -------------------------------------------------------------------------
+  # Security: Code Security & Reverse Engineering
+  # -------------------------------------------------------------------------
+  - id: MOBILE_A006
+    severity: fail
+    category: Security
+    title: Detect Rooted/Jailbroken Devices for Sensitive Features
+    description: |
+      Implement device integrity checks for sensitive features. Consider
+      restricting functionality on rooted/jailbroken devices or showing warnings.
+    rationale: |
+      Rooted/jailbroken devices bypass platform security protections, allowing
+      attackers to extract secrets, bypass business logic, and tamper with app.
+    check: |
+      - Is there jailbreak/root detection implemented?
+      - Are sensitive features restricted or warned on compromised devices?
+      - Is the detection logic obfuscated to avoid bypassing?
+    references:
+      - https://owasp.org/www-project-mobile-security/
+
+  - id: MOBILE_A007
+    severity: fail
+    category: Security
+    title: Obfuscate Code for Release Builds
+    description: |
+      Enable code obfuscation (ProGuard/R8 for Android, release optimization
+      for iOS) to prevent reverse engineering of sensitive business logic.
+    rationale: |
+      Unobfuscated mobile apps can be easily decompiled, exposing algorithms,
+      API keys, and security mechanisms to attackers.
+    check: |
+      - Is ProGuard/R8 enabled for Android release builds?
+      - Is code obfuscation configured for React Native/Flutter release builds?
+      - Are source maps not included in release builds?
+    references:
+      - https://developer.android.com/studio/build/shrink-code
+      - https://docs.flutter.dev/deployment/obfuscate
+
+  # -------------------------------------------------------------------------
+  # Architecture: App Lifecycle & State Management
+  # -------------------------------------------------------------------------
+  - id: MOBILE_A008
+    severity: fail
+    category: Architecture
+    title: Handle App Lifecycle Events Properly
+    description: |
+      Properly handle app backgrounding, foregrounding, and termination events
+      to manage resources, sessions, and user data correctly.
+    rationale: |
+      Improper lifecycle handling leads to memory leaks, data loss, session
+      issues, and poor user experience when switching between apps.
+    check: |
+      - Are app state listeners registered/unregistered properly?
+      - Is sensitive data cleared when app backgrounds?
+      - Are network requests cancelled when app backgrounds?
+      - Is state restored correctly when app returns to foreground?
+    references:
+      - https://reactnative.dev/docs/appstate
+      - https://docs.flutter.dev/development/ui/advanced/lifecycle
+
+  - id: MOBILE_A009
+    severity: fail
+    category: Architecture
+    title: Implement Offline-First Architecture with Sync
+    description: |
+      Design app to work offline with local data storage and automatic
+      synchronization when connectivity is restored.
+    rationale: |
+      Mobile connectivity is unreliable. Offline-first architecture ensures
+      app functionality regardless of network conditions.
+    check: |
+      - Is local storage implemented for critical data?
+      - Is there a sync mechanism for when connectivity returns?
+      - Are conflicts handled when data changes both offline and server-side?
+      - Is network connectivity monitored and UI updated accordingly?
+    references:
+      - https://www.mongodb.com/offline-first
+
+  # -------------------------------------------------------------------------
+  # Architecture: Navigation & Deep Linking
+  # -------------------------------------------------------------------------
+  - id: MOBILE_A010
+    severity: fail
+    category: Architecture
+    title: Implement Deep Linking and Universal Links
+    description: |
+      Support deep linking from external sources (web, other apps, notifications)
+      to specific app screens with proper navigation and error handling.
+    rationale: |
+      Deep linking enables app discovery, push notification navigation,
+      sharing, and integration with web marketing campaigns.
+    check: |
+      - Are deep links properly registered in app configuration?
+      - Is there proper validation and sanitization of deep link URLs?
+      - Are users navigated to correct screens with proper context?
+      - Are errors handled gracefully (invalid links, missing screens)?
+    references:
+      - https://developer.apple.com/documentation/xcode/allowing-apps-and-websites-to-link-to-your-content
+      - https://developer.android.com/training/app-links
+
+# ============================================================================
+# PHASE B: Best Practices & Performance (should-pass)
+# ============================================================================
+
+phase_b:
+  # -------------------------------------------------------------------------
+  # Performance: App Size & Bundle Optimization
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B001
+    severity: warn
+    category: Performance
+    title: Optimize App Bundle Size
+    description: |
+      Keep app bundle size minimal by removing unused resources, enabling
+      app splitting, and optimizing assets. Target: <50MB for most apps.
+    rationale: |
+      Large app sizes deter downloads, especially in emerging markets and
+      on limited data plans. App stores also highlight app size.
+    check: |
+      - Is app bundle size monitored and optimized?
+      - Are unused code and resources removed (tree shaking, ProGuard)?
+      - Are assets compressed and optimized (images, fonts)?
+      - Is App Thinning (iOS) or App Bundle (Android) used?
+    references:
+      - https://developer.apple.com/documentation/xcode/reducing-your-app-s-size
+      - https://developer.android.com/guide/app-bundle
+
+  - id: MOBILE_B002
+    severity: warn
+    category: Performance
+    title: Implement Lazy Loading for Navigation Routes
+    description: |
+      Lazy load screens and modules that aren't immediately needed to reduce
+      initial bundle load time and memory footprint.
+    rationale: |
+      Lazy loading improves app startup time and reduces memory usage by
+      only loading code when it's actually needed.
+    check: |
+      - Are navigation routes lazy loaded where appropriate?
+      - Is initial bundle size minimized through code splitting?
+      - Are heavy components loaded only when needed?
+    references:
+      - https://reactnavigation.org/docs/navigation-references/#lazy-loading
+      - https://docs.flutter.dev/perf/rendering/best-practices
+
+  # -------------------------------------------------------------------------
+  # Performance: Battery & Resource Usage
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B003
+    severity: warn
+    category: Performance
+    title: Minimize Battery Drain
+    description: |
+      Optimize app to minimize battery consumption by reducing unnecessary
+      background work, efficient polling, and proper lifecycle management.
+    rationale: |
+      Battery-draining apps receive poor reviews and users often uninstall
+      them. Battery efficiency is critical for user retention.
+    check: |
+      - Are background tasks minimized and efficient?
+      - Is polling optimized (use push notifications instead)?
+      - Are location services used only when necessary?
+      - Are sensors properly released when not needed?
+    references:
+      - https://developer.android.com/topic/performance/battery
+      - https://developer.apple.com/documentation/xcode/improving-your-app-s-performance
+
+  - id: MOBILE_B004
+    severity: warn
+    category: Performance
+    title: Optimize Image Loading and Caching
+    description: |
+      Use efficient image loading libraries with caching, compression, and
+      progressive loading to minimize memory and bandwidth usage.
+    rationale: |
+      Images are often the largest contributors to app size and bandwidth usage.
+      Proper caching and optimization significantly improve performance.
+    check: |
+      - Is an image loading library used (FastImage, cached_network_image)?
+      - Are images compressed and properly sized for display?
+      - Is caching implemented to avoid redundant downloads?
+      - Are placeholder and error states handled?
+    references:
+      - https://docs.flutter.dev/cookbook/images/cached-image
+
+  - id: MOBILE_B005
+    severity: warn
+    category: Performance
+    title: Optimize List Rendering with Virtualization
+    description: |
+      Use virtualized lists (FlatList/SectionList in React Native, ListView
+      in Flutter) for long lists to ensure smooth scrolling performance.
+    rationale: |
+      Rendering large lists without virtualization causes janky scrolling
+      and high memory usage, leading to poor UX.
+    check: |
+      - Are FlatList/SectionList (React Native) or ListView (Flutter) used?
+      - Are item render functions optimized (memo, useCallback)?
+      - Is pagination implemented for large datasets?
+      - Are placeholder items used while loading?
+    references:
+      - https://reactnative.dev/docs/flatlist
+      - https://docs.flutter.dev/cookbook/lists/long-lists
+
+  # -------------------------------------------------------------------------
+  # Performance: Startup Time & Responsiveness
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B006
+    severity: warn
+    category: Performance
+    title: Optimize App Startup Time
+    description: |
+      Minimize time-to-interactive by deferring non-critical initialization,
+      optimizing dependencies, and reducing initial bundle size.
+    rationale: |
+      Slow startup frustrates users and increases abandonment. Target <2 seconds
+      for time-to-interactive on most devices.
+    check: |
+      - Is startup time measured and optimized?
+      - Are non-critical operations deferred after first render?
+      - Are dependencies optimized (remove unused, lazy load)?
+      - Is there a loading state during initialization?
+    references:
+      - https://developer.android.com/topic/performance/vitals/launch-time
+
+  - id: MOBILE_B007
+    severity: warn
+    category: Performance
+    title: Implement Proper State Management
+    description: |
+      Use established state management solutions (Redux, MobX, Bloc, Riverpod,
+      Provider) instead of prop drilling and scattered state.
+    rationale: |
+      Proper state management improves code maintainability, testability,
+      and performance by centralizing app state logic.
+    check: |
+      - Is a state management library consistently used throughout the app?
+      - Is state properly normalized to avoid duplication?
+      - Are state updates optimized to minimize re-renders?
+      - Is state persistence implemented where needed?
+    references:
+      - https://reactnative.dev/docs/state-and-lifecycle
+
+  # -------------------------------------------------------------------------
+  # UX: Mobile-Specific Patterns
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B008
+    severity: warn
+    category: UX
+    title: Follow Platform Design Guidelines
+    description: |
+      Adhere to platform-specific design guidelines (Material Design for Android,
+      Human Interface Guidelines for iOS) for native feel.
+    rationale: |
+      Apps that follow platform conventions feel more familiar to users and
+      provide better user experience.
+    check: |
+      - Are Material Design components used on Android?
+      - Are iOS-style components used on iOS?
+      - Is navigation consistent with platform expectations?
+      - Are gestures implemented according to platform patterns?
+    references:
+      - https://material.io/design
+      - https://developer.apple.com/design/human-interface-guidelines/
+
+  - id: MOBILE_B009
+    severity: warn
+    category: UX
+    title: Implement Pull-to-Refresh and Infinite Scroll
+    description: |
+      Provide pull-to-refresh for content screens and infinite scroll for
+      long lists to improve content discoverability and UX.
+    rationale: |
+      These patterns are standard expectations in mobile apps and significantly
+      improve content accessibility and engagement.
+    check: |
+      - Is pull-to-refresh implemented on relevant screens?
+      - Is infinite scroll or "load more" implemented for long lists?
+      - Are loading states clearly indicated?
+      - Are errors handled gracefully?
+    references:
+      - https://reactnative.dev/docs/refreshcontrol
+
+  - id: MOBILE_B010
+    severity: warn
+    category: UX
+    title: Support Both Portrait and Landscape Orientations
+    description: |
+      Design layouts that work in both orientations, or explicitly lock
+      orientation when appropriate for specific screens.
+    rationale: |
+      Users rotate devices for various reasons. Apps should handle orientation
+      changes gracefully without losing state or breaking layouts.
+    check: |
+      - Do layouts adapt to orientation changes?
+      - Is state preserved during orientation changes?
+      - Are orientations locked for specific screens when appropriate (e.g., video)?
+      - Is keyboard avoidance properly handled?
+    references:
+      - https://docs.flutter.dev/cookbook/design/orientation
+
+  - id: MOBILE_B011
+    severity: warn
+    category: UX
+    title: Implement Haptic Feedback for Important Actions
+    description: |
+      Provide haptic feedback for important user actions (button taps,
+      success confirmations, errors) to improve engagement.
+    rationale: |
+      Haptic feedback makes apps feel more responsive and polished, confirming
+      user actions and improving perceived performance.
+    check: |
+      - Is haptic feedback provided for button taps?
+      - Are different haptic patterns used for different feedback types?
+      - Is haptic intensity appropriate for the action?
+      - Can users disable haptics in settings?
+    references:
+      - https://developer.apple.com/documentation/uikit/uikitfeedbackgenerator
+      - https://developer.android.com/reference/android/os/Vibrator
+
+  - id: MOBILE_B012
+    severity: warn
+    category: UX
+    title: Handle Keyboard Input Properly
+    description: |
+      Implement proper keyboard handling including keyboard avoidance,
+      appropriate keyboard types for inputs, and automatic focus management.
+    rationale: |
+      Poor keyboard handling is a common mobile app frustration. Proper
+      implementation significantly improves form input UX.
+    check: |
+      - Does UI avoid keyboard automatically (scroll content up)?
+      - Are appropriate keyboard types selected (email, numeric, URL)?
+      - Is focus managed properly (next/previous buttons)?
+      - Is keyboard dismissed appropriately (tap outside, scroll)?
+    references:
+      - https://reactnative.dev/docs/keyboardavoidingview
+
+  # -------------------------------------------------------------------------
+  # UX: Accessibility
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B013
+    severity: warn
+    category: Accessibility
+    title: Support Screen Readers (VoiceOver/TalkBack)
+    description: |
+      Ensure all interactive elements and content are accessible via screen
+      readers with proper labels and hints.
+    rationale: |
+      Screen reader support is essential for accessibility compliance and
+      enables visually impaired users to use your app.
+    check: |
+      - Are all interactive elements labeled with accessibilityLabel?
+      - Are screen reader hints provided where appropriate?
+      - Is reading order logical and consistent with visual layout?
+      - Are custom components accessible?
+    references:
+      - https://reactnative.dev/docs/accessibility
+      - https://docs.flutter.dev/development/accessibility-and-localization/accessibility
+
+  - id: MOBILE_B014
+    severity: warn
+    category: Accessibility
+    title: Support Dynamic Type and Text Scaling
+    description: |
+      Respect user's text size preferences and ensure layouts adapt to
+      larger font sizes without breaking.
+    rationale: |
+      Users with vision impairments rely on larger text sizes. Supporting
+      dynamic type is required for accessibility compliance.
+    check: |
+      - Do layouts adapt to larger text sizes?
+      - Are fonts specified using scalable units?
+      - Is text tested at maximum font size?
+      - Are there hardcoded dimensions that break with larger text?
+    references:
+      - https://developer.apple.com/documentation/uikit/uifont/scaling_fonts_automatically
+
+  - id: MOBILE_B015
+    severity: warn
+    category: Accessibility
+    title: Ensure Sufficient Color Contrast
+    description: |
+      Maintain WCAG AA compliant color contrast ratios (4.5:1 for normal text,
+      3:1 for large text) for all UI elements.
+    rationale: |
+      Poor color contrast makes content unreadable for users with color
+      vision deficiencies and in bright sunlight.
+    check: |
+      - Is color contrast ratio checked for all text and UI elements?
+      - Are color-only indicators supplemented with icons or text?
+      - Is the app tested with different display modes (invert, high contrast)?
+    references:
+      - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum
+
+  # -------------------------------------------------------------------------
+  # Testing: Mobile-Specific Testing
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B016
+    severity: warn
+    category: Testing
+    title: Write Unit Tests for Business Logic
+    description: |
+      Maintain unit tests for business logic, state management, and utility
+      functions with target coverage >70%.
+    rationale: |
+      Unit tests catch regressions early and document expected behavior.
+      They're fast and provide confidence when refactoring.
+    check: |
+      - Are unit tests written for state management logic?
+      - Are utility functions thoroughly tested?
+      - Is test coverage measured and reported?
+      - Are tests run in CI/CD pipeline?
+    references:
+      - https://jestjs.io/
+      - https://docs.flutter.dev/cookbook/testing/unit/introduction
+
+  - id: MOBILE_B017
+    severity: warn
+    category: Testing
+    title: Implement Component/Widget Tests
+    description: |
+      Test UI components and widgets in isolation to verify rendering,
+      user interactions, and state changes.
+    rationale: |
+      Component tests catch UI bugs and ensure components render correctly
+      with different props and states.
+    check: |
+      - Are components/widgets tested with various props and states?
+      - Are user interactions tested (taps, scrolls, input)?
+      - Are edge cases tested (loading, error, empty states)?
+    references:
+      - https://reactnative.dev/docs/testing-overview
+      - https://docs.flutter.dev/cookbook/testing/widget/introduction
+
+  - id: MOBILE_B018
+    severity: warn
+    category: Testing
+    title: Implement End-to-End Tests for Critical Flows
+    description: |
+      Create E2E tests for critical user flows (login, purchase, navigation)
+      using Detox (React Native) or integration tests (Flutter).
+    rationale: |
+      E2E tests verify that the entire app works together, catching integration
+      issues that unit and component tests miss.
+    check: |
+      - Are E2E tests implemented for critical user journeys?
+      - Are tests run on both iOS and Android?
+      - Are tests flake-free and reliable?
+      - Is test data properly managed?
+    references:
+      - https://wix.github.io/Detox/
+      - https://docs.flutter.dev/cookbook/testing/integration/introduction
+
+  - id: MOBILE_B019
+    severity: warn
+    category: Testing
+    title: Test on Multiple Screen Sizes and Densities
+    description: |
+      Test UI on various screen sizes (phones, tablets, foldables) and pixel
+      densities to ensure layouts adapt correctly.
+    rationale: |
+      Fragmented device landscape means testing on multiple devices is
+      essential to ensure consistent experience.
+    check: |
+      - Are layouts tested on small phones?
+      - Are layouts tested on tablets?
+      - Are layouts tested on different pixel densities?
+      - Are responsive breakpoints defined?
+    references:
+      - https://docs.flutter.dev/development/ui/layout/constraints
+
+  # -------------------------------------------------------------------------
+  # Build & Deployment
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B020
+    severity: warn
+    category: Build
+    title: Implement Automated Build and Release Pipeline
+    description: |
+      Set up CI/CD pipeline for automated building, testing, and distribution
+      of app releases (TestFlight, Play Console Internal Testing).
+    rationale: |
+      Automated builds ensure consistent releases, catch issues early, and
+      reduce manual effort and errors in the release process.
+    check: |
+      - Is CI/CD configured for both iOS and Android builds?
+      - Are tests automatically run on every PR?
+      - Are release candidates automatically distributed to testers?
+      - Is version management automated?
+    references:
+      - https://docs.github.com/en/actions
+
+  - id: MOBILE_B021
+    severity: warn
+    category: Build
+    title: Configure App Signing and Provisioning
+    description: |
+      Set up proper code signing (iOS certificates, Android keystores) and
+      provisioning profiles with secure key management.
+    rationale: |
+      Proper signing is required for app store distribution and ensures app
+      authenticity and integrity.
+    check: |
+      - Are code signing certificates configured in CI/CD?
+      - Are signing keys stored securely (not in repository)?
+      - Are provisioning profiles up to date?
+      - Is signing configured for both dev and release builds?
+    references:
+      - https://developer.apple.com/support/code-signing/
+
+  - id: MOBILE_B022
+    severity: warn
+    category: Build
+    title: Implement Crash Reporting
+    description: |
+      Integrate crash reporting tools (Crashlytics, Sentry, Bugsnag) to
+      track and analyze production crashes.
+    rationale: |
+      Crash reporting provides visibility into production issues, enabling
+      rapid response to user-impacting bugs.
+    check: |
+      - Is a crash reporting SDK integrated?
+      - Are crashes tracked with appropriate context (user ID, device info)?
+      - Is crash data reviewed regularly?
+      - Are high-priority crashes addressed quickly?
+    references:
+      - https://firebase.google.com/docs/crashlytics
+
+  - id: MOBILE_B023
+    severity: warn
+    category: Build
+    title: Implement Analytics and Event Tracking
+    description: |
+      Track user behavior and key events to understand app usage and
+      identify UX issues and optimization opportunities.
+    rationale: |
+      Analytics data provides insights into how users interact with the app,
+      informing product decisions and UX improvements.
+    check: |
+      - Is analytics SDK integrated (Firebase Analytics, Mixpanel)?
+      - Are key events tracked (screen views, conversions, errors)?
+      - Is user privacy respected (consent, opt-out)?
+      - Is analytics data reviewed regularly?
+    references:
+      - https://firebase.google.com/docs/analytics
+
+  # -------------------------------------------------------------------------
+  # Developer Experience
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B024
+    severity: warn
+    category: Developer Experience
+    title: Configure Hot Reloading and Fast Refresh
+    description: |
+      Set up development environment with hot reloading or fast refresh for
+      rapid development iteration.
+    rationale: |
+      Hot reload significantly speeds up development by allowing instant
+      code changes without rebuilding the entire app.
+    check: |
+      - Is hot reload/fast refresh working in development?
+      - Is state preserved during hot reload where possible?
+      - Is there a clear development vs production setup?
+    references:
+      - https://reactnative.dev/docs/fast-refresh
+
+  - id: MOBILE_B025
+    severity: warn
+    category: Developer Experience
+    title: Configure TypeScript and Linting
+    description: |
+      Use TypeScript for type safety and configure linting (ESLint, Dart
+      analyzer) with auto-formatting (Prettier) for code quality.
+    rationale: |
+      TypeScript catches type errors at compile time, while linting ensures
+      consistent code style and catches common errors.
+    check: |
+      - Is TypeScript configured with strict mode?
+      - Is ESLint/Dart analyzer configured with appropriate rules?
+      - Is auto-formatting configured (Prettier)?
+      - Are linting errors checked in CI/CD?
+    references:
+      - https://www.typescriptlang.org/
+
+  # -------------------------------------------------------------------------
+  # Localization & Internationalization
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B026
+    severity: warn
+    category: Localization
+    title: Implement Internationalization (i18n)
+    description: |
+      Structure app for multiple languages with string externalization and
+      support for RTL languages where appropriate.
+    rationale: |
+      International support enables app expansion to global markets and
+      improves accessibility for non-English speakers.
+    check: |
+      - Are strings externalized to localization files?
+      - Is there an i18n library configured (i18next, react-i18next, intl)?
+      - Are dates, numbers, and currencies formatted for locale?
+      - Are layouts tested with RTL languages?
+    references:
+      - https://reactnative.dev/docs/internationalization
+      - https://docs.flutter.dev/development/accessibility-and-localization/internationalization
+
+  # -------------------------------------------------------------------------
+  # Push Notifications
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B027
+    severity: warn
+    category: Features
+    title: Implement Push Notifications
+    description: |
+      Integrate push notification service (FCM, APNs) with proper permission
+      handling, background handling, and notification categories.
+    rationale: |
+      Push notifications are critical for user engagement, re-engagement,
+      and delivering timely information to users.
+    check: |
+      - Is push notification SDK integrated?
+      - Are permissions requested appropriately?
+      - Are notifications handled when app is in foreground, background, and terminated?
+      - Are notification categories configured for different types?
+    references:
+      - https://developer.android.com/guide/topics/ui/notifiers/notifications
+      - https://developer.apple.com/documentation/usernotifications
+
+  # -------------------------------------------------------------------------
+  # Platform-Specific: React Native
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B028
+    severity: warn
+    category: React Native
+    title: Use Hermes JavaScript Engine
+    description: |
+      Enable Hermes JavaScript engine for improved performance, reduced
+      memory usage, and smaller app size.
+    rationale: |
+      Hermes significantly improves React Native app performance and reduces
+      app size with minimal configuration changes.
+    check: |
+      - Is Hermes enabled in both iOS and Android builds?
+      - Are debugging capabilities maintained with Hermes?
+      - Is remote debugging configured?
+    references:
+      - https://reactnative.dev/docs/hermes
+
+  - id: MOBILE_B029
+    severity: warn
+    category: React Native
+    title: Use Navigation Library (React Navigation)
+    description: |
+      Use React Navigation library for consistent navigation patterns,
+      deep linking support, and type-safe navigation.
+    rationale: |
+      React Navigation provides standardized navigation patterns that match
+      platform expectations and simplify navigation management.
+    check: |
+      - Is React Navigation configured for the app?
+      - Are navigation types defined for type safety?
+      - Is deep linking integrated with navigation?
+    references:
+      - https://reactnavigation.org/
+
+  # -------------------------------------------------------------------------
+  # Platform-Specific: Flutter
+  # -------------------------------------------------------------------------
+  - id: MOBILE_B030
+    severity: warn
+    category: Flutter
+    title: Use Material and Cupertino Widgets Appropriately
+    description: |
+      Use Material widgets on Android and Cupertino widgets on iOS for
+      platform-appropriate look and feel.
+    rationale: |
+      Platform-specific widgets feel more native and provide better UX
+      by matching user expectations for each platform.
+    check: |
+      - Are platform-appropriate widgets used?
+      - Is there a widget abstraction for platform differences?
+      - Are platform-specific features leveraged?
+    references:
+      - https://docs.flutter.dev/development/ui/widgets/cupertino
+
+  - id: MOBILE_B031
+    severity: warn
+    category: Flutter
+    title: Configure Null Safety
+    description: |
+      Enable and use Dart null safety for fewer runtime null reference
+      errors and better type safety.
+    rationale: |
+      Null safety catches null reference errors at compile time, preventing
+      a common source of runtime crashes.
+    check: |
+      - Is null safety enabled?
+      - Are nullable and non-nullable types properly distinguished?
+      - Are null-aware operators used appropriately?
+    references:
+      - https://dart.dev/null-safety
+
+# ============================================================================
+# PHASE C: Documentation & Nice-to-Have (informational)
+# ============================================================================
+
+phase_c:
+  # -------------------------------------------------------------------------
+  # Documentation
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C001
+    severity: info
+    category: Documentation
+    title: Document Build and Release Process
+    description: |
+      Document the build process, signing configuration, and release
+      procedures for both iOS and Android platforms.
+    rationale: |
+      Clear documentation ensures reproducible builds and smooth handoffs
+      between team members for releases.
+    check: |
+      - Is there documentation for building the app locally?
+      - Are code signing procedures documented?
+      - Is the release process documented (App Store, Play Store)?
+      - Are troubleshooting steps documented?
+    references:
+      - https://www.writethedocs.org/
+
+  - id: MOBILE_C002
+    severity: info
+    category: Documentation
+    title: Document Development Environment Setup
+    description: |
+      Provide clear setup instructions for development environment including
+      dependencies, tools, and platform-specific requirements.
+    rationale: |
+      Good onboarding documentation reduces time to productivity for new
+      developers and prevents environment-related issues.
+    check: |
+      - Is there a README with setup instructions?
+      - Are platform requirements documented (Xcode version, Android Studio)?
+      - Are common troubleshooting steps documented?
+      - Is environment configuration documented (.env, API keys)?
+    references:
+      - https://www.writethedocs.org/
+
+  - id: MOBILE_C003
+    severity: info
+    category: Documentation
+    title: Document App Architecture and State Management
+    description: |
+      Document overall app architecture, state management approach, and
+      key design decisions for maintainability.
+    rationale: |
+      Architecture documentation helps new developers understand the codebase
+      and ensures consistent implementation of features.
+    check: |
+      - Is there an architecture diagram or description?
+      - Is the state management approach documented?
+      - Are key patterns and conventions documented?
+      - Are design decisions documented with rationale?
+    references:
+      - https://www.writethedocs.org/
+
+  # -------------------------------------------------------------------------
+  # Optional Features
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C004
+    severity: info
+    category: Features
+    title: Implement Biometric Authentication
+    description: |
+      Support biometric authentication (Face ID, Touch ID, fingerprint)
+      for secure and convenient user authentication.
+    rationale: |
+      Biometric authentication improves security while providing convenient
+      user experience compared to passwords.
+    check: |
+      - Is biometric authentication implemented using platform APIs?
+      - Is there a fallback to passcode/password?
+      - Is biometric data handled securely?
+      - Are permission requests handled appropriately?
+    references:
+      - https://developer.apple.com/documentation/localauthentication
+      - https://developer.android.com/training/sign-in/biometric-auth
+
+  - id: MOBILE_C005
+    severity: info
+    category: Features
+    title: Implement App Widgets
+    description: |
+      Provide home screen widgets for quick access to app content and
+      functionality without opening the full app.
+    rationale: |
+      Widgets increase app engagement and provide convenient access to
+      frequently used features.
+    check: |
+      - Are home screen widgets implemented for key features?
+      - Do widgets update properly with fresh data?
+      - Are widgets configured for multiple sizes?
+      - Are deep links from widgets handled properly?
+    references:
+      - https://developer.android.com/guide/topics/appwidgets
+
+  - id: MOBILE_C006
+    severity: info
+    category: Features
+    title: Support Dark Mode
+    description: |
+      Implement dark mode support that respects system theme preferences
+      with appropriate color schemes.
+    rationale: |
+      Dark mode reduces eye strain in low light and saves battery on OLED
+      screens. Users expect this feature in modern apps.
+    check: |
+      - Does app respect system dark mode setting?
+      - Are all screens tested in both light and dark modes?
+      - Is there a manual theme toggle in settings?
+      - Are images and assets optimized for both themes?
+    references:
+      - https://developer.android.com/guide/topics/ui/look-and-feel/darktheme
+      - https://developer.apple.com/design/human-interface-guidelines/dark-mode
+
+  - id: MOBILE_C007
+    severity: info
+    category: Features
+    title: Implement Share Sheet
+    description: |
+      Integrate platform share sheet for sharing content from your app to
+      other apps and social media.
+    rationale: |
+      Share functionality increases app virality and user engagement by
+      making it easy to share content.
+    check: |
+      - Is platform share sheet implemented?
+      - Can users share content to various destinations?
+      - Is shared content properly formatted (URLs, images, text)?
+    references:
+      - https://developer.apple.com/documentation/uikit/uiactivityviewcontroller
+
+  # -------------------------------------------------------------------------
+  # Performance Monitoring
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C008
+    severity: info
+    category: Monitoring
+    title: Implement Performance Monitoring
+    description: |
+      Monitor app performance metrics (FPS, memory usage, ANR rate) using
+      Firebase Performance Monitoring or similar tools.
+    rationale: |
+      Performance monitoring helps identify performance regressions and
+      optimization opportunities.
+    check: |
+      - Is performance monitoring SDK integrated?
+      - Are key performance metrics tracked (startup time, screen render time)?
+      - Are performance alerts configured?
+      - Is performance data reviewed regularly?
+    references:
+      - https://firebase.google.com/docs/perf-mon
+
+  - id: MOBILE_C009
+    severity: info
+    category: Monitoring
+    title: Implement Custom Event Analytics
+    description: |
+      Track custom events and funnels to understand user behavior and
+      identify UX friction points.
+    rationale: |
+      Custom analytics provide insights into how users actually use the app,
+      informing product decisions and UX improvements.
+    check: |
+      - Are key user actions tracked as events?
+      - Are conversion funnels defined and monitored?
+      - Is event data reviewed regularly?
+      - Is user privacy respected?
+    references:
+      - https://firebase.google.com/docs/analytics
+
+  # -------------------------------------------------------------------------
+  # A/B Testing
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C010
+    severity: info
+    category: Features
+    title: Implement A/B Testing Framework
+    description: |
+      Integrate A/B testing framework (Firebase Remote Config, Optimizely)
+      to experiment with features and UI changes.
+    rationale: |
+      A/B testing enables data-driven product decisions and reduces risk
+      of changes by validating with real users.
+    check: |
+      - Is an A/B testing SDK integrated?
+      - Are experiments properly configured and tracked?
+      - Is there a process for analyzing experiment results?
+      - Are experiments documented and shared with the team?
+    references:
+      - https://firebase.google.com/docs/remote-config
+
+  # -------------------------------------------------------------------------
+  # Security: Additional
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C011
+    severity: info
+    category: Security
+    title: Implement App Transport Security (iOS)
+    description: |
+      Configure App Transport Security (ATS) to enforce HTTPS connections
+      and prevent insecure HTTP communication.
+    rationale: |
+      ATS ensures all network communication is encrypted, preventing data
+      interception and tampering.
+    check: |
+      - Is ATS enabled with no exceptions?
+      - Are any exceptions necessary and properly configured?
+      - Is all network communication over HTTPS?
+    references:
+      - https://developer.apple.com/bundle-networking/
+
+  - id: MOBILE_C012
+    severity: info
+    category: Security
+    title: Configure Network Security Configuration (Android)
+    description: |
+      Implement Android Network Security Configuration to enforce HTTPS
+      and configure certificate pinning.
+    rationale: |
+      Network Security Configuration provides centralized control over
+      network security policies for the app.
+    check: |
+      - Is Network Security Configuration file created?
+      - Is HTTPS enforced for all domains?
+      - Is certificate pinning configured if needed?
+      - Are debug overrides properly handled?
+    references:
+      - https://developer.android.com/training/articles/security-config
+
+  # -------------------------------------------------------------------------
+  # Distribution & App Store
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C013
+    severity: info
+    category: Distribution
+    title: Optimize App Store Listing
+    description: |
+      Create compelling app store listings with screenshots, videos,
+      descriptions, and keywords for better discoverability.
+    rationale: |
+      App store optimization (ASO) significantly impacts app discoverability
+      and conversion rate from store views to installs.
+    check: |
+      - Are app store screenshots high quality and representative?
+      - Is app description clear and compelling?
+      - Are relevant keywords included in metadata?
+      - Is there a demo video showcasing key features?
+    references:
+      - https://developer.android.com/studio/publish
+      - https://developer.apple.com/app-store/app-store-optimization/
+
+  - id: MOBILE_C014
+    severity: info
+    category: Distribution
+    title: Configure In-App Purchases (if applicable)
+    description: |
+      Implement in-app purchases or subscriptions using platform-provided
+      APIs with proper receipt validation.
+    rationale: |
+      In-app purchases enable monetization opportunities. Proper implementation
+      ensures security and prevents fraud.
+    check: |
+      - Are in-app purchases implemented using platform APIs?
+      - Is receipt validation implemented on server?
+      - Are purchase flows tested and user-friendly?
+      - Is subscription management handled properly?
+    references:
+      - https://developer.apple.com/in-app-purchase
+
+  # -------------------------------------------------------------------------
+  # Compliance & Legal
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C015
+    severity: info
+    category: Compliance
+    title: Implement Privacy Policy and Consent
+    description: |
+      Provide privacy policy and implement consent mechanisms for data
+      collection in compliance with regulations (GDPR, CCPA).
+    rationale: |
+      Privacy compliance is legally required in many jurisdictions and
+      builds user trust.
+    check: |
+      - Is there a privacy policy accessible in-app?
+      - Is consent obtained for data collection?
+      - Can users review and change consent?
+      - Is data collection transparent to users?
+    references:
+      - https://www gdpr.eu/
+
+  - id: MOBILE_C016
+    severity: info
+    category: Compliance
+    title: Handle Data Deletion Requests
+    description: |
+      Implement mechanism for users to request deletion of their data
+      in compliance with privacy regulations (GDPR "right to be forgotten").
+    rationale: |
+      Data deletion requests are legally required under GDPR and other
+      privacy regulations.
+    check: |
+      - Is there a way for users to request account deletion?
+      - Is data actually deleted from servers and local storage?
+      - Is deletion confirmed to user?
+    references:
+      - https://www gdpr.eu/right-to-be-forgotten/
+
+  # -------------------------------------------------------------------------
+  # Platform Integration
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C017
+    severity: info
+    category: Features
+    title: Integrate with Platform Features (Camera, Maps, Contacts)
+    description: |
+      Leverage platform-specific features (camera, maps, contacts, calendar)
+      to provide richer functionality when appropriate.
+    rationale: |
+      Platform integration enhances app capabilities by using native device
+      features and platform services.
+    check: |
+      - Are platform features used where appropriate?
+      - Are platform APIs used correctly and efficiently?
+      - Are permission flows handled properly?
+      - Is fallback behavior implemented for devices without features?
+    references:
+      - https://developer.apple.com/documentation/
+      - https://developer.android.com/reference/
+
+  # -------------------------------------------------------------------------
+  # Cross-Platform Considerations
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C018
+    severity: info
+    category: Architecture
+    title: Abstract Platform Differences
+    description: |
+      Create abstraction layer for platform-specific differences to minimize
+      platform-specific code in shared components.
+    rationale: |
+      Platform abstractions improve code sharing and reduce duplication
+      across iOS and Android implementations.
+    check: |
+      - Is there a clear pattern for platform-specific code?
+      - Are platform abstractions well-defined?
+      - Is platform-specific code isolated and minimal?
+    references:
+      - https://reactnative.dev/docs/platform-specific-code
+
+  - id: MOBILE_C019
+    severity: info
+    category: Testing
+    title: Test on Both iOS and Android
+    description: |
+      Ensure testing covers both iOS and Android platforms, including
+      platform-specific features and behaviors.
+    rationale: |
+      Cross-platform apps may behave differently on each platform. Testing
+      on both ensures consistent experience.
+    check: |
+      - Are automated tests run on both platforms?
+      - Is manual testing performed on both platforms?
+      - Are platform-specific features tested?
+      - Are tests run on multiple OS versions?
+    references:
+      - https://docs.flutter.dev/testing/overview
+
+  # -------------------------------------------------------------------------
+  # Version Management
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C020
+    severity: info
+    category: Build
+    title: Implement Semantic Versioning
+    description: |
+      Use semantic versioning (MAJOR.MINOR.PATCH) for app versions to
+      communicate change impact to users and testers.
+    rationale: |
+      Semantic versioning provides clear communication about the nature of
+      changes (breaking features, new features, bug fixes).
+    check: |
+      - Is semantic versioning followed for app versions?
+      - Are version numbers incremented appropriately?
+      - Are changelogs provided for each release?
+    references:
+      - https://semver.org/
+
+  # -------------------------------------------------------------------------
+  # Error Handling
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C021
+    severity: info
+    category: Error Handling
+    title: Implement Graceful Error Handling
+    description: |
+      Handle errors gracefully with user-friendly messages and recovery
+      options instead of crashing or showing technical errors.
+    rationale: |
+      Good error handling improves user experience and prevents user
+      frustration when errors occur.
+    check: |
+      - Are errors caught and handled appropriately?
+      - Are error messages user-friendly and actionable?
+      - Is there a way to recover from errors?
+      - Are errors logged for debugging?
+    references:
+      - https://docs.flutter.dev/cookbook/design/error-handling
+
+  # id: MOBILE_C022
+    severity: info
+    category: Error Handling
+    title: Implement Global Error Handlers
+    description: |
+      Set up global error handlers to catch unhandled errors and exceptions,
+      logging them for analysis.
+    rationale: |
+      Global error handlers ensure that all errors are captured and logged,
+      even those not caught by local error handling.
+    check: |
+      - Is there a global error handler for JavaScript/Dart errors?
+      - Is there a global error handler for native errors?
+      - Are errors logged with sufficient context?
+    references:
+      - https://reactnative.dev/docs/error-handler
+
+  # -------------------------------------------------------------------------
+  # Animation & Transitions
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C023
+    severity: info
+    category: UX
+    title: Use Platform-Appropriate Animations
+    description: |
+      Use animations that match platform expectations (Material motion for
+      Android, iOS-style transitions for iOS).
+    rationale: |
+      Platform-appropriate animations feel more native and provide better
+      user experience by matching user expectations.
+    check: |
+      - Are animations consistent with platform guidelines?
+      - Are animations performant (60fps)?
+      - Are there options to reduce or disable animations for accessibility?
+    references:
+      - https://material.io/design/motion
+
+  - id: MOBILE_C024
+    severity: info
+    category: Performance
+    title: Optimize Animations Performance
+    description: |
+      Use platform-optimized animation APIs (Animate.css, Lottie, Flutter
+      animations) for smooth 60fps animations.
+    rationale: |
+      Smooth animations improve perceived performance and user experience.
+      Janky animations feel unpolished and buggy.
+    check: |
+      - Are animations running at 60fps?
+      - Are heavy operations avoided during animations?
+      - Are animation libraries used appropriately?
+    references:
+      - https://airbnb.io/lottie/
+
+  # -------------------------------------------------------------------------
+  # Social Features
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C025
+    severity: info
+    category: Features
+    title: Implement Social Login
+    description: |
+      Support social login (Sign in with Apple, Google, Facebook) for
+      convenient authentication and reduced friction.
+    rationale: |
+      Social login reduces sign-up friction and improves conversion rates
+      by eliminating password creation.
+    check: |
+      - Is Sign in with Apple implemented (required on iOS)?
+      - Are other social logins implemented (Google, Facebook)?
+      - Is social login properly linked to existing accounts?
+    references:
+      - https://developer.apple.com/sign-in-with-apple/
+
+  # -------------------------------------------------------------------------
+  # Offline Functionality
+  - id: MOBILE_C026
+    severity: info
+    category: Features
+    title: Implement Offline Queue for Network Requests
+    description: |
+      Queue network requests when offline and automatically retry when
+      connectivity is restored.
+    rationale: |
+      Offline request queue improves user experience by allowing actions
+      to complete even without connectivity.
+    check: |
+      - Are network requests queued when offline?
+      - Is there visibility into queued requests?
+      - Are queued requests automatically retried?
+      - Are conflicts handled when sync occurs?
+    references:
+      - https://axios-http.com/docs/interceptors
+
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C027
+    severity: info
+    category: Monitoring
+    title: Monitor App Size Over Time
+    description: |
+      Track app bundle size over time to identify and address bloat from
+      added features and dependencies.
+    rationale: |
+      App size tends to grow over time. Monitoring helps catch size increases
+      early and encourages optimization.
+    check: |
+      - Is app size tracked with each release?
+      - Are size increases reviewed and addressed?
+      - Is there a target app size budget?
+    references:
+      - https://developer.android.com/topic/performance/apk-size
+
+  # -------------------------------------------------------------------------
+  # Content Management
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C028
+    severity: info
+    category: Features
+    title: Implement Content Management System (CMS) Integration
+    description: |
+      Integrate with a headless CMS for dynamic content management without
+      app updates.
+    rationale: |
+      CMS integration enables non-technical teams to update app content
+      without requiring app store reviews and updates.
+    check: |
+      - Is a CMS integrated (Contentful, Strapi, custom)?
+      - Is content cached and updated efficiently?
+      - Is there a fallback if CMS is unavailable?
+    references:
+      - https://www.contentful.com/
+
+  # -------------------------------------------------------------------------
+  # Accessibility: Additional
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C029
+    severity: info
+    category: Accessibility
+    title: Support Reduced Motion Preferences
+    description: |
+      Respect user's reduced motion preference setting by disabling or
+      simplifying animations.
+    rationale: |
+      Some users experience motion sickness or distraction with animations.
+      Supporting reduced motion improves accessibility.
+    check: |
+      - Are animations disabled or simplified with reduced motion?
+      - Is reduced motion preference detected?
+      - Are there alternatives to animation for conveying information?
+    references:
+      - https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions
+
+  - id: MOBILE_C030
+    severity: info
+    category: Accessibility
+    title: Support High Contrast Mode
+    description: |
+      Ensure app remains usable when high contrast mode is enabled on the
+      device.
+    rationale: |
+      High contrast mode is used by users with visual impairments. Supporting
+      it ensures accessibility compliance.
+    check: |
+      - Is app tested with high contrast mode enabled?
+      - Are UI elements still visible in high contrast?
+      - Are custom colors overridden in high contrast?
+    references:
+      - https://developer.android.com/guide/topics/ui/accessibility
+
+  # -------------------------------------------------------------------------
+  # Feature Flags
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C031
+    severity: info
+    category: Features
+    title: Implement Feature Flags
+    description: |
+      Use feature flags to enable/disable features remotely without app
+      updates, enabling gradual rollouts and quick rollback.
+    rationale: |
+      Feature flags enable safer releases by allowing gradual rollout and
+      instant rollback if issues are found.
+    check: |
+      - Is a feature flagging solution integrated?
+      - Are features flagged appropriately?
+      - Is there a process for managing feature flags?
+      - Are stale flags cleaned up?
+    references:
+      - https://firebase.google.com/docs/remote-config
+
+  # -------------------------------------------------------------------------
+  # Developer Tools
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C032
+    severity: info
+    category: Developer Experience
+    title: Implement Debug Menu
+    description: |
+      Provide a debug menu for development and testing with options for
+      viewing logs, changing settings, and triggering actions.
+    rationale: |
+      Debug menu accelerates development and testing by providing quick access
+      to developer tools without code changes.
+    check: |
+      - Is there a debug menu accessible in development builds?
+      - Are useful debug options available?
+      - Is debug menu properly excluded from release builds?
+    references:
+      - https://reactnative.dev/docs/debugging
+
+  # -------------------------------------------------------------------------
+  # Memory Management
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C033
+    severity: info
+    category: Performance
+    title: Monitor and Fix Memory Leaks
+    description: |
+      Regularly test for memory leaks using profiling tools and fix issues
+      where memory is not properly released.
+    rationale: |
+      Memory leaks cause app slowdowns and crashes over time, especially on
+      lower-end devices with limited memory.
+    check: |
+      - Is memory usage profiled regularly?
+      - Are memory leaks identified and fixed?
+      - Are large objects properly released when not needed?
+    references:
+      - https://developer.android.com/studio/profile/memory-profiler
+
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C034
+    severity: info
+    category: Performance
+    title: Implement Image Memory Optimization
+    description: |
+      Optimize image memory usage by decoding images at appropriate sizes,
+      using caching strategies, and clearing unused images.
+    rationale: |
+      Images are a major contributor to memory usage. Proper optimization
+      prevents out-of-memory crashes.
+    check: |
+      - Are images decoded at display size?
+      - Is image caching configured appropriately?
+      - Are unused images cleared from memory?
+    references:
+      - https://developer.android.com/topic/performance/graphics
+
+  # -------------------------------------------------------------------------
+  # Background Tasks
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C035
+    severity: info
+    category: Features
+    title: Implement Background Tasks
+    description: |
+      Use platform background task APIs for periodic updates and sync while
+      respecting platform limitations.
+    rationale: |
+      Background tasks enable periodic data refresh and sync. Platform APIs
+      provide efficient and controlled background execution.
+    check: |
+      - Are background tasks implemented using platform APIs?
+      - Are background task limitations respected?
+      - Are background tasks tested on both platforms?
+    references:
+      - https://developer.apple.com/documentation/backgroundtasks
+
+  # -------------------------------------------------------------------------
+  # Security: Additional
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C036
+    severity: info
+    category: Security
+    title: Implement App Integrity Checks
+    description: |
+      Verify app integrity at runtime to detect tampering and repackaging
+      attacks.
+    rationale: |
+      App integrity checks help detect if the app has been modified or
+      repackaged with malicious code.
+    check: |
+      - Are app integrity checks implemented?
+      - Is the app signature verified at runtime?
+      - Is there a response to integrity check failures?
+    references:
+      - https://developer.android.com/google/play/integrity
+
+  # -------------------------------------------------------------------------
+  # Analytics: Additional
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C037
+    severity: info
+    category: Monitoring
+    title: Track Funnel Metrics
+    description: |
+      Track conversion funnels (onboarding, registration, purchase) to
+      identify drop-off points and optimize flows.
+    rationale: |
+      Funnel analysis reveals where users abandon flows, enabling targeted
+      UX improvements.
+    check: |
+      - Are key funnels defined and tracked?
+      - Is funnel data analyzed regularly?
+      - Are improvements made based on funnel insights?
+    references:
+      - https://support.google.com/analytics/answer
+
+  # -------------------------------------------------------------------------
+  # User Feedback
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C038
+    severity: info
+    category: Features
+    title: Implement In-App Feedback Mechanism
+    description: |
+      Provide an easy way for users to submit feedback, report bugs, or
+      request features from within the app.
+    rationale: |
+      In-app feedback increases user engagement and provides valuable
+      insights for product improvements.
+    check: |
+      - Is there an in-app feedback form or mechanism?
+      - Is feedback easily accessible?
+      - Is feedback routed to appropriate channels?
+    references:
+      - https://www.prodpad.com/blog/ultimate-guide-to-user-feedback/
+
+  # -------------------------------------------------------------------------
+  # Onboarding
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C039
+    severity: info
+    category: UX
+    title: Implement User Onboarding
+    description: |
+      Create onboarding flow to introduce key features and guide users
+      through initial setup.
+    rationale: |
+      Effective onboarding improves user activation and retention by helping
+      users understand app value and features.
+    check: |
+      - Is there an onboarding flow for new users?
+      - Is onboarding skippable for returning users?
+      - Is onboarding concise and focused on value proposition?
+      - Is onboarding effectiveness measured?
+    references:
+      - https://www.nngroup.com/articles/user-onboarding/
+
+  # -------------------------------------------------------------------------
+  # Referral & Sharing
+  # -------------------------------------------------------------------------
+  - id: MOBILE_C040
+    severity: info
+    category: Features
+    title: Implement Referral Program
+    description: |
+      Create referral program to incentivize users to share the app with
+      others, driving organic growth.
+    rationale: |
+      Referral programs are effective for user acquisition and leverage
+      existing users for growth.
+    check: |
+      - Is there a referral mechanism in the app?
+      - Are incentives provided for successful referrals?
+      - Is referral tracking implemented?
+    references:
+      - https://blog.hubspot.com/service/referral-program

@@ -1,6 +1,179 @@
 name: "Infrastructure"
-version: 1.0
-description: "Quality rules for DevOps and Infrastructure as Code"
+version: 1.4
+description: "Quality rules for DevOps and Infrastructure as Code (with CI/CD and Observability rules)"
+
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      infrastructure: 1.0
+      security: 1.0
+      observability: 1.0
+      performance: 1.0
+      reliability: 1.0
+      cicd: 1.0
+  web-app:
+    multipliers:
+      web: 1.0
+      api: 1.2
+      data: 1.0
+      infrastructure: 1.3
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      infrastructure: 1.5
+      security: 1.2
+      observability: 1.3
+      performance: 1.0
+      reliability: 1.0
+      cicd: 1.2
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.2
+      mobile: 1.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      infrastructure: 1.3
+      security: 1.2
+      observability: 1.2
+      performance: 1.0
+      reliability: 1.0
+      cicd: 1.2
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 1.5
+      infrastructure: 1.3
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.2
+      auth: 0.8
+    category_multipliers:
+      infrastructure: 1.5
+      security: 1.0
+      observability: 1.5
+      performance: 1.5
+      reliability: 1.2
+      cicd: 1.0
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 2.0
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.3
+      auth: 0.8
+    category_multipliers:
+      infrastructure: 2.0
+      security: 1.3
+      observability: 1.8
+      performance: 1.5
+      reliability: 1.5
+      cicd: 1.2
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.2
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.3
+      microservices: 1.2
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      infrastructure: 1.3
+      security: 1.2
+      observability: 1.3
+      performance: 1.2
+      reliability: 1.0
+      cicd: 1.2
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.2
+      infrastructure: 2.0
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.3
+      auth: 1.2
+    category_multipliers:
+      infrastructure: 2.0
+      security: 1.5
+      observability: 1.5
+      performance: 1.3
+      reliability: 1.3
+      cicd: 1.3
+  infrastructure-focused:
+    multipliers:
+      web: 0.5
+      api: 0.8
+      data: 1.2
+      infrastructure: 2.5
+      mobile: 0.3
+      ml: 0.5
+      graphql: 0.5
+      microservices: 1.5
+      async: 1.0
+      auth: 0.8
+    category_multipliers:
+      infrastructure: 3.0
+      security: 1.5
+      observability: 2.0
+      performance: 1.5
+      reliability: 2.0
+      cicd: 1.5
+  observability-focused:
+    multipliers:
+      web: 0.8
+      api: 1.0
+      data: 1.2
+      infrastructure: 1.5
+      mobile: 0.5
+      ml: 0.8
+      graphql: 0.8
+      microservices: 1.2
+      async: 1.0
+      auth: 0.8
+    category_multipliers:
+      infrastructure: 1.5
+      security: 1.0
+      observability: 3.0
+      performance: 1.0
+      reliability: 1.5
+      cicd: 1.0
 
 phases:
   a:
@@ -11,11 +184,14 @@ phases:
     active_levels: ["A", "B"]
 
 rules:
+  # Core Infrastructure Rules
   - id: "correctness.dockerfile"
     description: "Dockerfile follows best practices"
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
     check: "verify multi-stage build, non-root user, .dockerignore"
     check_type: "content"
 
@@ -24,6 +200,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
     check: "verify ENV instructions in Dockerfile or docker-compose"
     check_type: "content"
 
@@ -32,6 +210,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["infrastructure", "auth"]
     check: "verify no passwords, keys, tokens in configs"
     check_type: "content"
 
@@ -40,6 +220,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "reliability"
+    domain_tags: ["infrastructure", "api"]
     check: "verify /health or /readiness endpoints"
     check_type: "content"
 
@@ -48,6 +230,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "performance"
+    domain_tags: ["infrastructure"]
     check: "verify memory/CPU limits in deployment"
     check_type: "content"
 
@@ -56,6 +240,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "reliability"
+    domain_tags: ["infrastructure", "data"]
     check: "verify volume mounts for data persistence"
     check_type: "content"
 
@@ -64,6 +250,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure", "microservices"]
     check: "verify HPA (Horizontal Pod Autoscaler) or similar"
     check_type: "content"
 
@@ -72,6 +260,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure"]
     check: "verify Prometheus/metrics endpoints or logging"
     check_type: "content"
 
@@ -80,6 +270,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    category: "security"
+    domain_tags: ["infrastructure", "microservices"]
     check: "verify NetworkPolicy or firewall rules"
     check_type: "content"
 
@@ -88,5 +280,569 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure"]
     check: "verify restart: always/never/on-failure policies"
+    check_type: "content"
+
+  - id: "quality.iac_modularity"
+    description: "Infrastructure as Code follows modular design"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify Terraform modules, CloudFormation stacks, or Helm charts are organized into reusable components with clear interfaces"
+    check_type: "content"
+
+  - id: "correctness.iac_state_management"
+    description: "IaC state properly managed and versioned"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify state files are stored securely (remote backend), locked during operations, and never committed to version control"
+    check_type: "content"
+
+  - id: "quality.iac_validation"
+    description: "Pre-commit validation for IaC changes"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify validation hooks (terraform validate, terraform fmt -check, tflint, cfn-lint) in pre-commit or CI pipeline"
+    check_type: "content"
+
+  - id: "quality.resource_tagging"
+    description: "Mandatory resource tags for cost allocation and ownership"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify resources have required tags: Environment, Owner, CostCenter, Project, Compliance (e.g., PII, HIPAA)"
+    check_type: "content"
+
+  - id: "quality.naming_conventions"
+    description: "Consistent naming conventions across resources"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify standardized naming: {service}-{env}-{region}-{resource} (e.g., app-prod-us-east-1-api) with kebab-case"
+    check_type: "content"
+
+  - id: "quality.resource_grouping"
+    description: "Resources grouped by environment/lifecycle"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify separate resource groups, namespaces, or VPCs for dev/staging/production environments"
+    check_type: "content"
+
+  - id: "correctness.backup_strategy"
+    description: "Automated backup strategy for critical data"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure", "data"]
+    check: "verify automated backups (daily for databases, snapshots for EBS/EBS), retention policy (min 30 days), and backup encryption at rest"
+    check_type: "content"
+
+  - id: "quality.disaster_recovery"
+    description: "Disaster Recovery plan with defined RTO/RPO"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure", "data"]
+    check: "verify documented RTO (Recovery Time Objective, max 4h for critical) and RPO (Recovery Point Objective, max 15min), multi-region replication strategy"
+    check_type: "content"
+
+  - id: "correctness.data_replication"
+    description: "Data replication for high availability"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure", "data"]
+    check: "verify multi-AZ or multi-region replication for databases and storage (S3 cross-region replication, RDS Multi-AZ, read replicas)"
+    check_type: "content"
+
+  - id: "quality.cost_monitoring"
+    description: "Cost budgets and alerting configured"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure"]
+    check: "verify cost budgets (e.g., AWS Budgets), anomaly detection alerts, and regular cost review process"
+    check_type: "content"
+
+  - id: "quality.resource_cleanup"
+    description: "Automatic cleanup of unused resources"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure"]
+    check: "verify lifecycle policies for old snapshots, unused load balancers, orphaned volumes, and automated resource tagging for cleanup"
+    check_type: "content"
+
+  - id: "quality.right_sizing"
+    description: "Resource right-sizing based on actual usage"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure"]
+    check: "verify resource sizing matches actual usage (CPU/memory utilization 50-80%), use of autoscaling, and reserved instances for steady-state workloads"
+    check_type: "content"
+
+  - id: "quality.tls_encryption"
+    description: "TLS encryption for all communications"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify TLS 1.2+ for all endpoints, certificate management (ACM/Let's Encrypt), and encrypted data in transit (databases, cache, message queues)"
+    check_type: "content"
+
+  - id: "correctness.vulnerability_scanning"
+    description: "Container and dependency vulnerability scanning"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["infrastructure"]
+    check: "verify vulnerability scanning in CI (Trivy, Snyk, Clair), base image updates, and security patching process"
+    check_type: "content"
+
+  - id: "quality.audit_logging"
+    description: "Audit logging for compliance and security"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["infrastructure", "auth"]
+    check: "verify audit logs for admin actions, authentication events, and data access (CloudTrail, VPC Flow Logs, auditd) with retention (min 90 days)"
+    check_type: "content"
+
+  - id: "correctness.config_versioning"
+    description: "Infrastructure configuration version controlled"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify all infrastructure configs in Git (Terraform, Helm, Kubernetes manifests), no manual console changes"
+    check_type: "content"
+
+  - id: "quality.config_drift_detection"
+    description: "Configuration drift detection enabled"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure"]
+    check: "verify drift detection (terraform plan, tfsec, or custom tools) to detect manual changes outside IaC"
+    check_type: "content"
+
+  - id: "quality.service_mesh"
+    description: "Service mesh for microservice communication"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "infrastructure"
+    domain_tags: ["infrastructure", "microservices"]
+    check: "verify service mesh (Istio, Linkerd, AWS App Mesh) for mTLS, traffic management, and observability in microservices"
+    check_type: "content"
+
+  # CI/CD Specific Rules
+  - id: "ci.pipeline_configuration"
+    description: "CI/CD pipeline configured with build, test, and deploy stages"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify CI/CD pipeline (GitHub Actions, GitLab CI, Jenkins, CircleCI) defined with stages: build, test, deploy, and environment-specific configurations"
+    check_type: "content"
+
+  - id: "ci.automated_tests"
+    description: "Automated tests run on every commit"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify test suite executes in CI pipeline with unit tests, integration tests, and minimum coverage threshold (e.g., 80%)"
+    check_type: "content"
+
+  - id: "ci.pr_checks"
+    description: "Pre-merge checks for pull requests (lint, type-check, test)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify PR branch protection requires status checks: lint, type-check, tests pass, and required approvals before merge"
+    check_type: "content"
+
+  - id: "ci.deployment_strategy"
+    description: "Deployment strategy defined (blue-green, canary, rolling)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure", "microservices"]
+    check: "verify deployment strategy (blue-green, canary, rolling update) with health checks between phases and automatic rollback on failure"
+    check_type: "content"
+
+  - id: "ci.rollback_mechanism"
+    description: "Automated rollback mechanism for failed deployments"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify rollback capability (previous version retention, database migration rollback, one-click rollback via CI/CD tool)"
+    check_type: "content"
+
+  - id: "ci.environment_separation"
+    description: "Environment-specific configurations (dev/staging/prod)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify separate environments with distinct configs, deployment pipelines, and access controls (dev/staging/production)"
+    check_type: "content"
+
+  - id: "ci.build_caching"
+    description: "Build caching enabled for faster CI pipelines"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure"]
+    check: "verify dependency caching (npm, pip, go mod) and layer caching in Docker builds to reduce CI execution time"
+    check_type: "content"
+
+  - id: "ci.artifact_management"
+    description: "Build artifacts versioned and stored"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify artifacts (Docker images, compiled binaries) are tagged with version/hash and stored in artifact registry (Docker Hub, ECR, Artifactory)"
+    check_type: "content"
+
+  - id: "ci.branch_protection"
+    description: "Branch protection rules on main branch"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify main branch protected: no direct push, PR required, required reviews, status checks must pass, and up-to-date branch requirement"
+    check_type: "content"
+
+  - id: "ci.status_notifications"
+    description: "CI/CD failure notifications configured"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure"]
+    check: "verify notifications on CI failures (Slack, email, Teams) with build status, logs link, and responsible team assignment"
+    check_type: "content"
+
+  - id: "ci.secrets_in_ci"
+    description: "Secrets management in CI/CD (no hardcoded credentials)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "security"
+    domain_tags: ["infrastructure", "auth"]
+    check: "verify secrets injected via environment variables or secret managers (GitHub Secrets, AWS Secrets Manager, Vault), never in CI config files"
+    check_type: "content"
+
+  - id: "ci.parallel_execution"
+    description: "Parallel job execution for faster feedback"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure"]
+    check: "verify CI jobs run in parallel where possible (test matrix, independent stages) to reduce total pipeline duration"
+    check_type: "content"
+
+  - id: "ci.integration_tests"
+    description: "Integration tests in CI pipeline"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure", "api", "data"]
+    check: "verify integration tests execute against test environment with database, external API mocks, or test containers"
+    check_type: "content"
+
+  - id: "ci.e2e_tests"
+    description: "End-to-end tests in pre-production pipeline"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "cicd"
+    domain_tags: ["infrastructure"]
+    check: "verify E2E tests run against staging environment before production deployment with critical user journeys covered"
+    check_type: "content"
+
+  # Monitoring & Observability Rules
+  - id: "observability.metrics_collection"
+    description: "Metrics collection configured (Prometheus/Grafana)"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify metrics endpoint (/metrics) exposing Prometheus metrics, or CloudWatch/Prometheus integration for resource and application metrics"
+    check_type: "content"
+
+  - id: "observability.structured_logging"
+    description: "Structured logging with JSON format and correlation IDs"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify logs in structured format (JSON) with fields: timestamp, level, message, correlation_id, service, and optional user_id"
+    check_type: "content"
+
+  - id: "observability.log_levels"
+    description: "Proper log levels used (DEBUG, INFO, WARN, ERROR)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify appropriate log levels: DEBUG for dev only, INFO for normal operations, WARN for deprecations/retries, ERROR for failures requiring attention"
+    check_type: "content"
+
+  - id: "observability.distributed_tracing"
+    description: "Distributed tracing configured (OpenTelemetry/Jaeger)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "microservices", "api"]
+    check: "verify OpenTelemetry SDK or Jaeger integration for trace spans across service boundaries with automatic trace propagation"
+    check_type: "content"
+
+  - id: "observability.trace_propagation"
+    description: "Trace context propagation (W3C traceparent headers)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify W3C trace context (traceparent, tracestate) headers passed to downstream services for request correlation"
+    check_type: "content"
+
+  - id: "observability.sli_slo"
+    description: "SLI/SLO definitions and tracking"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify SLIs (Service Level Indicators) defined: availability, latency, error rate, and SLOs (e.g., 99.9% uptime, p95 < 200ms) with dashboards"
+    check_type: "content"
+
+  - id: "observability.alerting"
+    description: "Alert rules with severity levels configured"
+    severity: "fail"
+    weight: 2
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure"]
+    check: "verify alert rules for critical conditions: high error rate (>5%), latency spike (p95 > 1s), downtime, with severity levels (P0-P3)"
+    check_type: "content"
+
+  - id: "observability.escalation_policies"
+    description: "On-call rotation and escalation policies defined"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure"]
+    check: "verify on-call rotation (PagerDuty, Opsgenie), escalation paths (30min -> 1h -> manager), and runbooks for common incidents"
+    check_type: "content"
+
+  - id: "observability.dashboards"
+    description: "Grafana dashboards for key metrics"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure"]
+    check: "verify Grafana dashboards covering: system metrics (CPU/memory/disk), application metrics (requests/errors/latency), and business metrics"
+    check_type: "content"
+
+  - id: "observability.runbooks"
+    description: "Runbooks linked to alerts"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure"]
+    check: "verify each critical alert has associated runbook with diagnosis steps, mitigation actions, and escalation contacts"
+    check_type: "content"
+
+  - id: "observability.apm_integration"
+    description: "APM tool integration (Datadog, New Relic, etc.)"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify APM agent (Datadog, New Relic, Dynatrace) for auto-instrumentation, distributed tracing, and service maps"
+    check_type: "content"
+
+  - id: "observability.error_tracking"
+    description: "Error tracking service configured (Sentry, Rollbar)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify error tracking (Sentry, Rollbar, Bugsnag) with error grouping, stack traces, user context, and release tracking"
+    check_type: "content"
+
+  - id: "observability.profiling"
+    description: "Continuous profiling for performance optimization"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "performance"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify continuous profiling (pprof, Parca, Datadog Profiling) for CPU, memory, and hotspot analysis"
+    check_type: "content"
+
+  - id: "observability.log_aggregation"
+    description: "Centralized log aggregation with retention"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure"]
+    check: "verify centralized logging (ELK, Loki, CloudWatch Logs) with log shipping, search capabilities, and retention policy (min 30 days)"
+    check_type: "content"
+
+  - id: "observability.synthetic_monitoring"
+    description: "Synthetic monitoring for critical endpoints"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify synthetic monitors (Pingdom, Uptime Robot, AWS Synthetics) for critical endpoints with regional checks and alerts"
+    check_type: "content"
+
+  - id: "observability.correlation_ids"
+    description: "Correlation IDs for request tracing"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify unique X-Correlation-ID or X-Request-ID generated on ingress and propagated through all services for log aggregation"
+    check_type: "content"
+
+  - id: "observability.redis_monitoring"
+    description: "Redis monitoring for cache and queue performance"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "data"]
+    check: "verify Redis monitoring: hit ratio, memory usage, eviction rate, blocked clients, and pub/sub queue length"
+    check_type: "content"
+
+  - id: "observability.api_metrics"
+    description: "API-specific metrics tracking"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify API metrics: request rate by endpoint, response time distribution (p50/p95/p99), error rate by status code, and rate limiting metrics"
+    check_type: "content"
+
+  - id: "observability.health_check_detail"
+    description: "Detailed health checks (liveness vs readiness)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "reliability"
+    domain_tags: ["infrastructure", "api", "microservices"]
+    check: "verify separate health endpoints: /health/live (liveness - is process running), /health/ready (readiness - dependencies OK) with dependency checks"
+    check_type: "content"
+
+  - id: "observability.transaction_monitoring"
+    description: "Transaction integrity monitoring"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api", "data"]
+    check: "verify transaction monitoring: distributed transaction success rate, orphan transaction detection, deadlock tracking, and compensating action metrics"
+    check_type: "content"
+
+  - id: "observability.business_metrics"
+    description: "Business metrics and KPIs tracked"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "api"]
+    check: "verify business metrics: active users, conversion rate, order volume, revenue tracking, and custom domain-specific KPIs"
+    check_type: "content"
+
+  - id: "observability.stream_monitoring"
+    description: "Stream processing monitoring"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "data", "async"]
+    check: "verify stream monitoring (Kafka, Kinesis): consumer lag, processing latency, throughput, failed message handling, and dead letter queue monitoring"
+    check_type: "content"
+
+  - id: "observability.queue_depth"
+    description: "Queue depth and backlog monitoring"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "async"]
+    check: "verify queue depth monitoring (RabbitMQ, SQS, Redis) with alerts for backlogs, consumer scaling triggers, and message age tracking"
+    check_type: "content"
+
+  - id: "observability.database_connection"
+    description: "Database connection pool monitoring"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "observability"
+    domain_tags: ["infrastructure", "data"]
+    check: "verify connection pool metrics: active/idle connections, wait time, connection failures, and pool exhaustion alerts"
     check_type: "content"

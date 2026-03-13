@@ -1,6 +1,143 @@
 name: "Security Review"
-version: 1.0
-description: "Правила безопасности для кода и конфигураций (auth, encryption, input validation)"
+version: 1.3
+description: "Правила безопасности для кода и конфигураций (auth, encryption, input validation, GraphQL security) с категорийной приоритизацией (Exp 46)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 46)
+priority_profiles:
+  default:
+    # All domains at baseline
+    multipliers:
+      web: 1.0
+      api: 1.0
+      auth: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    # Web apps prioritize web, api, auth security
+    multipliers:
+      web: 1.5
+      api: 1.3
+      auth: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+    category_multipliers:
+      security: 1.5  # Security-focused for web apps
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  mobile-app:
+    # Mobile apps prioritize mobile, auth, data security
+    multipliers:
+      web: 0.8
+      api: 1.3
+      auth: 1.5
+      data: 1.3
+      infrastructure: 0.8
+      mobile: 2.0
+      ml: 0.5
+      graphql: 0.8
+      microservices: 0.8
+    category_multipliers:
+      security: 1.5  # Mobile security critical
+      performance: 1.3  # Mobile performance important
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  ml-service:
+    # ML services prioritize data, infrastructure, api security
+    multipliers:
+      web: 0.5
+      api: 1.2
+      auth: 1.0
+      data: 2.0
+      infrastructure: 1.3
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.0
+    category_multipliers:
+      security: 1.3  # Data security important
+      performance: 1.2  # Model performance critical
+      testing: 0.8
+      documentation: 1.0
+      code_quality: 0.8
+
+  data-pipeline:
+    # Data pipelines prioritize data, infrastructure security
+    multipliers:
+      web: 0.3
+      api: 1.0
+      auth: 1.2
+      data: 2.0
+      infrastructure: 1.5
+      mobile: 0.2
+      ml: 1.2
+      graphql: 0.5
+      microservices: 1.2
+    category_multipliers:
+      security: 1.5  # Data security critical
+      performance: 1.3  # Pipeline performance important
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 0.8
+
+  graphql-api:
+    # GraphQL APIs prioritize graphql, api, auth security
+    multipliers:
+      web: 1.0
+      api: 1.5
+      auth: 1.3
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.0
+    category_multipliers:
+      security: 1.5  # API security critical
+      performance: 1.2  # Query performance important
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  # NEW (Exp 46): Security-focused profile for high-security applications
+  security-focused:
+    # All domains at baseline
+    multipliers:
+      web: 1.0
+      api: 1.0
+      auth: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+    category_multipliers:
+      security: 2.0  # Double weight for ALL security rules
+      performance: 0.8
+      testing: 1.0
+      documentation: 0.5
+      code_quality: 0.8
 
 phases:
   a:
@@ -16,6 +153,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "auth", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "security"  # Exp 46
     check: "verify no passwords, API keys, tokens in source code"
     check_type: "content"
 
@@ -24,6 +163,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "graphql"]
+    category: "security"  # Exp 46
     check: "verify sanitization of user input, parameterized queries"
     check_type: "content"
 
@@ -32,6 +173,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "graphql"]
+    category: "security"  # Exp 46
     check: "verify parameterized queries or ORM usage, no string concatenation"
     check_type: "content"
 
@@ -40,6 +183,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web"]
+    category: "security"  # Exp 46
     check: "verify output encoding, CSP headers, no unsafe innerHTML"
     check_type: "content"
 
@@ -48,6 +193,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "mobile", "graphql", "microservices"]
+    category: "security"  # Exp 46
     check: "verify auth middleware, decorators, or guards on endpoints"
     check_type: "content"
 
@@ -56,6 +203,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "mobile", "graphql", "microservices"]
+    category: "security"  # Exp 46
     check: "verify permission checks before resource access"
     check_type: "content"
 
@@ -64,6 +213,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "mobile", "graphql", "infrastructure"]
+    category: "security"  # Exp 46
     check: "verify HTTPS redirect, secure cookies, HSTS headers"
     check_type: "content"
 
@@ -72,6 +223,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web"]
+    category: "security"  # Exp 46
     check: "verify CSRF tokens, SameSite cookies, origin checks"
     check_type: "content"
 
@@ -80,6 +233,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "mobile", "graphql", "microservices"]
+    category: "security"  # Exp 46
     check: "verify generic error messages, no stack traces to client"
     check_type: "content"
 
@@ -88,5 +243,159 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "security"  # Exp 46
     check: "verify package audit results, dependency updates"
+    check_type: "content"
+
+  - id: "security.cors_configuration"
+    description: "Настройка CORS (Cross-Origin Resource Sharing)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api"]
+    category: "security"  # Exp 46
+    check: "verify CORS middleware configured, allowed origins restricted, credentials handled"
+    check_type: "content"
+
+  - id: "security.csp_headers"
+    description: "Content Security Policy headers для защиты от XSS"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web"]
+    category: "security"  # Exp 46
+    check: "verify CSP header with restrictive policy, default-src, script-src, object-src"
+    check_type: "content"
+
+  - id: "security.rate_limiting"
+    description: "Rate limiting для защиты от DDoS и brute-force"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "graphql", "microservices"]
+    category: "security"  # Exp 46
+    check: "verify rate limiter middleware, per-IP or per-user limits, exponential backoff"
+    check_type: "content"
+
+  # Phase B: Secret Scanning Improvements (Exp 3)
+  - id: "security.jwt_token_handling"
+    description: "JWT токены обрабатываются безопасно (валидация, хранение, истечение)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "mobile", "graphql", "microservices"]
+    category: "security"  # Exp 46
+    check: "verify JWT signature validation, expiration checks, secure storage (httpOnly cookies or secure storage), no tokens in URLs or logs"
+    check_type: "content"
+
+  - id: "security.api_key_management"
+    description: "API ключи управляются безопасно (ротация, scoped permissions)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "data", "ml", "graphql", "microservices"]
+    category: "security"  # Exp 46
+    check: "verify API keys are scoped with minimal permissions, rotation policy exists, keys not committed to code, environment-specific keys"
+    check_type: "content"
+
+  - id: "security.env_variable_usage"
+    description: "Environment variables используются для секретов, не хардкод"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql", "microservices"]
+    category: "security"  # Exp 46
+    check: "verify secrets loaded from environment variables or secret managers, default values not set, .env files in .gitignore, no fallback secrets"
+    check_type: "content"
+
+  - id: "security.secret_rotation"
+    description: "Ротация секретов реализована (ключи, токены, сертификаты)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "graphql", "microservices"]
+    category: "security"  # Exp 46
+    check: "verify secret rotation mechanism exists, certificate expiration monitoring, key rotation documentation, automated rotation where possible"
+    check_type: "content"
+
+  # NEW - Exp 30: GraphQL-specific security rules
+  - id: "security.graphql_query_depth_limiting"
+    description: "Ограничение глубины GraphQL запросов для защиты от вложенных атак"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify query depth limiting middleware configured (e.g., graphql-depth-limit, max depth 5-7 levels)"
+    check_type: "content"
+
+  - id: "security.graphql_query_complexity_analysis"
+    description: "Анализ сложности GraphQL запросов для предотвращения DoS"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify query complexity analysis enabled with complexity limits (e.g., graphql-validation-complexity)"
+    check_type: "content"
+
+  - id: "security.graphql_introspection_disabled"
+    description: "GraphQL introspection отключён в production"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify introspection disabled in production (env-based config, NODE_ENV=production check)"
+    check_type: "content"
+
+  - id: "security.graphql_rate_limiting"
+    description: "Rate limiting для GraphQL запросов (на основе сложности)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify rate limiting considers query complexity, not just request count (cost-based rate limiting)"
+    check_type: "content"
+
+  - id: "security.graphql_batch_query_limiting"
+    description: "Ограничение на количество операций в одном GraphQL batch запросе"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify limits on batch queries (max operations per request, typically 5-10)"
+    check_type: "content"
+
+  - id: "security.graphql_persisted_queries"
+    description: "Persisted queries для разрешения trusted queries только"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["graphql"]
+    category: "security"  # Exp 46
+    check: "verify persisted queries enabled for production (APQ - Automatic Persisted Queries, or allowlist-based)"
+    check_type: "content"
+
+  - id: "security.graphql_field_authorization"
+    description: "Authorization на уровне полей GraphQL (не только resolver)"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    domain_tags: ["graphql", "auth"]
+    category: "security"  # Exp 46
+    check: "verify field-level authorization checks for sensitive fields (not just at resolver level)"
+    check_type: "content"
+
+  - id: "security.graphql_mutation_idempotency"
+    description: "Idempotency key для GraphQL мутаций"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["graphql", "async"]
+    category: "security"  # Exp 46
+    check: "verify mutations support idempotency keys for safe retries on network failures"
     check_type: "content"

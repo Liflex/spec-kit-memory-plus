@@ -1,6 +1,120 @@
 name: "Code Generation"
-version: 1.0
+version: 1.3
 description: "Quality rules for generated code implementations"
+
+# Priority Profiles for different project types (Exp 13)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      async: 1.0
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.5
+      api: 1.2
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.0
+      async: 1.3
+    category_multipliers:
+      code_quality: 1.5
+      security: 1.2
+      performance: 1.2
+      testing: 1.0
+
+  mobile-app:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 2.0
+      ml: 0.5
+      graphql: 0.8
+      async: 1.5
+    category_multipliers:
+      code_quality: 1.5
+      security: 1.3
+      performance: 1.5
+      testing: 1.2
+
+  ml-service:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.2
+      ml: 2.0
+      graphql: 0.3
+      async: 1.2
+    category_multipliers:
+      code_quality: 1.5
+      security: 1.0
+      performance: 2.0
+      testing: 1.5
+
+  data-pipeline:
+    multipliers:
+      web: 0.2
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.2
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      async: 1.0
+    category_multipliers:
+      code_quality: 1.2
+      security: 1.0
+      performance: 1.8
+      testing: 1.3
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      async: 1.3
+    category_multipliers:
+      code_quality: 1.5
+      security: 1.3
+      performance: 1.3
+      testing: 1.2
+
+  code-gen-focused:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.5
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.5
+      graphql: 1.2
+      async: 1.2
+    category_multipliers:
+      code_quality: 2.5
+      security: 2.0
+      performance: 1.5
+      testing: 2.0
 
 phases:
   a:
@@ -16,6 +130,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "testing"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify test files or test functions exist"
     check_type: "content"
 
@@ -24,6 +140,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify try/except or error handling patterns"
     check_type: "content"
 
@@ -32,6 +150,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify comments or docstrings present"
     check_type: "content"
 
@@ -40,6 +160,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify type hints for function parameters"
     check_type: "content"
 
@@ -48,6 +170,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify classes or modules defined"
     check_type: "content"
 
@@ -56,6 +180,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify snake_case or camelCase consistency"
     check_type: "content"
 
@@ -64,6 +190,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["web", "api", "graphql"]
     check: "verify parameter validation or sanitization"
     check_type: "content"
 
@@ -72,6 +200,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "performance"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify no deeply nested loops (>3 levels)"
     check_type: "content"
 
@@ -80,6 +210,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "graphql"]
     check: "verify log statements or print debugging"
     check_type: "content"
 
@@ -88,6 +220,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "B"
+    category: "security"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "ml", "graphql"]
     check: "verify no passwords, API keys, tokens in code"
     check_type: "content"
 
@@ -96,6 +230,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
     check: "verify imports are organized and necessary"
     check_type: "content"
 
@@ -104,5 +240,139 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    category: "performance"
+    domain_tags: ["web", "api", "data", "graphql"]
     check: "verify caching decorators or patterns"
+    check_type: "content"
+
+  # Async/await patterns
+  - id: "correctness.async_await"
+    description: "Proper async/await patterns (no blocking calls in async functions)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["async"]
+    check: "verify async functions use await properly, no blocking I/O without await"
+    check_type: "content"
+
+  # Resource cleanup
+  - id: "correctness.resource_cleanup"
+    description: "Proper resource cleanup (context managers, finally blocks, no resource leaks)"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "graphql"]
+    check: "verify resources use 'with' statements or finally blocks for cleanup"
+    check_type: "content"
+
+  # Thread safety
+  - id: "correctness.thread_safety"
+    description: "Thread-safe patterns (locks, async safety, no race conditions)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["data", "ml", "async"]
+    check: "verify concurrent operations use locks, async patterns, or atomic operations"
+    check_type: "content"
+
+  # Memory leak prevention
+  - id: "performance.memory_leaks"
+    description: "Memory leak prevention (no circular references, unclosed resources)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["web", "api", "data", "mobile", "ml"]
+    check: "verify no circular references, resources are properly closed, weak references used where appropriate"
+    check_type: "content"
+
+  # Retry logic
+  - id: "quality.retry_logic"
+    description: "Retry logic with exponential backoff and max retries"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api", "data", "graphql", "async"]
+    check: "verify retry mechanisms with exponential backoff, max retries, jitter"
+    check_type: "content"
+
+  # Exception handling quality
+  - id: "quality.exception_handling"
+    description: "Specific exception handling (no bare except, proper exception types)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
+    check: "verify specific exception types caught, no bare except: clauses"
+    check_type: "content"
+
+  # Idempotency
+  - id: "quality.idempotency"
+    description: "Idempotent operations for safe retries"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api", "data", "graphql"]
+    check: "verify operations are idempotent or have idempotency keys for safe retries"
+    check_type: "content"
+
+  # Configuration management
+  - id: "quality.config_management"
+    description: "Environment-based configuration (no hardcoded values)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "graphql"]
+    check: "verify configuration from environment variables or config files, no hardcoded URLs/keys"
+    check_type: "content"
+
+  # API client patterns
+  - id: "quality.api_client_patterns"
+    description: "Proper API client patterns (timeouts, connection pooling, error handling)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api", "data", "graphql", "async"]
+    check: "verify API clients have timeouts, connection limits, proper error handling"
+    check_type: "content"
+
+  # Logging quality
+  - id: "quality.logging_structure"
+    description: "Structured logging with appropriate levels and no sensitive data"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["web", "api", "data", "infrastructure", "graphql"]
+    check: "verify structured logging (JSON/logfmt), appropriate log levels, no passwords/tokens in logs"
+    check_type: "content"
+
+  # Context managers
+  - id: "quality.context_managers"
+    description: "Proper use of context managers for resource management"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile"]
+    check: "verify context managers used for files, locks, connections, transactions"
+    check_type: "content"
+
+  # Circuit breaker pattern
+  - id: "quality.circuit_breaker"
+    description: "Circuit breaker pattern for fault tolerance"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    category: "performance"
+    domain_tags: ["api", "data", "graphql", "microservices"]
+    check: "verify circuit breaker pattern for external service calls to prevent cascading failures"
     check_type: "content"

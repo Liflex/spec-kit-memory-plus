@@ -1,6 +1,162 @@
 name: "Test Files"
-version: 1.0
-description: "Правила качества для тестовых файлов (unit tests, integration tests, e2e)"
+version: 1.3
+description: "Правила качества для тестовых файлов (unit tests, integration tests, e2e) с категорийной приоритизацией (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.3
+      api: 1.2
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.1
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.3  # Testing important for web apps
+      documentation: 0.8
+      code_quality: 1.0
+
+  mobile-app:
+    multipliers:
+      web: 0.3
+      api: 1.3
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 2.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.1
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.5  # Mobile testing critical (device fragmentation)
+      documentation: 0.8
+      code_quality: 1.0
+
+  ml-service:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.0
+      async: 1.2
+      auth: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.2  # ML model testing important
+      documentation: 1.0
+      code_quality: 0.8
+
+  data-pipeline:
+    multipliers:
+      web: 0.2
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.2
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.2
+      async: 1.3
+      auth: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.3  # Pipeline testing critical
+      documentation: 0.8
+      code_quality: 0.8
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.2
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.3  # GraphQL query testing important
+      documentation: 0.8
+      code_quality: 1.0
+
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.5
+      auth: 1.3
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.5  # Microservice integration testing critical
+      documentation: 0.8
+      code_quality: 1.0
+
+  # NEW (Exp 47): Testing-focused profile for high-test-coverage projects
+  testing-focused:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 0.8
+      performance: 0.8
+      testing: 2.0  # Double weight for ALL testing rules
+      documentation: 1.0
+      code_quality: 1.0
 
 phases:
   a:
@@ -16,6 +172,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify given/when/then or arrange/act/assert pattern"
     check_type: "content"
 
@@ -24,6 +182,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify assert statements with descriptive messages"
     check_type: "content"
 
@@ -32,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify setup/teardown or beforeEach/afterEach for isolation"
     check_type: "content"
 
@@ -40,6 +202,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify tests for null, empty, negative values, boundaries"
     check_type: "content"
 
@@ -48,6 +212,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["api", "data", "microservices", "async"]
+    category: "testing"  # Exp 47
     check: "verify mocks for external dependencies, not for code under test"
     check_type: "content"
 
@@ -56,6 +222,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify tests for exception handling and error cases"
     check_type: "content"
 
@@ -64,6 +232,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify coverage reports or comprehensive test cases"
     check_type: "content"
 
@@ -72,6 +242,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify tests complete quickly, no unnecessary waits"
     check_type: "content"
 
@@ -80,6 +252,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["api", "data", "microservices", "graphql"]
+    category: "testing"  # Exp 47
     check: "verify integration tests for API endpoints, database operations"
     check_type: "content"
 
@@ -88,5 +262,118 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "async"]
+    category: "testing"  # Exp 47
     check: "verify test names follow pattern: should_returnX_whenY"
+    check_type: "content"
+
+  - id: "quality.mock_verification"
+    description: "Mocks верифицируются (verify(), toHaveBeenCalledWith())"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "data", "microservices", "async"]
+    category: "testing"  # Exp 47
+    check: "verify mock interactions are verified with explicit assertions, not just called"
+    check_type: "content"
+
+  - id: "quality.test_data_factories"
+    description: "Test данные создаются через factories/fixtures, не вручную"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data", "api", "web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify use of test data factories, fixtures, or builders pattern"
+    check_type: "content"
+
+  - id: "quality.async_testing"
+    description: "Async тесты правильно обрабатывают promises и timeouts"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["async", "api", "microservices"]
+    category: "testing"  # Exp 47
+    check: "verify async/await in tests, proper promise handling, no race conditions"
+    check_type: "content"
+
+  # === FRONTEND-SPECIFIC TESTING RULES (Exp 31) ===
+  - id: "testing.e2e_coverage"
+    description: "E2E тесты покрывают критические пользовательские сценарии"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify E2E tests (Playwright, Cypress, Puppeteer) for key user journeys: login, purchase, form submission"
+    check_type: "content"
+
+  - id: "testing.visual_regression"
+    description: "Visual regression тесты для критических UI компонентов"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify visual snapshot testing (Playwright screenshots, Chromatic, Percy) for components and pages"
+    check_type: "content"
+
+  - id: "testing.accessibility_testing"
+    description: "Accessibility тесты для WCAG соответствия"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify a11y tests (axe-core, jest-axe, @testing-library/react) for ARIA labels, keyboard navigation, color contrast"
+    check_type: "content"
+
+  - id: "testing.component_testing"
+    description: "Component unit тесты для изолированного тестирования UI"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify component tests (@testing-library/react, Vue Test Utils, Angular TestBed) with user-centric queries (getByRole, getByLabelText)"
+    check_type: "content"
+
+  - id: "testing.playwright_best_practices"
+    description: "Playwright/E2E тесты следуют best practices"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify use of data-testid selectors (not CSS/XPath), proper waiting (auto-waiting over explicit waits), page object pattern, independent tests"
+    check_type: "content"
+
+  - id: "testing.property_based_testing"
+    description: "Property-based тесты для data-heavy функций"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "api", "data"]
+    category: "testing"  # Exp 47
+    check: "verify property-based tests (Hypothesis, jqwik, fast-check) for validation, parsing, transformation functions with random inputs"
+    check_type: "content"
+
+  - id: "testing.responsive_testing"
+    description: "Responsive тесты для разных viewport размеров"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "testing"  # Exp 47
+    check: "verify responsive tests across viewports (mobile: 375px, tablet: 768px, desktop: 1920px) using Playwright viewport emulation or CSS media query tests"
+    check_type: "content"
+
+  - id: "testing.contract_testing"
+    description: "Contract тесты для API интеграций"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "microservices", "web"]
+    category: "testing"  # Exp 47
+    check: "verify contract tests (Pact, Spring Cloud Contract) for consumer-provider API compatibility"
     check_type: "content"

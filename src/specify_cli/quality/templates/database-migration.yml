@@ -1,0 +1,504 @@
+name: Database Migration
+version: 1.0
+description: Quality rules for database migration scripts (forward-only, rollback testing, transaction safety, idempotency)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.2
+      async: 1.0
+      auth: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  web-app:
+    multipliers:
+      web: 1.0
+      api: 1.2
+      data: 2.0
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.0
+    category_multipliers: *id001
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 2.0
+      infrastructure: 0.8
+      mobile: 1.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.0
+    category_multipliers: *id001
+  ml-service:
+    multipliers:
+      web: 0.3
+      api: 0.8
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.3
+      microservices: 1.0
+      async: 1.0
+      auth: 0.5
+    category_multipliers: *id001
+  data-pipeline:
+    multipliers:
+      web: 0.2
+      api: 0.8
+      data: 2.0
+      infrastructure: 1.3
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.2
+      microservices: 1.2
+      async: 1.2
+      auth: 0.5
+    category_multipliers: *id001
+  graphql-api:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 2.0
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers: *id001
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 2.0
+      infrastructure: 1.2
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.3
+      auth: 1.0
+    category_multipliers: *id001
+  migration-first:
+    description: For projects prioritizing migration safety and data integrity
+    multipliers:
+      web: 0.5
+      api: 0.8
+      data: 3.0
+      infrastructure: 1.5
+      mobile: 0.5
+      ml: 0.3
+      graphql: 0.5
+      microservices: 1.5
+      async: 1.0
+      auth: 0.8
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: migration.transaction_wrap
+  description: Each migration wrapped in transaction for atomicity
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify BEGIN TRANSACTION...COMMIT pattern; DDL wrapped appropriately per DB (PostgreSQL supports DDL in transactions, MySQL partially)
+  check_type: content
+  category: infrastructure
+- id: migration.rollback_on_error
+  description: Explicit ROLLBACK on error/failure in migration script
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify error handling includes ROLLBACK or transaction abort logic
+  check_type: content
+  category: infrastructure
+- id: migration.idempotent_up
+  description: UP migration is idempotent (can be re-run safely)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify IF NOT EXISTS, CREATE OR REPLACE, or CHECK constraints to allow safe re-execution
+  check_type: content
+  category: infrastructure
+- id: migration.data_preservation
+  description: Data preservation verified before destructive operations
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify backup/dump before DROP/ALTER COLUMN; check data migration scripts for data loss prevention
+  check_type: content
+  category: infrastructure
+- id: migration.backwards_compatible
+  description: Schema changes maintain backwards compatibility during deployment
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  - async
+  check: 'verify expand-contract pattern: add column (NULL), migrate data, set NOT NULL, remove old column across multiple migrations'
+  check_type: content
+  category: infrastructure
+- id: migration.no_dropping_data
+  description: No DROP TABLE or DROP COLUMN without explicit data migration plan
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify any DROP operation has preceding data migration or archival step documented
+  check_type: content
+  category: infrastructure
+- id: migration.forward_only_preferred
+  description: Forward-only migrations preferred over reversible for complex changes
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify complex data migrations use forward-only pattern; DOWN returns error or is stub for simple changes only
+  check_type: content
+  category: infrastructure
+- id: migration.rollback_documented
+  description: Rollback procedure documented for forward-only migrations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migration comments or docs explain how to rollback if needed (e.g., restore from backup, new migration to revert)
+  check_type: content
+  category: documentation
+- id: migration.test_rollback
+  description: Rollback tested for reversible migrations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify test suite includes migration UP then DOWN to verify reversibility without schema errors
+  check_type: content
+  category: testing
+- id: migration.test_on_copy
+  description: Migration tested on production database copy before deployment
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify CI/CD or documentation includes migration testing on DB clone/snapshot from production
+  check_type: content
+  category: testing
+- id: migration.performance_tested
+  description: Long-running migrations have performance estimates and limits
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migrations affecting many rows have estimated execution time, batching, or throttling
+  check_type: content
+  category: performance
+- id: migration.versioning
+  description: Migrations have version numbers or timestamps for ordering
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migration filenames include version (V001__description.sql) or timestamp (20240301_120000_description.sql)
+  check_type: content
+  category: infrastructure
+- id: migration.checksum
+  description: Migration checksums or hashes tracked for integrity verification
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migration tool (Flyway, Liquibase, Alembic) computes and verifies checksums to detect manual modifications
+  check_type: content
+  category: infrastructure
+- id: migration.no_dependency_circular
+  description: No circular dependencies between migrations
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migrations are linearly ordered; no migration references a table created by a later migration
+  check_type: content
+  category: infrastructure
+- id: migration.db_specific_annotated
+  description: Database-specific syntax annotated with vendor name
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify vendor-specific code includes comments like -- PostgreSQL-only or -- MySQL-specific
+  check_type: content
+  category: infrastructure
+- id: migration.cross_db_compatible
+  description: Portable SQL used for multi-database support
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify standard SQL syntax; avoid DB-specific features if project targets multiple databases (use ORM abstraction or conditional SQL)
+  check_type: content
+  category: infrastructure
+- id: migration.batch_processing
+  description: Large data migrations use batching to prevent locks/timeout
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify data migrations over 10K rows use LIMIT/OFFSET batching or cursor-based pagination with COMMIT per batch
+  check_type: content
+  category: infrastructure
+- id: migration.zero_downtime
+  description: Zero-downtime migration pattern for production tables
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  - async
+  check: 'verify expand-contract pattern: add new column (nullable), backfill data in batches, switch reads, switch writes, remove old column'
+  check_type: content
+  category: infrastructure
+- id: migration.backfill_strategy
+  description: Data backfill strategy documented for new columns
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify comments or docs explain how to populate new columns for existing data (default values, backfill script, etc.)
+  check_type: content
+  category: documentation
+- id: migration.descriptive_name
+  description: Migration has descriptive name explaining the change
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  check: verify migration filename or header comment includes clear description (e.g., V003__add_user_email_index.sql not V003__fix.sql)
+  check_type: content
+  category: reliability
+- id: migration.jira_ticket_ref
+  description: Migration references ticket or issue tracker
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - data
+  check: 'verify migration includes ticket number in comments (e.g., -- JIRA-1234, #567) for traceability'
+  check_type: content
+  category: general
+- id: migration.impact_commented
+  description: High-impact migrations have risk assessment comments
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify migrations with DROP, ALTER on large tables, or data migration >1M rows include risk/impact comments
+  check_type: content
+  category: documentation
+- id: migration.index_concurrent
+  description: Index creation uses CONCURRENT option for production tables
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify CREATE INDEX CONCURRENTLY (PostgreSQL) or ONLINE=ON (SQL Server) for large tables to avoid table locks
+  check_type: content
+  category: infrastructure
+- id: migration.constraint_validated
+  description: New constraints added with NOT VALID initially, validated later
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify ALTER TABLE ... ADD CONSTRAINT ... NOT VALID then VALIDATE CONSTRAINT for large tables to avoid full table scan lock
+  check_type: content
+  category: infrastructure
+- id: migration.index_removal
+  description: Old indexes removed after schema migration completes
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - data
+  check: verify expand-contract migrations include DROP INDEX for old indexes after new schema is in use
+  check_type: content
+  category: correctness
+- id: migration.permission_check
+  description: Migration scripts don't hardcode credentials or secrets
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - auth
+  - security
+  check: verify no passwords, API keys, or connection strings in migration files; use environment variables or config references
+  check_type: content
+  category: security
+- id: migration.privilege_minimum
+  description: Migration runs with minimum required database privileges
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - security
+  check: verify migration user has DDL privileges but not SUPERUSER/ADMIN unless absolutely necessary
+  check_type: content
+  category: security
+- id: migration.nosql_collection_preservation
+  description: Document migrations preserve collection data before restructuring
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify MongoDB/document migrations export/copy collection before modifying schema or data structure
+  check_type: content
+  category: infrastructure
+- id: migration.nosql_index_build
+  description: NoSQL index builds use background option
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: 'verify createIndex({background: true}) for MongoDB to avoid blocking operations'
+  check_type: content
+  category: infrastructure
+- id: migration.nosql_sharding_aware
+  description: Sharded collections migrations use chunk-aware operations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify sharded MongoDB migrations use bulkWrite with ordered:false or mongorestore for large data changes
+  check_type: content
+  category: infrastructure
+- id: migration.orm_generated
+  description: ORM-generated migrations reviewed for safety before commit
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  check: verify Django/Alembic/Sequelize/etc. auto-generated migrations are manually reviewed for data loss and locked operations
+  check_type: content
+  category: general
+- id: migration.orm_data_migration
+  description: Data migrations separated from schema migrations in ORM
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  check: verify Django data migrations, Alembic batch operations, or separate data migration scripts for large data changes
+  check_type: content
+  category: correctness
+- id: migration.down_implemented
+  description: DOWN migration implemented and tested for reversible changes
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify DOWN method reverses UP changes; for forward-only, DOWN raises NotImplementedError or returns abort message
+  check_type: content
+  category: testing
+- id: migration.down_data_handling
+  description: DOWN migration handles data rollback appropriately
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - data
+  - infrastructure
+  check: verify DOWN migrations handle data changes (restore dropped data, undo data migrations) or explicitly document data loss
+  check_type: content
+  category: infrastructure

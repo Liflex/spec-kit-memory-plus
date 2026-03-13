@@ -1,0 +1,721 @@
+name: Container & Docker
+version: 1.0
+description: Quality rules for Container, Docker, and Kubernetes deployments
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      container: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  container-first:
+    multipliers:
+      web: 1.2
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.5
+      mobile: 0.8
+      ml: 0.8
+      graphql: 1.2
+      microservices: 1.5
+      async: 1.2
+      auth: 1.0
+      container: 2.0
+    description: Container-first applications with Docker/Kubernetes focus
+    category_multipliers: *id001
+  k8s-native:
+    multipliers:
+      web: 1.0
+      api: 1.2
+      data: 1.0
+      infrastructure: 1.8
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 1.8
+      async: 1.2
+      auth: 1.0
+      container: 2.2
+    description: Kubernetes-native cloud applications
+    category_multipliers: *id001
+  microservice-containers:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.8
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.5
+      auth: 1.2
+      container: 2.0
+    description: Microservices architecture with containerized services
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: dockerfile.multi_stage
+  description: Dockerfile uses multi-stage builds to minimize image size
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify multi-stage FROM statements with separate build and runtime stages
+  check_type: content
+  category: performance
+- id: dockerfile.non_root_user
+  description: Container runs as non-root user for security
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify USER instruction with non-root user (e.g., USER nobody or USER appuser)
+  check_type: content
+  category: security
+- id: dockerfile.dockerignore
+  description: .dockerignore file present to exclude unnecessary files
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify .dockerignore in project root excluding node_modules, .git, *.log, .env
+  check_type: content
+  category: infrastructure
+- id: dockerfile.specific_base
+  description: Uses specific base image tags (not 'latest')
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify FROM uses pinned version (e.g., alpine:3.19, not alpine:latest)
+  check_type: content
+  category: testing
+- id: dockerfile.layer_caching
+  description: Dockerfile optimized for layer caching
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify package installations before copying source code for optimal layer caching
+  check_type: content
+  category: performance
+- id: dockerfile.minimal_layers
+  description: Dockerfile minimizes layers by combining RUN instructions
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify related commands combined with && and \ for reduced layer count
+  check_type: content
+  category: infrastructure
+- id: dockerfile.no_secrets
+  description: No secrets or credentials in Dockerfile
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify no ENV with secrets, no COPY of .env files, secrets injected at runtime
+  check_type: content
+  category: security
+- id: dockerfile.healthcheck
+  description: Dockerfile includes HEALTHCHECK instruction
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - api
+  check: verify HEALTHCHECK with CMD, interval, timeout, and retries defined
+  check_type: content
+  category: infrastructure
+- id: dockerfile.alpine_slim
+  description: Uses minimal base images (alpine, slim, distroless)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify base image is alpine, slim-slim, or distroless for reduced attack surface
+  check_type: content
+  category: infrastructure
+- id: dockerfile.entrypoint
+  description: Uses ENTRYPOINT for container's main process
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify ENTRYPOINT for container's primary process, CMD for default arguments
+  check_type: content
+  category: infrastructure
+- id: image.vulnerability_scan
+  description: Container images scanned for vulnerabilities in CI/CD
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify Trivy, Snyk, or Clair scanning in CI pipeline with fail thresholds
+  check_type: content
+  category: security
+- id: image.base_update
+  description: Base images updated regularly for security patches
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify Dependabot, Renovate, or automated base image update workflows
+  check_type: content
+  category: infrastructure
+- id: image.signature_verify
+  description: Container images verified with digital signatures
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify image signatures with cosign, Notary, or Docker Content Trust
+  check_type: content
+  category: security
+- id: image.private_registry
+  description: Uses private container registry for production images
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify ECR, GCR, ACR, or private Docker Hub for production image storage
+  check_type: content
+  category: security
+- id: image.immutability
+  description: Container images are immutable (no runtime modifications)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify images tagged with version/hash, no 'latest' in production, images never modified after build
+  check_type: content
+  category: infrastructure
+- id: image.provenance
+  description: Image build provenance tracked (SBOM, build info)
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify SBOM generation (Syft, SPDX), build metadata in image labels
+  check_type: content
+  category: infrastructure
+- id: k8s.resource_limits
+  description: Kubernetes containers have CPU and memory limits
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify resources.limits.cpu and resources.limits.memory in all Pod/Deployment specs
+  check_type: content
+  category: infrastructure
+- id: k8s.resource_requests
+  description: Kubernetes containers have CPU and memory requests
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify resources.requests.cpu and resources.requests.memory for proper scheduling
+  check_type: content
+  category: infrastructure
+- id: k8s.probes_configured
+  description: Kubernetes health probes configured (liveness, readiness, startup)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - api
+  check: verify livenessProbe, readinessProbe, and startupProbe in Pod specs
+  check_type: content
+  category: infrastructure
+- id: k8s.probe_thresholds
+  description: Health probe thresholds configured appropriately
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: 'verify probe thresholds: initialDelaySeconds, periodSeconds, timeoutSeconds, failureThreshold'
+  check_type: content
+  category: infrastructure
+- id: k8s.replicas
+  description: Deployment specifies replica count for availability
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - container
+  - infrastructure
+  - microservices
+  check: verify spec.replicas >= 2 for production deployments
+  check_type: content
+  category: infrastructure
+- id: k8s.hpa
+  description: Horizontal Pod Autoscaler configured for scaling
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - microservices
+  check: verify HPA resource with metrics (CPU/memory/custom) for auto-scaling
+  check_type: content
+  category: infrastructure
+- id: k8s.pod_disruption_budget
+  description: PodDisruptionBudget for high availability during maintenance
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - microservices
+  check: verify PodDisruptionBudget with minAvailable or maxUnavailable
+  check_type: content
+  category: infrastructure
+- id: k8s.anti_affinity
+  description: Pod anti-affinity for spreading across nodes
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - microservices
+  check: verify podAntiAffinity to prevent pods on same node for HA
+  check_type: content
+  category: infrastructure
+- id: k8s.node_selector
+  description: Pods assigned to appropriate node pools
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify nodeSelector or nodeAffinity for workload-specific node pools
+  check_type: content
+  category: infrastructure
+- id: runtime.readonly_root
+  description: Container filesystem is read-only
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: 'verify readOnlyRootFilesystem: true in securityContext or container spec'
+  check_type: content
+  category: security
+- id: runtime.drop_capabilities
+  description: Drops unnecessary Linux capabilities
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify drop capabilities in securityContext.capabilities.drop (e.g., ALL, NET_RAW)
+  check_type: content
+  category: security
+- id: runtime.privileged_disabled
+  description: Privileged mode disabled for containers
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: 'verify no privileged: true in container securityContext'
+  check_type: content
+  category: security
+- id: runtime.seccomp_profile
+  description: Seccomp profile applied for syscall filtering
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify seccompProfile in securityContext (RuntimeDefault or custom)
+  check_type: content
+  category: security
+- id: runtime.apparmor_profile
+  description: AppArmor profile for mandatory access control
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify AppArmor profile annotation or container annotation
+  check_type: content
+  category: security
+- id: runtime.no_host_network
+  description: Container does not use host network
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: 'verify hostNetwork: false (default) or not set in Pod spec'
+  check_type: content
+  category: security
+- id: runtime.no_host_pid
+  description: Container does not share host PID namespace
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: 'verify hostPID: false (default) or not set in Pod spec'
+  check_type: content
+  category: security
+- id: runtime.no_host_ipc
+  description: Container does not share host IPC namespace
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: 'verify hostIPC: false (default) or not set in Pod spec'
+  check_type: content
+  category: security
+- id: runtime.resource_quota
+  description: Namespace has ResourceQuota for limiting total resources
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify ResourceQuota object limiting CPU, memory, PVC storage in namespace
+  check_type: content
+  category: infrastructure
+- id: runtime.limit_range
+  description: Namespace has LimitRange for default resource limits
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify LimitRange object for default/min/max resource constraints
+  check_type: content
+  category: infrastructure
+- id: compose.version
+  description: docker-compose.yml uses recent compose format version
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify docker-compose.yml with format version 3.8+ or omit for automatic selection
+  check_type: content
+  category: code_quality
+- id: compose.named_volumes
+  description: Docker Compose uses named volumes for persistence
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - data
+  check: verify volumes section with named volumes for database, cache, and data persistence
+  check_type: content
+  category: infrastructure
+- id: compose.env_file
+  description: Environment variables in .env file, not hardcoded
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify env_file directive or env variables from .env, no secrets in compose file
+  check_type: content
+  category: security
+- id: compose.healthcheck
+  description: Docker Compose services have health checks
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - api
+  check: verify healthcheck in docker-compose.yml service definitions
+  check_type: content
+  category: infrastructure
+- id: compose.restart_policy
+  description: Docker Compose services have restart policies
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: 'verify restart: always/on-failure for production services'
+  check_type: content
+  category: infrastructure
+- id: compose.network_isolation
+  description: Docker Compose services use custom networks
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify custom networks in docker-compose.yml for service isolation
+  check_type: content
+  category: security
+- id: registry.tagging
+  description: Container images tagged with semantic version or commit hash
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify image tags follow v1.2.3 or commit SHA pattern, no 'latest' tag in CI/CD
+  check_type: content
+  category: infrastructure
+- id: registry.retention
+  description: Image retention policy configured for registry cleanup
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify lifecycle policy for old image cleanup (e.g., keep last 50 images)
+  check_type: content
+  category: infrastructure
+- id: registry.replication
+  description: Images replicated across regions for global availability
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify registry replication for multi-region deployments (ECR replication, GCR replication)
+  check_type: content
+  category: infrastructure
+- id: optimize.docker_build_cache
+  description: Docker build cache mounted during CI builds
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify Docker buildkit cache mount or registry cache for faster builds
+  check_type: content
+  category: infrastructure
+- id: optimize.parallel_builds
+  description: Docker builds run in parallel for multi-platform images
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify docker buildx for parallel multi-platform builds (amd64, arm64)
+  check_type: content
+  category: infrastructure
+- id: optimize.buildkit_enabled
+  description: BuildKit enabled for improved build performance
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify DOCKER_BUILDKIT=1 or BuildKit enabled in daemon configuration
+  check_type: content
+  category: performance
+- id: optimize.sbom_generation
+  description: SBOM (Software Bill of Materials) generated for images
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify SBOM generation (Syft, Trivy sbom) as part of image build process
+  check_type: content
+  category: security
+- id: networking.service_exposure
+  description: Services exposed only via Ingress/LoadBalancer, not NodePort
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - api
+  check: verify Ingress or LoadBalancer used, NodePort avoided for production services
+  check_type: content
+  category: infrastructure
+- id: networking.tls_termination
+  description: TLS termination at Ingress or service mesh
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify TLS configuration at Ingress controller or service mesh (Istio, Linkerd)
+  check_type: content
+  category: security
+- id: networking.network_policies
+  description: Kubernetes NetworkPolicies for traffic control
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify NetworkPolicy objects defining allowed ingress/egress traffic
+  check_type: content
+  category: security
+- id: config.configmaps
+  description: Configuration stored in ConfigMaps, not in images
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  check: verify ConfigMaps for non-sensitive configuration (environment variables, configs)
+  check_type: content
+  category: infrastructure
+- id: config.secrets_manager
+  description: Secrets stored in external secret manager
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify External Secrets Operator, AWS Secrets Manager, or Vault integration
+  check_type: content
+  category: security
+- id: config.secrets_encryption
+  description: Kubernetes Secrets encrypted at rest
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify EncryptionConfig for etcd encryption or envelope encryption provider
+  check_type: content
+  category: security
+- id: config.no_secrets_in_env
+  description: No secrets in environment variables (use mounted files)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - container
+  - infrastructure
+  - auth
+  check: verify secrets mounted as files (volumes) rather than environment variables
+  check_type: content
+  category: security

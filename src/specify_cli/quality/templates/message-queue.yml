@@ -1,0 +1,902 @@
+name: Message Queue
+version: 1.0
+description: Quality rules for message queues, event streaming, and async messaging patterns (RabbitMQ, Kafka, Redis Streams, AWS SQS/SNS)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.0
+      grpc: 1.0
+      messaging: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  event-driven:
+    multipliers:
+      web: 0.8
+      api: 1.2
+      data: 1.3
+      infrastructure: 1.2
+      mobile: 0.5
+      ml: 0.8
+      graphql: 0.5
+      microservices: 2.0
+      async: 2.0
+      auth: 1.2
+      serverless: 1.0
+      realtime: 1.3
+      grpc: 0.8
+      messaging: 2.0
+    description: Event-driven microservices architecture with message queues
+    category_multipliers: *id001
+  pubsub:
+    multipliers:
+      web: 0.7
+      api: 1.0
+      data: 1.2
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 0.5
+      microservices: 1.8
+      async: 2.0
+      auth: 1.0
+      serverless: 1.2
+      realtime: 1.5
+      grpc: 0.7
+      messaging: 2.0
+    description: Pub/Sub messaging system for real-time notifications
+    category_multipliers: *id001
+  event-sourcing:
+    multipliers:
+      web: 0.6
+      api: 1.0
+      data: 1.5
+      infrastructure: 1.3
+      mobile: 0.4
+      ml: 0.8
+      graphql: 0.5
+      microservices: 1.8
+      async: 2.0
+      auth: 1.2
+      serverless: 0.8
+      realtime: 1.0
+      grpc: 0.6
+      messaging: 2.0
+    description: Event sourcing architecture with event store
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: mq.producer.message_validation
+  description: Producer validates messages before sending
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify producer validates message schema, required fields, and business rules before publishing
+  check_type: content
+  category: security
+- id: mq.producer.acknowledgment_handling
+  description: Producer handles broker acknowledgment correctly
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify producer waits for broker ack and handles ack/nack responses (no fire-and-forget in production)
+  check_type: content
+  category: reliability
+- id: mq.producer.unique_message_id
+  description: Messages have unique IDs for idempotency
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify each message has a unique ID (UUID, correlation ID) for deduplication and tracing
+  check_type: content
+  category: reliability
+- id: mq.producer.timestamp_metadata
+  description: Messages include timestamp metadata
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify messages include published timestamp, expiry time, or TTL metadata
+  check_type: content
+  category: infrastructure
+- id: mq.producer.retry_on_failure
+  description: Producer implements retry mechanism for transient failures
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify producer has retry logic with exponential backoff for connection failures
+  check_type: content
+  category: reliability
+- id: mq.producer.dead_letter_queue
+  description: Failed messages route to Dead Letter Queue (DLQ)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify producer/consumer routes messages that exceed retry limit to DLQ for manual inspection
+  check_type: content
+  category: general
+- id: mq.producer.message_size_limits
+  description: Producer respects message size limits
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify producer checks message size against broker limits (e.g., 128KB for SQS, 1MB for Kafka, 2MB for RabbitMQ)
+  check_type: content
+  category: performance
+- id: mq.producer.connection_pooling
+  description: Producer uses connection pooling/reuse
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify producer reuses connections/channels instead of creating new connection per message
+  check_type: content
+  category: performance
+- id: mq.producer.batch_publishing
+  description: Producer uses batching for high-throughput scenarios
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify producer uses batch publishing APIs (Kafka batch, SQS batch) for multiple messages
+  check_type: content
+  category: performance
+- id: mq.producer.compression
+  description: Producer compresses large messages
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify producer enables compression (gzip, snappy, lz4) for messages above size threshold
+  check_type: content
+  category: performance
+- id: mq.consumer.acknowledgment_handling
+  description: Consumer acknowledges messages after processing
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify consumer acknowledges messages only after successful processing (not before)
+  check_type: content
+  category: reliability
+- id: mq.consumer.idempotency
+  description: Consumer processes messages idempotently
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify consumer operations are idempotent (duplicate processing of same message ID doesn't cause errors)
+  check_type: content
+  category: general
+- id: mq.consumer.error_handling
+  description: Consumer handles processing errors gracefully
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify consumer catches exceptions, logs errors, and routes failed messages to DLQ or retry queue
+  check_type: content
+  category: security
+- id: mq.consumer.message_validation
+  description: Consumer validates message schema
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify consumer validates message schema and required fields before processing
+  check_type: content
+  category: security
+- id: mq.consumer.concurrent_processing
+  description: Consumer uses appropriate concurrency level
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify consumer uses worker threads/prefetch count matching processing capacity (avoid overwhelming consumer)
+  check_type: content
+  category: performance
+- id: mq.consumer.prefetch_count
+  description: Consumer prefetch limit configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify prefetch/quality-of-service limit set (e.g., RabbitMQ QoS, Kafka fetch.min.bytes)
+  check_type: content
+  category: performance
+- id: mq.consumer.message_timeout
+  description: Consumer has message processing timeout
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify consumer enforces timeout for message processing to prevent hanging consumers
+  check_type: content
+  category: reliability
+- id: mq.consumer.ordered_processing
+  description: Ordered processing maintained when required
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify single partition/consumer for ordered messages or document ordering semantics
+  check_type: content
+  category: general
+- id: mq.consumer.graceful_shutdown
+  description: Consumer shuts down gracefully
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify consumer handles SIGTERM, finishes processing current messages, and closes connections
+  check_type: content
+  category: infrastructure
+- id: mq.consumer.health_check
+  description: Consumer health check endpoint
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify consumer exposes health check (connection status, lag metrics) for orchestration
+  check_type: content
+  category: infrastructure
+- id: mq.exchange.durable_queues
+  description: Production queues are durable
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify queues are marked durable to survive broker restart (no transient queues in production)
+  check_type: content
+  category: infrastructure
+- id: mq.exchange.message_ttl
+  description: Message TTL configured for queues
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify message TTL configured to prevent indefinite queue buildup for stale messages
+  check_type: content
+  category: performance
+- id: mq.exchange.queue_quota
+  description: Queue length/size limits configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify queue has max length or max size limit to prevent unbounded memory usage
+  check_type: content
+  category: performance
+- id: mq.exchange.dead_letter_exchange
+  description: Dead Letter Exchange configured for failed messages
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify queue has Dead Letter Exchange configured for messages that fail processing
+  check_type: content
+  category: reliability
+- id: mq.exchange.routing_key_convention
+  description: Routing keys follow naming convention
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - docs
+  check: verify routing keys follow hierarchical convention (e.g., domain.service.action)
+  check_type: content
+  category: documentation
+- id: mq.exchange.topic_design
+  description: Topic/exchange design follows best practices
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify topic design avoids wildcards that match too many message types (performance impact)
+  check_type: content
+  category: infrastructure
+- id: mq.exchange.partition_strategy
+  description: Kafka partition strategy defined
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify partitioning strategy (key-based, round-robin, sticky) matches ordering requirements
+  check_type: content
+  category: infrastructure
+- id: mq.exchange.replication_factor
+  description: Kafka replication factor configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify topic replication factor >= 3 for production (fault tolerance)
+  check_type: content
+  category: infrastructure
+- id: mq.security.tls_encryption
+  description: TLS encryption enabled for broker connections
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify client connections use TLS (no plaintext connections in production)
+  check_type: content
+  category: security
+- id: mq.security.authentication
+  description: Client authentication enabled (SASL, mTLS, AWS IAM)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify broker requires authentication (username/password, mTLS certificates, SASL, IAM roles)
+  check_type: content
+  category: security
+- id: mq.security.authorization
+  description: Access control per queue/topic
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify producers/consumer permissions are scoped to specific queues/topics (principle of least privilege)
+  check_type: content
+  category: security
+- id: mq.security.sensitive_data_redaction
+  description: Sensitive data not in message payloads
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify no passwords, API keys, or PII in message payloads (use tokens/references instead)
+  check_type: content
+  category: security
+- id: mq.security.encryption_at_rest
+  description: Messages encrypted at rest
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify broker enables encryption at rest or application encrypts sensitive message fields
+  check_type: content
+  category: security
+- id: mq.security.vpc_peering
+  description: Broker access restricted to VPC
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify broker endpoints accessible only from VPC (private subnets, VPC endpoints, VPN)
+  check_type: content
+  category: infrastructure
+- id: mq.security.secret_rotation
+  description: Credentials/keys rotated regularly
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - auth
+  check: verify process for rotating broker credentials, certificates, and API keys
+  check_type: content
+  category: security
+- id: mq.schema.schema_registry
+  description: Schema registry for message schemas (Avro, Protobuf, JSON Schema)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify message schemas registered in schema registry (Confluent Schema Registry, AWS Glue)
+  check_type: content
+  category: correctness
+- id: mq.schema.backward_compatibility
+  description: Schema changes maintain backward compatibility
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify schema additions are optional, deletions use default values, and field types aren't changed
+  check_type: content
+  category: reliability
+- id: mq.schema.consumer_contract_testing
+  description: Consumer contract testing for schema compatibility
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify consumer contract tests validate schema compatibility before deployment
+  check_type: content
+  category: testing
+- id: mq.schema.versioned_schemas
+  description: Schemas include version information
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify schemas have version field (e.g., v1, v2) and multiple versions supported during migration
+  check_type: content
+  category: code_quality
+- id: mq.observability.message_logging
+  description: Messages logged with context (ID, timestamp, status)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify producer/consumer logs message ID, timestamp, and processing status for debugging
+  check_type: content
+  category: infrastructure
+- id: mq.observability.correlation_id
+  description: Correlation ID propagated across messages
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify correlation ID passed in message metadata for distributed tracing
+  check_type: content
+  category: infrastructure
+- id: mq.observability.consumer_lag_metrics
+  description: Consumer lag metrics exposed
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify consumer lag (offset difference) monitored and alerted for delayed processing
+  check_type: content
+  category: infrastructure
+- id: mq.observability.producer_metrics
+  description: Producer metrics (publish rate, errors) monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: 'verify producer exposes metrics: messages published, publish latency, error rate'
+  check_type: content
+  category: infrastructure
+- id: mq.observability.queue_depth_monitoring
+  description: Queue depth monitored and alerted
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify queue depth/backlog monitored and alerts configured for unusual buildup
+  check_type: content
+  category: infrastructure
+- id: mq.observability.dead_letter_queue_monitoring
+  description: DLQ monitored for failed messages
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify DLQ monitored and alerts configured for message accumulation
+  check_type: content
+  category: infrastructure
+- id: mq.observability.distributed_tracing
+  description: Distributed tracing integration (OpenTelemetry, Jaeger)
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify message processing includes trace context for end-to-end tracing
+  check_type: content
+  category: infrastructure
+- id: mq.testing.consumer_unit_tests
+  description: Consumer logic unit tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify consumer message processing logic has unit tests with mock broker
+  check_type: content
+  category: testing
+- id: mq.testing.integration_tests
+  description: Integration tests with real broker
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify integration tests use Testcontainers or embedded broker for realistic testing
+  check_type: content
+  category: testing
+- id: mq.testing.contract_tests
+  description: Producer-consumer contract tests
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify contract tests validate producer output matches consumer expectations
+  check_type: content
+  category: testing
+- id: mq.testing.load_tests
+  description: Load tests for throughput validation
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify load tests validate producer/consumer throughput under peak message volume
+  check_type: content
+  category: security
+- id: mq.testing.failure_scenarios
+  description: Failure scenarios tested (broker down, network partition)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify tests simulate broker failure, network timeout, and message loss scenarios
+  check_type: content
+  category: testing
+- id: mq.testing.idempotency_tests
+  description: Idempotency tested explicitly
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - testing
+  check: verify tests deliver duplicate messages and verify no side effects occur
+  check_type: content
+  category: testing
+- id: mq.performance.batch_size_optimization
+  description: Batch size optimized for throughput
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify batch size tuned for optimal throughput vs latency tradeoff
+  check_type: content
+  category: performance
+- id: mq.performance.compression_enabled
+  description: Compression enabled for large payloads
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify compression enabled (snappy, gzip, lz4, zstd) for bandwidth optimization
+  check_type: content
+  category: performance
+- id: mq.performance.connection_reuse
+  description: Long-lived connections reused
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify producer/consumer reuse connections over time (no connection per message)
+  check_type: content
+  category: performance
+- id: mq.performance.async_publishing
+  description: Async publishing used where appropriate
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - performance
+  check: verify async publishing used for non-blocking message sends where fire-and-forget is acceptable
+  check_type: content
+  category: performance
+- id: mq.reliability.exactly_once_semantics
+  description: Exactly-once semantics configured where needed
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify exactly-once semantics enabled (Kafka idempotent producer, transactions) for critical operations
+  check_type: content
+  category: reliability
+- id: mq.reliability.transactional_outbox
+  description: Transactional outbox pattern for dual writes
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - data
+  check: verify transactional outbox pattern used when updating DB and publishing message (prevents inconsistency)
+  check_type: content
+  category: reliability
+- id: mq.reliability.offset_commit_strategy
+  description: Offset commit strategy configured (auto vs manual)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify offset commit strategy (manual commit after processing, auto-commit with tradeoffs)
+  check_type: content
+  category: reliability
+- id: mq.reliability.consumer_rebalance_handling
+  description: Consumer handles rebalance events gracefully
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - async
+  check: verify consumer handles partition rebalance (Kafka) or queue reassignment (RabbitMQ)
+  check_type: content
+  category: reliability
+- id: mq.documentation.message_schema_documented
+  description: Message schemas documented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - docs
+  check: verify message schemas documented with field descriptions and example payloads
+  check_type: content
+  category: documentation
+- id: mq.documentation.event_catalog
+  description: Event catalog maintained
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - docs
+  check: verify event catalog lists all events, producers, consumers, and schemas
+  check_type: content
+  category: documentation
+- id: mq.documentation.consumer_documentation
+  description: Consumer behavior documented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - docs
+  check: verify consumer documentation covers error handling, retries, DLQ, and idempotency
+  check_type: content
+  category: documentation
+- id: mq.deployment.resource_limits
+  description: Container resource limits configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify consumer pods have CPU/memory limits matching concurrency level
+  check_type: content
+  category: infrastructure
+- id: mq.deployment.liveness_readiness_probes
+  description: Kubernetes probes configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify liveness probe checks process, readiness probe checks broker connection
+  check_type: content
+  category: infrastructure
+- id: mq.deployment.horizontal_scaling
+  description: Horizontal scaling support
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify consumer supports horizontal scaling (multiple instances, partition distribution)
+  check_type: content
+  category: infrastructure
+- id: mq.deployment.disaster_recovery
+  description: Disaster recovery plan documented
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - messaging
+  - infrastructure
+  check: verify DR plan covers broker failover, message replay, and consumer recovery
+  check_type: content
+  category: documentation

@@ -66,12 +66,10 @@ def hello():
     def test_check_rule_content(self):
         """Test content-based rule checking"""
         artifact = "# My Title\n\nThis is documentation."
+        criteria = self.rule_manager.load_criteria("docs")
 
-        passed, reason = self.evaluator._check_rule(
-            criteria.get_active_rules(criteria, "A")[0],
-            artifact
-        )
-
-        # Just verify it runs without error
-        assert isinstance(passed, bool)
-        assert isinstance(reason, str)
+        rules = criteria.get_active_rules("A")
+        if rules:
+            passed, reason = self.evaluator._check_rule(rules[0], artifact)
+            assert isinstance(passed, bool)
+            assert isinstance(reason, str)

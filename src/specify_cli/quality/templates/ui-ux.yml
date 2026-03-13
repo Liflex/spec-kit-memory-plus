@@ -1,6 +1,88 @@
 name: "UI/UX Design"
-version: 1.0
+version: 1.2
 description: "Правиля для UI/UX дизайна (accessibility, responsive, usability)"
+
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      accessibility: 1.0
+      ux_quality: 1.0
+      performance: 1.0
+  web-app:
+    multipliers:
+      web: 2.0
+      api: 0.5
+      data: 0.3
+      infrastructure: 0.3
+      mobile: 1.0
+      ml: 0.3
+      graphql: 0.5
+      microservices: 0.5
+      async: 0.8
+      auth: 1.0
+    category_multipliers:
+      accessibility: 1.5
+      ux_quality: 1.5
+      performance: 1.2
+  mobile-app:
+    multipliers:
+      web: 1.2
+      api: 0.5
+      data: 0.3
+      infrastructure: 0.3
+      mobile: 2.0
+      ml: 0.3
+      graphql: 0.5
+      microservices: 0.5
+      async: 0.8
+      auth: 1.0
+    category_multipliers:
+      accessibility: 1.3
+      ux_quality: 1.8
+      performance: 1.5
+  ux-focused:
+    multipliers:
+      web: 2.0
+      api: 0.3
+      data: 0.2
+      infrastructure: 0.2
+      mobile: 1.5
+      ml: 0.2
+      graphql: 0.3
+      microservices: 0.3
+      async: 0.5
+      auth: 0.5
+    category_multipliers:
+      accessibility: 2.0
+      ux_quality: 3.0
+      performance: 1.5
+  accessibility-focused:
+    multipliers:
+      web: 1.5
+      api: 0.3
+      data: 0.2
+      infrastructure: 0.2
+      mobile: 1.5
+      ml: 0.2
+      graphql: 0.3
+      microservices: 0.3
+      async: 0.5
+      auth: 0.5
+    category_multipliers:
+      accessibility: 3.0
+      ux_quality: 1.5
+      performance: 1.0
 
 phases:
   a:
@@ -16,6 +98,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify alt attributes on img tags"
     check_type: "content"
 
@@ -24,6 +108,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify focus indicators, tab order, keyboard shortcuts"
     check_type: "content"
 
@@ -32,6 +118,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify text contrast ratio >= 4.5:1 for normal text"
     check_type: "content"
 
@@ -40,53 +128,147 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify aria-label, aria-describedby for accessibility"
     check_type: "content"
 
-  - id: "quality.responsive_design"
+  - id: "ux_quality.responsive_design"
     description: "Адаптивный дизайн для разных экранов"
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify media queries, responsive breakpoints, mobile-first"
     check_type: "content"
 
-  - id: "quality.loading_states"
+  - id: "ux_quality.loading_states"
     description: "Состояния загрузки (loading indicators)"
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify spinners, skeletons, or progress indicators"
     check_type: "content"
 
-  - id: "quality.empty_states"
+  - id: "ux_quality.empty_states"
     description: "Состояния пустого контента"
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify empty state messages, illustrations, actions"
     check_type: "content"
 
-  - id: "quality.error_states"
+  - id: "ux_quality.error_states"
     description: "Состояния ошибок с понятными сообщениями"
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify error messages with next steps, not just error codes"
     check_type: "content"
 
-  - id: "quality.consistent_spacing"
+  - id: "ux_quality.consistent_spacing"
     description: "Консистентные отступы (design tokens)"
     severity: "info"
     weight: 0
     phase: "B"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify consistent padding, margins, spacing scale"
     check_type: "content"
 
-  - id: "quality.feedback_timing"
+  - id: "ux_quality.feedback_timing"
     description: "Быстрый отзыв на действия пользователя"
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "performance"
+    domain_tags: ["web", "mobile"]
     check: "verify immediate feedback for buttons, forms, interactions"
+    check_type: "content"
+
+  - id: "accessibility.form_labels"
+    description: "Labels для form fields и их ассоциации"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
+    check: "verify visible labels, aria-label, or aria-labelledby for all inputs"
+    check_type: "content"
+
+  - id: "accessibility.focus_management"
+    description: "Управление фокусом в интерактивных компонентах"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
+    check: "verify focus trap in modals/dialogs, focus restoration after close"
+    check_type: "content"
+
+  - id: "accessibility.touch_targets"
+    description: "Минимальные размеры touch targets для мобильных устройств"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "accessibility"
+    domain_tags: ["mobile", "web"]
+    check: "verify interactive elements >= 44x44px (WCAG 2.5.5)"
+    check_type: "content"
+
+  - id: "accessibility.animation_preferences"
+    description: "Учёт prefers-reduced-motion для анимаций"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
+    check: "verify @media (prefers-reduced-motion) for animations"
+    check_type: "content"
+
+  - id: "ux_quality.component_library"
+    description: "Использование компонентов из component library"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify use of Button, Input, Modal from design system library"
+    check_type: "content"
+
+  - id: "ux_quality.design_tokens"
+    description: "Design tokens вместо хардкодинга значений"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify use of spacing, color, radius tokens (e.g. --spacing-md)"
+    check_type: "content"
+
+  - id: "ux_quality.typography_scale"
+    description: "Использование типографической шкалы"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify use of predefined font sizes, weights, line-heights"
+    check_type: "content"
+
+  - id: "ux_quality.color_palette"
+    description: "Использование color palette из design system"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "ux_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify use of semantic color tokens (e.g. --color-primary)"
     check_type: "content"

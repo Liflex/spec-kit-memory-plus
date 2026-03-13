@@ -1,0 +1,687 @@
+# Service Mesh Quality Criteria Template
+# Version: 1.0
+# Supports: Istio, Linkerd, Consul Connect, AWS App Mesh, Open Service Mesh
+
+template:
+  name: service-mesh
+  display_name: Service Mesh Quality
+  version: "1.0"
+  description: |
+    Quality criteria for service mesh configuration including mTLS,
+    traffic management, observability, resilience patterns, and
+    policy enforcement for Istio, Linkerd, Consul Connect, and more.
+
+  categories:
+    - name: "mTLS & Security"
+      description: "Mutual TLS authentication and certificate management"
+      rules:
+        - id: mesh.mtls_required
+          name: "mTLS Enabled"
+          description: "All mesh services must have mTLS enabled for east-west traffic"
+          severity: fail
+          category: security
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - mTLS is enabled globally or per namespace
+            - STRICT or PERMISSIVE mode is configured
+            - All services participate in mesh authentication
+          tags: [security, mtls, authentication, istio, linkerd]
+
+        - id: mesh.mtls_mode_strict
+          name: "mTLS Strict Mode"
+          description: "Prefer STRICT mTLS mode over PERMISSIVE for production"
+          severity: warn
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Production environments use STRICT mTLS mode
+            - PERMISSIVE mode is only used during migration
+            - Clear timeline for PERMISSIVE to STRICT migration
+          tags: [security, mtls, production, hardening]
+
+        - id: mesh.certificate_rotation
+          name: "Certificate Rotation"
+          description: "Automatic certificate rotation must be configured"
+          severity: fail
+          category: security
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Automatic certificate rotation is enabled
+            - Rotation period is configured (typically 90 days)
+            - Certificate revocation is properly handled
+          tags: [security, certificates, rotation, compliance]
+
+        - id: mesh.cert_identity
+          name: "Service Identity"
+          description: "Services must have proper SPIFFE/SPIRE identities"
+          severity: warn
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Each service has unique SPIFFE identity
+            - Identity format follows convention: spiffe://<domain>/ns/<namespace>/sa/<service-account>
+            - Service accounts are properly mapped to services
+          tags: [security, identity, spiffe, spire]
+
+    - name: "Traffic Management"
+      description: "Service routing, load balancing, and traffic splitting"
+      rules:
+        - id: mesh.traffic_rules
+          name: "Traffic Rules Defined"
+          description: "VirtualService or equivalent traffic rules must be defined"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - VirtualServices (or equivalent) define traffic routing
+            - Route destinations are explicitly specified
+            - Default fallback route is configured
+          tags: [routing, virtualservice, istio]
+
+        - id: mesh.load_balancing
+          name: "Load Balancing Strategy"
+          description: "Appropriate load balancing algorithm must be configured"
+          severity: warn
+          category: performance
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Load balancing policy is defined (ROUND_ROBIN, LEAST_CONN, RANDOM, PASSTHROUGH)
+            - Policy is appropriate for workload type
+            - Consistent hashing is used for stateful services
+          tags: [performance, load-balancing, traffic]
+
+        - id: mesh.traffic_splitting
+          name: "Traffic Splitting Support"
+          description: "Support for canary, blue-green, and A/B testing deployments"
+          severity: info
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Traffic splitting rules support percentage-based routing
+            - Header-based routing for A/B testing is available
+            - Multiple versions can coexist (canary, blue-green)
+          tags: [deployment, canary, blue-green, ab-testing]
+
+        - id: mesh.session_affinity
+          name: "Session Affinity"
+          description: "Session affinity configured for stateful services"
+          severity: info
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Stateful services use session affinity (sticky sessions)
+            - Cookie-based or header-based affinity is configured
+            - TTL for affinity is appropriately set
+          tags: [reliability, sessions, stateful]
+
+    - name: "Observability"
+      description: "Metrics, logs, traces, and telemetry"
+      rules:
+        - id: mesh.telemetry_enabled
+          name: "Telemetry Enabled"
+          description: "Mesh telemetry (metrics, logs, traces) must be enabled"
+          severity: fail
+          category: observability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Telemetry is enabled for the mesh
+            - Metrics are collected (latency, traffic, errors)
+            - Access logging is configured
+            - Distributed tracing is enabled
+          tags: [observability, metrics, telemetry, monitoring]
+
+        - id: mesh.prometheus_integration
+          name: "Prometheus Integration"
+          description: "Integration with Prometheus for metrics collection"
+          severity: warn
+          category: observability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Prometheus scraping is configured for mesh metrics
+            - Custom metrics are exposed
+            - Metric labels include service, version, namespace
+          tags: [observability, prometheus, metrics]
+
+        - id: mesh.distributed_tracing
+          name: "Distributed Tracing"
+          description: "Integration with distributed tracing system (Jaeger, Zipkin, Tempo)"
+          severity: warn
+          category: observability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Tracing is enabled for mesh services
+            - Trace sampling rate is configured
+            - Propagation format is consistent (B3, W3C Trace Context)
+            - Tracing backend is reachable
+          tags: [observability, tracing, jaeger, zipkin]
+
+        - id: mesh.access_logs
+          name: "Access Logs"
+          description: "Comprehensive access logging for traffic analysis"
+          severity: info
+          category: observability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Access logs capture source, destination, latency, status
+            - Log format is consistent across mesh
+            - Log sampling is configured for high-traffic services
+          tags: [observability, logging, access-logs]
+
+    - name: "Resilience & Fault Tolerance"
+      description: "Circuit breaking, retries, timeouts, and bulkheads"
+      rules:
+        - id: mesh.circuit_breaker
+          name: "Circuit Breaker Configured"
+          description: "Circuit breaking must prevent cascading failures"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Circuit breaker thresholds are defined (connections, requests, retries)
+            - Circuit breaker is enabled for critical services
+            - Recovery strategies are defined (half-open, open)
+          tags: [reliability, circuit-breaker, resilience]
+
+        - id: mesh.timeout_configured
+          name: "Request Timeouts"
+          description: "Appropriate timeouts must be configured for all services"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - HTTP request timeouts are configured
+            - gRPC timeouts are configured
+            - Timeout values are appropriate for service type
+            - Timeout propagation across service boundaries
+          tags: [reliability, timeout, resilience]
+
+        - id: mesh.retry_policy
+          name: "Retry Policy"
+          description: "Retry policy for transient failures"
+          severity: warn
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Retry attempts are configured (typically 2-3)
+            - Retry timeout is defined
+            - Exponential backoff is configured
+            - Retries are limited to idempotent operations
+          tags: [reliability, retry, resilience]
+
+        - id: mesh.bulkhead
+          name: "Bulkhead Isolation"
+          description: "Bulkhead patterns to limit resource consumption"
+          severity: info
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Connection pool limits are configured
+            - Concurrent request limits are defined
+            - Bulkhead isolation prevents resource exhaustion
+          tags: [reliability, bulkhead, resilience]
+
+        - id: mesh.outlier_detection
+          name: "Outlier Detection"
+          description: "Eject unhealthy instances from load balancing pool"
+          severity: warn
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Consecutive error thresholds are configured
+            - Base ejection time is set
+            - Minimum ejection duration is defined
+            - Health check integration is present
+          tags: [reliability, health-check, load-balancing]
+
+    - name: "Service Discovery"
+      description: "Service registration, health checking, and endpoint discovery"
+      rules:
+        - id: mesh.service_registration
+          name: "Service Registration"
+          description: "Services must be properly registered in the mesh"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - All services are registered with service registry
+            - Service labels and annotations are complete
+            - Service metadata includes version, environment
+          tags: [discovery, registration, reliability]
+
+        - id: mesh.health_checks
+          name: "Health Checks"
+          description: "Active and passive health checks configured"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Active health checks are configured (HTTP, TCP, gRPC)
+            - Health check endpoints are defined (/health, /ready)
+            - Passive health checks use success/failure rates
+            - Unhealthy instances are removed from rotation
+          tags: [reliability, health-check, discovery]
+
+        - id: mesh.endpoint_discovery
+          name: "Endpoint Discovery"
+          description: "Dynamic endpoint discovery without hardcoding"
+          severity: warn
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Service endpoints are discovered dynamically
+            - No hardcoded IP addresses in configuration
+            - DNS resolution is properly configured
+            - Service registry updates are propagated
+          tags: [discovery, dns, reliability]
+
+    - name: "Policy Enforcement"
+      description: "Authorization, rate limiting, and access control"
+      rules:
+        - id: mesh.authorization_policy
+          name: "Authorization Policies"
+          description: "Fine-grained authorization policies must be defined"
+          severity: warn
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Authorization policies are defined (allow, deny)
+            - Policies use Principals, Sources, Conditions
+            - Namespace-wide or service-specific policies exist
+            - Default deny-all policy is considered
+          tags: [security, authorization, rbac]
+
+        - id: mesh.mesh_rate_limiting
+          name: "Rate Limiting"
+          description: "Rate limiting at mesh level for protection"
+          severity: info
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Rate limiting is configured for critical services
+            - Local and global rate limits are defined
+            - Rate limit keys are appropriate (source, destination, headers)
+          tags: [security, rate-limiting, reliability]
+
+        - id: mesh.ip_whitelist
+          name: "IP Allowlisting"
+          description: "IP-based access control for sensitive services"
+          severity: info
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - IP allowlists are configured for admin services
+            - Source IP validation is enabled
+            - Network policies complement mesh policies
+          tags: [security, ip-whitelist, authorization]
+
+        - id: mesh.jwt_validation
+          name: "JWT Validation"
+          description: "JWT validation at mesh ingress"
+          severity: warn
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - JWT validation is configured at mesh level
+            - Public keys or JWKS endpoint is defined
+            - JWT claims are validated (issuer, audience)
+            - Authorization headers are extracted and forwarded
+          tags: [security, jwt, authentication]
+
+    - name: "Ingress & Egress"
+      description: "Mesh gateway configuration for north-south traffic"
+      rules:
+        - id: mesh.ingress_gateway
+          name: "Ingress Gateway"
+          description: "Ingress gateway must be configured for external access"
+          severity: fail
+          category: reliability
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Ingress gateway is deployed and accessible
+            - Gateway hosts and ports are configured
+            - TLS termination is handled at ingress
+            - Gateway routes traffic to mesh services
+          tags: [ingress, gateway, networking]
+
+        - id: mesh.egress_gateway
+          name: "Egress Gateway"
+          description: "Egress gateway for external service calls"
+          severity: warn
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Egress gateway is configured for external API calls
+            - External services are accessed via egress
+            - Egress policies control external access
+            - Direct external access is restricted (Pod anti-spoofing)
+          tags: [security, egress, networking]
+
+        - id: mesh.tls_ingress
+          name: "TLS at Ingress"
+          description: "TLS must be terminated at ingress gateway"
+          severity: fail
+          category: security
+          phase: A
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Ingress gateway has TLS certificates
+            - TLS 1.2+ is enforced
+            - Cipher suites are secure
+            - HTTP to HTTPS redirect is configured
+          tags: [security, tls, ingress]
+
+    - name: "Configuration Management"
+      description: "Versioning, validation, and governance"
+      rules:
+        - id: mesh.config_validation
+          name: "Configuration Validation"
+          description: "Mesh configuration must be validated before apply"
+          severity: warn
+          category: quality
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Configuration validation is enabled (dry-run)
+            - Schema validation is performed
+            - Configuration syntax is checked
+            - Invalid configurations are rejected
+          tags: [quality, validation, configuration]
+
+        - id: mesh.config_versioning
+          name: "Configuration Versioning"
+          description: "Mesh configuration is version controlled"
+          severity: info
+          category: quality
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Mesh config is stored in version control
+            - Config changes are reviewed (PRs)
+            - Rollback to previous config is available
+            - Config drift detection is in place
+          tags: [quality, versioning, gitops]
+
+        - id: mesh.mesh_upgrade_strategy
+          name: "Mesh Upgrade Strategy"
+          description: "Controlled upgrade process for mesh control plane"
+          severity: info
+          category: operations
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Control plane upgrade strategy is defined (canary, rolling)
+            - Data plane auto-injection is configured
+            - Compatibility between control/data plane versions
+            - Rollback plan exists for failed upgrades
+          tags: [operations, upgrade, control-plane]
+
+    - name: "Performance Optimization"
+      description: "Connection pooling, keep-alive, and resource tuning"
+      rules:
+        - id: mesh.connection_pooling
+          name: "Connection Pooling"
+          description: "Connection pooling configured for efficient resource use"
+          severity: warn
+          category: performance
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - HTTP connection pool limits are configured
+            - TCP keep-alive is enabled
+            - Max connections per endpoint is defined
+            - Connection idle timeout is configured
+          tags: [performance, pooling, optimization]
+
+        - id: mesh.http2
+          name: "HTTP/2 Configuration"
+          description: "HTTP/2 enabled for mesh services"
+          severity: info
+          category: performance
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - HTTP/2 is enabled for service-to-service communication
+            - HTTP/2 connection reuse is configured
+            - Stream limits are appropriate
+          tags: [performance, http2, networking]
+
+        - id: mesh.compression
+          name: "Response Compression"
+          description: "Compression configured for large payloads"
+          severity: info
+          category: performance
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - GZIP compression is enabled
+            - Compression minimum size is configured
+            - Compressible content types are defined
+          tags: [performance, compression, optimization]
+
+    - name: "Multi-Cluster & Multi-Region"
+      description: "Multi-cluster and multi-region deployment patterns"
+      rules:
+        - id: mesh.multi_cluster
+          name: "Multi-Cluster Configuration"
+          description: "Multi-cluster mesh configuration if applicable"
+          severity: info
+          category: operations
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Multi-cluster mesh is configured (primary/remote)
+            - Cluster discovery is enabled
+            - Cross-cluster service routing works
+            - Certificate authority is shared or federated
+          tags: [operations, multi-cluster, networking]
+
+        - id: mesh.multi_region
+          name: "Multi-Region Failover"
+          description: "Multi-region deployment with failover support"
+          severity: info
+          category: reliability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Services are deployed across regions
+            - Cross-region traffic routing is configured
+            - Failover mechanisms are in place
+            - Latency-aware routing is considered
+          tags: [reliability, multi-region, failover]
+
+    - name: "Security Headers & Policies"
+      description: "Additional security hardening at mesh level"
+      rules:
+        - id: mesh.security_headers
+          name: "Security Headers"
+          description: "Security headers injected by mesh proxy"
+          severity: info
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Security headers are configured via EnvoyFilters or similar
+            - Headers include: HSTS, X-Frame-Options, CSP, X-Content-Type-Options
+            - Header injection is consistent across all services
+          tags: [security, headers, hardening]
+
+        - id: mesh.sidecar_resources
+          name: "Sidecar Resources"
+          description: "Sidecar proxy resource limits must be configured"
+          severity: warn
+          category: performance
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Sidecar CPU and memory requests are set
+            - Sidecar CPU and memory limits are defined
+            - Resources are appropriate for traffic volume
+            - Sidecar monitoring for resource usage
+          tags: [performance, sidecar, resources]
+
+    - name: "Operations & Troubleshooting"
+      description: "Debugging, monitoring, and operational readiness"
+      rules:
+        - id: mesh.proxy_config_dump
+          name: "Proxy Configuration Access"
+          description: "Ability to dump proxy configuration for debugging"
+          severity: info
+          category: operations
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Posture of accessing proxy config (proxy-config endpoint)
+            - Config dump is available for troubleshooting
+            - Cluster/endpoint/RDS/LDS/CDS/EDS can be inspected
+          tags: [operations, debugging, troubleshooting]
+
+        - id: mesh.mesh_metrics
+          name: "Mesh Control Plane Metrics"
+          description: "Control plane metrics monitoring and alerting"
+          severity: warn
+          category: observability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Control plane metrics are scraped (Pilot, Citadel, Galley for Istio)
+            - Control plane health is monitored
+            - Configuration sync status is tracked
+            - Webhook latency and success rate monitored
+          tags: [observability, control-plane, monitoring]
+
+        - id: mesh.alerating_rules
+          name: "Alerting Rules"
+          description: "Alerting rules for mesh-specific issues"
+          severity: info
+          category: observability
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Alerts for high error rate (> 5%)
+            - Alerts for high latency (p95, p99)
+            - Alerts for circuit breaker trips
+            - Alerts for certificate expiration
+          tags: [observability, alerting, monitoring]
+
+    - name: "Compliance & Auditing"
+      description: "Compliance requirements and audit trails"
+      rules:
+        - id: mesh.audit_logging
+          name: "Audit Logging"
+          description: "Audit logs for security-relevant events"
+          severity: info
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Audit logs capture authentication events
+            - Authorization decisions are logged
+            - Configuration changes are audited
+            - Audit logs are shipped to SIEM
+          tags: [security, audit, compliance]
+
+        - id: mesh.compliance_reporting
+          name: "Compliance Reporting"
+          description: "Compliance reports for regulatory requirements"
+          severity: info
+          category: security
+          phase: B
+          domain: mesh
+          evaluation: |
+            Check if:
+            - Compliance reports are generated (SOC2, PCI-DSS, HIPAA)
+            - mTLS compliance is documented
+            - Service mesh policy enforcement is verifiable
+          tags: [security, compliance, audit]
+
+# Metadata
+template_metadata:
+  total_rules: 50
+  phase_a_rules: 15
+  phase_b_rules: 35
+  fail_severity: 10
+  warn_severity: 25
+  info_severity: 15
+  primary_domains: [mesh, microservices, infrastructure, security]
+  supported_platforms:
+    - Istio
+    - Linkerd
+    - Consul Connect
+    - AWS App Mesh
+    - Open Service Mesh (OSM)
+    - Kuma
+    - Traefik Mesh
+  use_cases:
+    - Microservices architecture
+    - Zero-trust networking
+    - Multi-cluster deployments
+    - Service-to-service encryption
+    - Canary and blue-green deployments
+    - Observability at scale

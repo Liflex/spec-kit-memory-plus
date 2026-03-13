@@ -1,6 +1,110 @@
 name: "Frontend Code"
-version: 1.0
+version: 1.2
 description: "Quality rules for frontend code (React, Vue, Angular, components)"
+
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.0
+      performance: 1.0
+      accessibility: 1.0
+  web-app:
+    multipliers:
+      web: 2.0
+      api: 1.3
+      data: 0.8
+      infrastructure: 0.5
+      mobile: 1.0
+      ml: 0.5
+      graphql: 1.3
+      microservices: 0.8
+      async: 1.2
+      auth: 1.2
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.2
+      performance: 1.3
+      accessibility: 1.5
+  mobile-app:
+    multipliers:
+      web: 1.0
+      api: 1.3
+      data: 0.8
+      infrastructure: 0.5
+      mobile: 2.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.2
+      auth: 1.2
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.2
+      performance: 1.5
+      accessibility: 1.3
+  graphql-api:
+    multipliers:
+      web: 1.5
+      api: 1.3
+      data: 1.0
+      infrastructure: 0.5
+      mobile: 1.0
+      ml: 0.5
+      graphql: 2.0
+      microservices: 0.8
+      async: 1.2
+      auth: 1.2
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.2
+      performance: 1.2
+      accessibility: 1.2
+  frontend-focused:
+    multipliers:
+      web: 2.0
+      api: 1.0
+      data: 0.5
+      infrastructure: 0.3
+      mobile: 1.5
+      ml: 0.3
+      graphql: 1.0
+      microservices: 0.5
+      async: 0.8
+      auth: 1.0
+    category_multipliers:
+      code_quality: 2.0
+      security: 1.5
+      performance: 1.8
+      accessibility: 2.0
+  accessibility-focused:
+    multipliers:
+      web: 1.5
+      api: 0.5
+      data: 0.3
+      infrastructure: 0.3
+      mobile: 1.5
+      ml: 0.3
+      graphql: 0.5
+      microservices: 0.5
+      async: 0.5
+      auth: 0.8
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.0
+      performance: 1.0
+      accessibility: 3.0
 
 phases:
   a:
@@ -16,6 +120,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify component structure (export default Component)"
     check_type: "content"
 
@@ -24,6 +130,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify useState/useReducer for state, no direct mutations"
     check_type: "content"
 
@@ -32,6 +140,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify prop types defined (propTypes or TypeScript)"
     check_type: "content"
 
@@ -40,6 +150,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify route definitions (routes, Router, BrowserRouter)"
     check_type: "content"
 
@@ -47,7 +159,9 @@ rules:
     description: "Responsive design considerations"
     severity: "warn"
     weight: 1
-    "phase": "A"
+    phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify media queries or responsive classes"
     check_type: "content"
 
@@ -56,6 +170,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify alt attributes on img tags"
     check_type: "content"
 
@@ -64,6 +180,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    category: "performance"
+    domain_tags: ["web", "mobile"]
     check: "verify React.lazy() or dynamic imports for large components"
     check_type: "content"
 
@@ -72,6 +190,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "accessibility"
+    domain_tags: ["web", "mobile"]
     check: "verify header, nav, main, footer elements instead of div soup"
     check_type: "content"
 
@@ -80,6 +200,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["web"]
     check: "verify dangerouslySetInnerHTML is avoided, React auto-escapes"
     check_type: "content"
 
@@ -88,5 +210,77 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
     check: "verify CSS modules, no global style pollution"
+    check_type: "content"
+
+  - id: "performance.react_hooks_optimization"
+    description: "React hooks optimization for performance"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["web", "mobile"]
+    check: "verify useCallback/useMemo for expensive computations and callback dependencies"
+    check_type: "content"
+
+  - id: "correctness.error_boundaries"
+    description: "Error boundaries for graceful failure handling"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify error boundary components or error handling UI for async operations"
+    check_type: "content"
+
+  - id: "quality.component_composition"
+    description: "Component composition over inheritance"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify composition patterns (children prop, render props, slots) over inheritance"
+    check_type: "content"
+
+  - id: "quality.api_integration"
+    description: "Proper API integration with state management"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile", "api", "graphql", "async"]
+    check: "verify loading, error, and data states for API calls (fetch/axios/RTK Query)"
+    check_type: "content"
+
+  - id: "quality.form_validation"
+    description: "Client-side form validation"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify form validation patterns (controlled inputs, validation libraries, error display)"
+    check_type: "content"
+
+  - id: "quality.environment_config"
+    description: "Environment-based configuration"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["web", "mobile"]
+    check: "verify environment variables for config (API URLs, feature flags), no hardcoded values"
+    check_type: "content"
+
+  - id: "quality.state_persistence"
+    description: "Client-side state persistence patterns"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["web", "mobile"]
+    check: "verify proper localStorage/sessionStorage usage with error handling and fallbacks"
     check_type: "content"

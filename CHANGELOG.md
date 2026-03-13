@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.75.1] - 2026-03-13
+
+### Added
+- **Exp 132: Blend Preset Integration with Quality Loop**
+  - Added `blend_preset` parameter to `QualityLoop.run()` for direct preset usage
+  - Auto-detection and recommendation of blend presets based on project type
+  - Intelligent project_type to blend_preset mapping in `TemplateRegistry`
+  - Seamless integration: blend presets take precedence over project_type and criteria
+  - New presets info method `get_all_blend_presets_info()` for CLI display
+
+### Changed
+- Updated `QualityLoop.run()` docstring with blend_preset parameter documentation
+- Enhanced `TemplateRegistry.recommend_blend_preset()` with smart project type mapping
+- Updated README.md with blend preset usage examples for quality loop
+
+### Fixed
+- Improved preset recommendation fallback to keyword matching when direct mapping fails
+
+
+
 <!-- markdownlint-disable MD024 -->
 
 Recent changes to the Specify CLI and templates are documented here.
@@ -10,6 +30,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- feat(quality): add `--project-type` parameter for automatic template selection (Exp 128)
+  - Automatically selects optimal template combination based on project type
+  - Supports 8 project types: web-app, microservice, ml-service, mobile-app, graphql-api, serverless, desktop, infrastructure
+  - Overrides `--criteria` when specified for simplified UX
+  - Example: `--project-type web-app` → frontend,backend,api-spec,security,performance,testing,docs
+
+- feat(quality): add template comparison feature (Exp 129)
+  - `speckit templates compare` - side-by-side comparison of 2-4 templates
+  - `speckit templates diff` - diff-style comparison between two templates
+  - Compare domain tags, severity breakdown, priority profiles, and phases
+  - Visual checkmarks (✓/✗) for quick scanning of differences
+  - Example: `speckit templates compare frontend mobile backend`
+
+- feat(quality): add template blend feature (Exp 130)
+  - `speckit templates blend` - blend multiple templates into a single configuration
+  - Three blend modes: union (all rules), consensus (majority rules), weighted (custom weights)
+  - Save blended templates to YAML files for reuse
+  - Control template influence with custom weights
+  - Example: `speckit templates blend frontend backend security --mode union --output full-stack.yml`
+  - Weighted example: `speckit templates blend backend frontend --mode weighted --weights backend:0.7,frontend:0.3`
+
+- feat(quality): add blend presets for common use cases (Exp 131)
+  - `speckit templates presets list` - list all available blend presets
+  - `speckit templates presets info <preset>` - show detailed preset information
+  - `speckit templates presets search <query>` - search presets by keyword
+  - `speckit templates presets recommend <project-type>` - recommend preset for project type
+  - `speckit templates presets apply <preset>` - apply preset to create blended template
+  - 10 built-in presets: full_stack_secure, microservices_robust, api_first, mobile_backend, data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform, devsecops
+  - Filter presets by tag or project type
+  - Example: `speckit templates presets apply full_stack_secure --output my-stack.yml`
 
 - feat(extensions): support `.extensionignore` to exclude files/folders during `specify extension add` (#1781)
 

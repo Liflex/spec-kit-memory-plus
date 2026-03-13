@@ -1,6 +1,142 @@
 name: "Database Schema"
-version: 1.0
-description: "Quality rules for database schema definitions (SQL, migrations, models)"
+version: 1.2
+description: "Quality rules for database schema definitions (SQL, migrations, models) with category-based prioritization (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.0
+      api: 1.2
+      data: 1.3
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.2  # DB security important
+      performance: 1.3  # DB performance critical
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3  # Schema quality important
+
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 1.2
+      infrastructure: 0.8
+      mobile: 1.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.3  # Mobile DB security critical
+      performance: 1.3  # Mobile DB performance critical
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.2
+
+  ml-service:
+    multipliers:
+      web: 0.3
+      api: 0.8
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.3
+      microservices: 1.0
+      async: 1.0
+      auth: 0.5
+    category_multipliers:
+      security: 1.2  # ML data security important
+      performance: 1.5  # ML data performance critical
+      testing: 0.8
+      documentation: 1.2
+      code_quality: 1.5
+
+  data-pipeline:
+    multipliers:
+      web: 0.2
+      api: 0.8
+      data: 2.0
+      infrastructure: 1.3
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.2
+      microservices: 1.2
+      async: 1.2
+      auth: 0.5
+    category_multipliers:
+      security: 1.5  # Pipeline DB security critical
+      performance: 1.5  # Pipeline throughput critical
+      testing: 1.0
+      documentation: 1.2
+      code_quality: 1.3
+
+  graphql-api:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.5
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.2
+      performance: 1.3  # GraphQL query performance important
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3
+
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.5
+      infrastructure: 1.2
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.3
+      auth: 1.0
+    category_multipliers:
+      security: 1.2
+      performance: 1.3  # Microservice DB performance critical
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.3
 
 phases:
   a:
@@ -16,6 +152,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
     check: "verify PRIMARY KEY constraint in table definitions"
     check_type: "content"
 
@@ -24,6 +162,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
     check: "verify FOREIGN KEY references with ON DELETE/UPDATE"
     check_type: "content"
 
@@ -32,6 +172,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["data"]
+    category: "performance"  # Exp 47
     check: "verify INDEX statements for search columns"
     check_type: "content"
 
@@ -40,6 +182,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
     check: "verify VARCHAR sizes, INT/DECIMAL precision, TEXT vs JSON"
     check_type: "content"
 
@@ -48,6 +192,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
     check: "verify NOT NULL on important fields (id, created_at, etc.)"
     check_type: "content"
 
@@ -56,6 +202,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["data", "api"]
+    category: "security"  # Exp 47
     check: "verify parameterized queries, no string concatenation"
     check_type: "content"
 
@@ -64,6 +212,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["data"]
+    category: "performance"  # Exp 47
     check: "verify read-heavy queries have denormalized joins"
     check_type: "content"
 
@@ -72,6 +222,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
     check: "verify timestamp columns for tracking"
     check_type: "content"
 
@@ -80,6 +232,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["data", "infrastructure"]
+    category: "code_quality"  # Exp 47
     check: "verify migrations have up/down methods"
     check_type: "content"
 
@@ -88,5 +242,67 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["data"]
+    category: "documentation"  # Exp 47
     check: "verify CHECK constraints have descriptive names"
+    check_type: "content"
+
+  - id: "quality.transaction_boundaries"
+    description: "Transactions properly defined with BEGIN/COMMIT/ROLLBACK for ACID compliance"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data", "async"]
+    category: "code_quality"  # Exp 47
+    check: "verify explicit transaction boundaries for multi-step operations with rollback on error"
+    check_type: "content"
+
+  - id: "quality.query_isolation"
+    description: "N+1 problem prevented with proper query batching and JOIN optimization"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data", "api"]
+    category: "performance"  # Exp 47
+    check: "verify queries use JOINs or batching instead of separate queries in loops (N+1 prevention)"
+    check_type: "content"
+
+  - id: "correctness.unique_constraints"
+    description: "UNIQUE constraints on business keys to prevent duplicate data"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data"]
+    category: "code_quality"  # Exp 47
+    check: "verify UNIQUE constraints on business-critical columns (email, username, slug)"
+    check_type: "content"
+
+  - id: "security.sensitive_data"
+    description: "Sensitive data encrypted or masked (passwords, tokens, PII)"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    domain_tags: ["data", "auth"]
+    category: "security"  # Exp 47
+    check: "verify encryption at rest for passwords, tokens, PII; use hashing (bcrypt/argon2) for passwords"
+    check_type: "content"
+
+  - id: "quality.connection_pooling"
+    description: "Connection pooling configured with proper limits and timeouts"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data", "infrastructure"]
+    category: "performance"  # Exp 47
+    check: "verify connection pool settings (max_connections, timeout, idle_timeout) for database access"
+    check_type: "content"
+
+  - id: "quality.backup_strategy"
+    description: "Backup and recovery strategy defined with retention policy"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["data", "infrastructure"]
+    category: "code_quality"  # Exp 47
+    check: "verify backup automation, retention policy, and periodic restore testing documented"
     check_type: "content"

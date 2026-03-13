@@ -1,0 +1,946 @@
+name: gRPC
+version: 1.0
+description: Quality rules for gRPC services, streaming, and protobuf definitions
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.0
+      grpc: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  grpc-service:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.2
+      mobile: 0.3
+      ml: 0.5
+      graphql: 0.3
+      microservices: 2.0
+      async: 1.5
+      auth: 1.3
+      serverless: 0.8
+      realtime: 1.2
+      grpc: 2.0
+    description: gRPC microservice with high emphasis on gRPC and microservices patterns
+    category_multipliers: *id001
+  grpc-api:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.5
+      ml: 0.5
+      graphql: 0.5
+      microservices: 1.5
+      async: 1.3
+      auth: 1.3
+      serverless: 0.8
+      realtime: 1.0
+      grpc: 1.8
+    description: API with gRPC backend and REST gateway
+    category_multipliers: *id001
+  polyglot-api:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 0.8
+      microservices: 1.3
+      async: 1.2
+      auth: 1.3
+      serverless: 0.8
+      realtime: 1.0
+      grpc: 1.5
+    description: Polyglot API with both REST and gRPC endpoints
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: grpc.proto.package_naming
+  description: Proto package follows reverse domain naming convention
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify proto package name follows reverse domain (e.g., com.example.service.v1)
+  check_type: content
+  category: code_quality
+- id: grpc.proto.syntax_version
+  description: Proto files use proto3 syntax
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify 'syntax = "proto3";' at the top of all .proto files
+  check_type: content
+  category: general
+- id: grpc.proto.unique_field_names
+  description: Field names are unique within messages
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify no duplicate field names within the same message definition
+  check_type: content
+  category: general
+- id: grpc.proto.field_numbering
+  description: Field numbers follow numbering conventions (1-15 for frequent fields)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify field numbers 1-15 for frequently used fields (optimized encoding), 16+ for less frequent
+  check_type: content
+  category: code_quality
+- id: grpc.proto.reserved_ranges
+  description: Reserved field numbers and names for deleted fields
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify 'reserved' directive for deleted/renamed field numbers and names to prevent reuse
+  check_type: content
+  category: general
+- id: grpc.proto.optional_vs_required
+  description: Proto3 fields properly marked with 'optional' for clarity
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify 'optional' keyword used for fields that may be unset (proto3 semantics)
+  check_type: content
+  category: general
+- id: grpc.proto.message_naming
+  description: Message names use PascalCase
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify message names in PascalCase (e.g., UserRequest, GetUserResponse)
+  check_type: content
+  category: general
+- id: grpc.proto.enum_naming
+  description: Enum types use PascalCase, enum values use UPPER_SNAKE_CASE
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify enum type name in PascalCase, values in UPPER_SNAKE_CASE (e.g., enum Status { STATUS_UNKNOWN = 0; })
+  check_type: content
+  category: correctness
+- id: grpc.proto.enum_zero_value
+  description: Enums have a zero value as the first entry (default value)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify enums have a zero-value entry (e.g., UNKNOWN = 0) as the first enum value
+  check_type: content
+  category: reliability
+- id: grpc.proto.comments_documentation
+  description: Services, messages, and fields have documentation comments
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify comments above services, messages, and important fields describing their purpose and usage
+  check_type: content
+  category: documentation
+- id: grpc.proto.import_organization
+  description: Proto imports are organized and no circular dependencies
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify imports are grouped (stdlib, third-party, local) and no circular import dependencies exist
+  check_type: content
+  category: general
+- id: grpc.proto.wellknown_types
+  description: Use Well-Known Types for common patterns (timestamp, duration, empty)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify use of google.protobuf.Timestamp, Duration, Empty, Struct, Value instead of custom types
+  check_type: content
+  category: correctness
+- id: grpc.proto.oneof_usage
+  description: Use oneof for mutually exclusive fields
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify oneof used for fields that are mutually exclusive (saves memory, enforces only one set)
+  check_type: content
+  category: general
+- id: grpc.proto.map_fields
+  description: Use map<K, V> for key-value pairs instead of repeated messages
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify map<K, V> used for dictionaries/associative arrays (better encoding than repeated Message)
+  check_type: content
+  category: general
+- id: grpc.server.tls_enabled
+  description: gRPC server uses TLS for secure communication
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify server credentials configured with TLS certificates (no insecure plaintext in production)
+  check_type: content
+  category: security
+- id: grpc.server.interceptor_chain
+  description: gRPC server has interceptor chain for cross-cutting concerns
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify server interceptors configured for logging, auth, error handling, metrics
+  check_type: content
+  category: infrastructure
+- id: grpc.server.error_handling
+  description: Proper gRPC status codes returned for errors
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify appropriate gRPC status codes (NotFound, InvalidArgument, AlreadyExists, Unauthenticated, etc.)
+  check_type: content
+  category: infrastructure
+- id: grpc.server.deadline_propagation
+  description: Server respects and propagates deadlines
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify server reads deadline from context and passes to downstream calls (databases, external APIs)
+  check_type: content
+  category: infrastructure
+- id: grpc.server.max_message_size
+  description: Max receive and send message size configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify max_recv_message_length and max_send_message_length limits configured (default 4MB may be too small/large)
+  check_type: content
+  category: performance
+- id: grpc.server.connection_timeout
+  description: Connection timeout configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify server has connection timeout configuration to prevent idle connection buildup
+  check_type: content
+  category: infrastructure
+- id: grpc.server.reflection_disabled_production
+  description: Server reflection disabled in production
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify gRPC server reflection is disabled in production environments (information disclosure risk)
+  check_type: content
+  category: security
+- id: grpc.server.health_check
+  description: gRPC health checking protocol implemented
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify gRPC Health Checking Protocol (grpc.health.v1.Health) implemented for load balancers
+  check_type: content
+  category: infrastructure
+- id: grpc.server.compression_enabled
+  description: Message compression enabled for large payloads
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify compression enabled (gzip, deflate) for messages above a size threshold
+  check_type: content
+  category: performance
+- id: grpc.server.streaming_flow_control
+  description: Flow control for streaming responses
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify server implements flow control for server streaming (avoid overwhelming client with messages)
+  check_type: content
+  category: infrastructure
+- id: grpc.client.retry_policy
+  description: Client has retry policy for transient failures
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify retry policy configured for retryable status codes (Unavailable, ResourceExhausted, Aborted)
+  check_type: content
+  category: reliability
+- id: grpc.client.per_rpc_timeout
+  description: Per-RPC timeout configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify timeout configured for each RPC call (using context.WithTimeout or grpc.WithTimeout)
+  check_type: content
+  category: reliability
+- id: grpc.client.connection_pooling
+  description: Client uses connection pooling/reuse
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify client connections are reused (single client instance, not creating new connection per request)
+  check_type: content
+  category: performance
+- id: grpc.client.load_balancing
+  description: Client load balancing policy configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - microservices
+  check: verify load balancing policy (round_robin, pick_first, grpclb, etc.) configured for service discovery
+  check_type: content
+  category: general
+- id: grpc.client.keepalive
+  description: Client keepalive ping configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify keepalive parameters configured (time, timeout, permit_without_stream) to detect broken connections
+  check_type: content
+  category: general
+- id: grpc.client.blocking_vs_async
+  description: Client uses appropriate blocking/async stubs
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify async stubs used for non-blocking calls, blocking stubs only when necessary
+  check_type: content
+  category: general
+- id: grpc.client.interceptor_chain
+  description: Client has interceptor chain for cross-cutting concerns
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  check: verify client interceptors for logging, retry, timeout, metadata propagation
+  check_type: content
+  category: reliability
+- id: grpc.streaming.server_flow_control
+  description: Server streaming respects client flow control
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify server streaming checks IsPaused() and waits for client demand before sending more messages
+  check_type: content
+  category: infrastructure
+- id: grpc.streaming.client_cancellation
+  description: Client can cancel streaming RPCs
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify client context can be cancelled to terminate ongoing streaming RPCs cleanly
+  check_type: content
+  category: general
+- id: grpc.streaming.bidi_ordering
+  description: Bidirectional streaming maintains ordering semantics
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify bidi streaming maintains message order or documents ordering guarantees
+  check_type: content
+  category: general
+- id: grpc.streaming.resource_cleanup
+  description: Resources cleaned up on stream completion/cancellation
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify defer or cleanup handlers for releasing resources when stream ends (normally or cancelled)
+  check_type: content
+  category: general
+- id: grpc.streaming.backpressure
+  description: Backpressure handling for high-volume streams
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify backpressure mechanism (buffer limits, flow control) to prevent OOM on high-throughput streams
+  check_type: content
+  category: reliability
+- id: grpc.streaming.message_size_limits
+  description: Message size limits enforced for streaming
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify per-message size limits configured to prevent large messages from breaking stream
+  check_type: content
+  category: performance
+- id: grpc.streaming.reconnection_strategy
+  description: Reconnection strategy for persistent streams
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - async
+  check: verify exponential backoff reconnection for persistent streams on connection failure
+  check_type: content
+  category: general
+- id: grpc.security.mtls_enabled
+  description: Mutual TLS (mTLS) authentication configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify mTLS enabled with client certificate validation for service-to-service authentication
+  check_type: content
+  category: security
+- id: grpc.security.jwt_authentication
+  description: JWT/OAuth2 token authentication via metadata
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify authentication interceptor validates JWT tokens from Authorization metadata
+  check_type: content
+  category: security
+- id: grpc.security.rbac_authorization
+  description: Role-based access control (RBAC) for RPC methods
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify authorization checks for RPC methods based on user roles/permissions
+  check_type: content
+  category: security
+- id: grpc.security.metadata_sanitization
+  description: Sensitive data not leaked in metadata
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify no secrets, passwords, or tokens in gRPC metadata (except auth tokens)
+  check_type: content
+  category: security
+- id: grpc.security.input_validation
+  description: Input validation on all RPC request messages
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify request message validation (field constraints, business rules) before processing
+  check_type: content
+  category: security
+- id: grpc.security.error_message_sanitization
+  description: Error messages don't leak internal details
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify error messages sent to client don't expose stack traces, SQL queries, or internal paths
+  check_type: content
+  category: security
+- id: grpc.security.rate_limiting
+  description: Rate limiting per RPC or per client
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify rate limiting configured (requests per second/minute) per client or per RPC method
+  check_type: content
+  category: security
+- id: grpc.security.ip_whitelist
+  description: IP whitelist for privileged operations
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - auth
+  check: verify IP whitelist for admin/debug RPC methods (only accessible from trusted networks)
+  check_type: content
+  category: security
+- id: grpc.performance.binary_marshaling
+  description: Use binary protobuf marshaling, not JSON/text
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify using protobuf binary marshaling, not JSON encoding (defeats gRPC performance benefits)
+  check_type: content
+  category: performance
+- id: grpc.performance.message_reuse
+  description: Message objects reused in hot paths
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify proto message objects are reused in loops to reduce GC pressure (sync.Pool)
+  check_type: content
+  category: performance
+- id: grpc.performance.compression_threshold
+  description: Compression only used above size threshold
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify compression enabled only for messages above a threshold (e.g., 1KB) to avoid CPU overhead for small messages
+  check_type: content
+  category: performance
+- id: grpc.performance.grpc_web_disabled_same_datacenter
+  description: gRPC-Web only when needed (same datacenter should use native gRPC)
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify native gRPC used for service-to-service, gRPC-Web only for browser clients
+  check_type: content
+  category: performance
+- id: grpc.performance.connection_reuse
+  description: Long-lived connections instead of per-request connections
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify HTTP/2 connections are kept alive and reused across many RPCs (connection pooling)
+  check_type: content
+  category: performance
+- id: grpc.performance.grpc_proxy_optimization
+  description: gRPC proxy/gateway configured for optimal routing
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - performance
+  check: verify gRPC gateway (envoy, grpc-gateway) configured with connection pooling, caching, and HTTP/2 support
+  check_type: content
+  category: performance
+- id: grpc.observability.logging_interceptor
+  description: Logging interceptor for request/response
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify logging interceptor logs RPC method, duration, status code, and request ID
+  check_type: content
+  category: infrastructure
+- id: grpc.observability.metrics_interceptor
+  description: Metrics interceptor for monitoring
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify metrics interceptor tracks RPC calls by method, status code, latency histograms, and active streams
+  check_type: content
+  category: infrastructure
+- id: grpc.observability.tracing_interceptor
+  description: Distributed tracing interceptor
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify OpenTelemetry or tracing interceptor propagates trace context across gRPC calls
+  check_type: content
+  category: infrastructure
+- id: grpc.observability.correlation_id
+  description: Correlation ID propagated in metadata
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify X-Correlation-ID or similar header passed in metadata for distributed tracing
+  check_type: content
+  category: infrastructure
+- id: grpc.observability.prometheus_metrics
+  description: Prometheus metrics exposed for gRPC services
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify /metrics endpoint exposes grpc_server_started, grpc_server_handled, grpc_server_msg_received
+  check_type: content
+  category: infrastructure
+- id: grpc.testing.unit_tests_for_services
+  description: Unit tests for RPC service implementations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - testing
+  check: verify unit tests for service methods with mock dependencies (using mockgen or similar)
+  check_type: content
+  category: testing
+- id: grpc.testing.integration_tests
+  description: Integration tests with real gRPC server/client
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - testing
+  check: verify integration tests spawning real gRPC server and client (in-process or docker)
+  check_type: content
+  category: testing
+- id: grpc.testing.contract_tests
+  description: Contract tests for proto compatibility
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - testing
+  check: verify tests checking proto backward compatibility (e.g., buf check breaking)
+  check_type: content
+  category: testing
+- id: grpc.testing.load_tests
+  description: Load tests for streaming and high-throughput RPCs
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - testing
+  check: verify load testing (ghz, grpcurl) for performance validation under load
+  check_type: content
+  category: performance
+- id: grpc.documentation.api_documentation
+  description: gRPC API documentation generated and published
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - docs
+  check: verify proto documentation generated (protoc-gen-doc, buf) and published (Markdown, HTML)
+  check_type: content
+  category: documentation
+- id: grpc.documentation.example_code
+  description: Example client code in multiple languages
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - docs
+  check: verify example client code provided in common languages (Go, Python, Java, JS, C#)
+  check_type: content
+  category: documentation
+- id: grpc.documentation.swagger_for_gateway
+  description: OpenAPI/Swagger documentation for gRPC-Web gateway
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - docs
+  check: verify gRPC gateway has OpenAPI documentation (swagger.json) generated from proto annotations
+  check_type: content
+  category: documentation
+- id: grpc.evolving.backward_compatibility
+  description: Proto changes maintain backward compatibility
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  check: verify field additions are optional, field numbers not reused, and 'reserved' used for deletions
+  check_type: content
+  category: reliability
+- id: grpc.evolving.semantic_versioning
+  description: Proto packages use semantic versioning
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  check: verify proto package includes version (e.g., v1, v2) and follows semver for breaking changes
+  check_type: content
+  category: general
+- id: grpc.evolving.buf_workspace
+  description: Buf workspace configured for mono-repo management
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  check: verify buf.yaml and buf.work.yaml configured for dependency management and linting
+  check_type: content
+  category: general
+- id: grpc.evolving.breaking_change_detection
+  description: Breaking change detection in CI pipeline
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify CI pipeline runs 'buf check breaking' against previous version to detect breaking changes
+  check_type: content
+  category: infrastructure
+- id: grpc.evolving.lint_checks
+  description: Proto linter configured (buf lint, protolint)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  check: verify proto linting configured (buf lint with custom lint rules)
+  check_type: content
+  category: code_quality
+- id: grpc.deployment.service_discovery
+  description: Service discovery integration (Consul, etcd, DNS)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - microservices
+  check: verify gRPC server registered with service discovery (Consul, etcd, K8s service) for client resolution
+  check_type: content
+  category: infrastructure
+- id: grpc.deployment.container_configuration
+  description: Container/Docker image configured for gRPC
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify Dockerfile exposes gRPC port, uses non-root user, and optimizes for HTTP/2
+  check_type: content
+  category: infrastructure
+- id: grpc.deployment.kubernetes_probes
+  description: Kubernetes probes use gRPC health checks
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - infrastructure
+  check: verify K8s liveness/readiness probes use gRPC health check protocol (grpc-health-probe)
+  check_type: content
+  category: infrastructure
+- id: grpc.deployment.sidecar_proxy
+  description: Service mesh sidecar (Envoy, Istio) for gRPC
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - grpc
+  - microservices
+  check: verify service mesh sidecar configured for mTLS, observability, and traffic management
+  check_type: content
+  category: infrastructure

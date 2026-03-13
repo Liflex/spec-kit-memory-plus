@@ -1,6 +1,142 @@
 name: "API Specification"
-version: 1.0
-description: "Quality rules for API specifications (OpenAPI, REST, GraphQL)"
+version: 1.3
+description: "Quality rules for API specifications (OpenAPI, REST, GraphQL) with category-based prioritization (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.3
+      microservices: 1.0
+      async: 1.0
+      auth: 1.5
+    category_multipliers:
+      security: 1.2
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # API documentation critical
+      code_quality: 1.0
+
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 1.3
+      ml: 0.5
+      graphql: 1.2
+      microservices: 1.0
+      async: 1.0
+      auth: 1.5
+    category_multipliers:
+      security: 1.2
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # Mobile API docs critical
+      code_quality: 1.0
+
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.3
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.2
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # ML API documentation important
+      code_quality: 1.0
+
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.2
+      data: 1.5
+      infrastructure: 1.2
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.3
+      auth: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.3  # Data API documentation important
+      code_quality: 0.8
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.2
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.2
+      async: 1.2
+      auth: 1.3
+    category_multipliers:
+      security: 1.2
+      performance: 1.0
+      testing: 1.0
+      documentation: 2.0  # GraphQL schema documentation critical
+      code_quality: 1.0
+
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.2
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.3
+      microservices: 2.0
+      async: 1.3
+      auth: 1.3
+    category_multipliers:
+      security: 1.2
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # Microservice API documentation critical
+      code_quality: 1.0
 
 phases:
   a:
@@ -16,6 +152,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
     check: "verify GET, POST, PUT, DELETE endpoints present"
     check_type: "content"
 
@@ -24,6 +162,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["api"]
+    category: "documentation"  # Exp 47
     check: "verify 200, 201, 204, 400, 404, 500 codes present"
     check_type: "content"
 
@@ -32,6 +172,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["api"]
+    category: "documentation"  # Exp 47
     check: "verify application/json, text/html content types"
     check_type: "content"
 
@@ -40,6 +182,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
     check: "verify each endpoint has a description field"
     check_type: "content"
 
@@ -48,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["api", "graphql", "auth"]
+    category: "documentation"  # Exp 47
     check: "verify auth methods (Bearer, API key, etc.) documented"
     check_type: "content"
 
@@ -56,6 +202,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
     check: "verify query, path, body parameters listed"
     check_type: "content"
 
@@ -64,6 +212,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
     check: "verify response body schemas defined"
     check_type: "content"
 
@@ -72,6 +222,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify page, limit parameters for list operations"
     check_type: "content"
 
@@ -80,6 +232,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["api"]
+    category: "documentation"  # Exp 47
     check: "verify rate limits documented"
     check_type: "content"
 
@@ -88,5 +242,107 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
     check: "verify /v1/ or version header mentioned"
+    check_type: "content"
+
+  - id: "compliance.openapi_swagger"
+    description: "OpenAPI/Swagger specification compliance (info, paths, components fields)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api"]
+    category: "code_quality"  # Exp 47
+    check: "verify OpenAPI 3.0 or Swagger 2.0 structure with required fields (openapi/swagger, info, paths)"
+    check_type: "content"
+
+  - id: "quality.request_examples"
+    description: "Request examples provided for POST/PUT/PATCH operations"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify request body examples or example fields present for write operations"
+    check_type: "content"
+
+  - id: "quality.response_examples"
+    description: "Response examples provided for successful responses"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify response body examples present for 2xx status codes"
+    check_type: "content"
+
+  - id: "correctness.error_responses"
+    description: "Error responses documented with schemas for 4xx/5xx codes"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify error response schemas defined (error code, message, details fields)"
+    check_type: "content"
+
+  - id: "security.security_schemes"
+    description: "Security schemes defined in components/securitySchemes"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    domain_tags: ["api", "graphql", "auth"]
+    category: "security"  # Exp 47
+    check: "verify security schemes documented (BearerAuth, ApiKeyAuth, OAuth2, etc.) with type and scheme"
+    check_type: "content"
+
+  - id: "quality.deprecated_marking"
+    description: "Deprecated endpoints marked with deprecated field and sunset information"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify deprecated endpoints have deprecated: true with reason and alternative endpoint"
+    check_type: "content"
+
+  - id: "quality.webhooks_documentation"
+    description: "Webhooks documented with payload schemas and retry policies"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify webhook endpoints defined with event types, payload schema, and retry configuration"
+    check_type: "content"
+
+  - id: "quality.breaking_changes"
+    description: "Breaking changes detected and documented in changelog"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify API version changes documented with breaking change notices and migration guide"
+    check_type: "content"
+
+  - id: "consistency.naming"
+    description: "API naming consistency (kebab-case for paths, camelCase for properties)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql"]
+    category: "code_quality"  # Exp 47
+    check: "verify consistent naming conventions across endpoints (URL paths use kebab-case, property names use camelCase)"
+    check_type: "content"
+
+  - id: "consistency.idempotency"
+    description: "Idempotent operations marked for safe retry (GET, PUT, DELETE)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api"]
+    category: "documentation"  # Exp 47
+    check: "verify idempotent operations documented (safe methods can be retried without side effects)"
     check_type: "content"

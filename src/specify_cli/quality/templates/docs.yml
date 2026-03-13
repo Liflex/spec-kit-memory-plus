@@ -1,6 +1,162 @@
 name: "Documentation"
-version: 1.0
-description: "Quality rules for documentation files (README, guides, etc.)"
+version: 1.2
+description: "Quality rules for documentation files (README, guides, etc.) with category-based prioritization (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.3
+      api: 1.2
+      data: 0.8
+      infrastructure: 0.8
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.3  # Documentation important for web apps
+      code_quality: 1.0
+
+  mobile-app:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 0.8
+      infrastructure: 0.8
+      mobile: 2.0
+      ml: 0.5
+      graphql: 1.0
+      microservices: 0.8
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.3  # Mobile documentation important
+      code_quality: 1.0
+
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.0
+      async: 1.0
+      auth: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 0.8
+      documentation: 1.5  # ML documentation critical (model cards, data docs)
+      code_quality: 0.8
+
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.2
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.2
+      async: 1.1
+      auth: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # Data documentation critical
+      code_quality: 0.8
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.0
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.2
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # GraphQL documentation critical (schema, queries)
+      code_quality: 1.0
+
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.2
+      auth: 1.3
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.5  # Microservice documentation critical
+      code_quality: 1.0
+
+  # NEW (Exp 47): Documentation-focused profile for well-documented projects
+  docs-focused:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 0.8
+      performance: 0.8
+      testing: 0.8
+      documentation: 2.0  # Double weight for ALL documentation rules
+      code_quality: 0.8
 
 phases:
   a:
@@ -16,6 +172,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify # Title or ## Heading present"
     check_type: "content"
 
@@ -24,6 +182,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify introduction or overview section exists"
     check_type: "content"
 
@@ -32,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify install, setup, or getting started section"
     check_type: "content"
 
@@ -40,6 +202,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify usage examples or code snippets present"
     check_type: "content"
 
@@ -48,6 +212,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify markdown link format [text](url)"
     check_type: "content"
 
@@ -56,6 +222,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify headings follow hierarchy (h1 -> h2 -> h3)"
     check_type: "content"
 
@@ -64,6 +232,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify common words spelled correctly"
     check_type: "content"
 
@@ -72,6 +242,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify ``` language for code blocks"
     check_type: "content"
 
@@ -80,6 +252,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify see also, references, or further reading"
     check_type: "content"
 
@@ -88,5 +262,47 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
     check: "verify support, contact, or issue tracker link"
+    check_type: "content"
+
+  - id: "quality.example_code_validation"
+    description: "Code examples are complete with language syntax and context"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
+    category: "documentation"  # Exp 47
+    check: "verify code examples have language tags, are syntactically complete, and include context/explanation"
+    check_type: "content"
+
+  - id: "quality.installation_completeness"
+    description: "Installation includes prerequisites, dependencies, and verification steps"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
+    check: "verify prerequisites listed, dependencies specified, and success verification provided"
+    check_type: "content"
+
+  - id: "quality.troubleshooting"
+    description: "Troubleshooting section for common issues"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql", "infrastructure"]
+    category: "documentation"  # Exp 47
+    check: "verify troubleshooting, FAQ, or common issues section exists"
+    check_type: "content"
+
+  - id: "quality.api_reference"
+    description: "API reference or technical specification links"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["api", "graphql", "web"]
+    category: "documentation"  # Exp 47
+    check: "verify API reference, technical docs, or specification links are provided"
     check_type: "content"

@@ -2,12 +2,14 @@
 Evaluator
 
 Evaluates artifacts against quality rules.
+Supports priority-aware scoring with domain multipliers.
+Exp 55: Enhanced with category scores and severity counts for quality gates.
 """
 
 import re
 import subprocess
 from pathlib import Path
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict, Any
 from datetime import datetime
 
 from specify_cli.quality.models import (
@@ -17,13 +19,15 @@ from specify_cli.quality.models import (
     QualityRule,
     Phase,
     RuleCheckType,
+    PriorityProfile,
 )
 from specify_cli.quality.rules import RuleManager
 from specify_cli.quality.scorer import Scorer
+from specify_cli.quality.priority_profiles import PriorityProfilesManager
 
 
 class Evaluator:
-    """Evaluate artifact against quality rules"""
+    """Evaluate artifact against quality rules with priority-aware scoring"""
 
     def __init__(self, rule_manager: RuleManager, scorer: Scorer):
         """Initialize evaluator
@@ -39,7 +43,10 @@ class Evaluator:
         self,
         artifact: str,
         criteria: CriteriaTemplate,
-        phase: str = "A"
+        phase: str = "A",
+        priority_profile: Optional[str] = None,
+        cascade_strategy: Optional[str] = None,
+        project_root: Optional[str] = None,
     ) -> EvaluationResult:
         """Evaluate artifact against criteria
 
@@ -47,12 +54,44 @@ class Evaluator:
             artifact: Artifact content (markdown with code blocks)
             criteria: Criteria template
             phase: Evaluation phase ("A" or "B")
+            priority_profile: Optional priority profile name for domain-based weighting
+            cascade_strategy: Optional cascade merge strategy (avg/max/min/wgt/weighted)
+            project_root: Optional project root for loading custom profiles
 
         Returns:
             EvaluationResult with score, passed/failed rules
         """
         # Convert phase string to enum
         phase_enum = Phase(phase)
+
+        # Get priority profile if specified (supports cascade profiles with "+" syntax)
+        profile = None
+        if priority_profile:
+            # Check for cascade profile syntax (e.g., "web-app+mobile-app")
+            is_cascade, profile_names, cascade_error = PriorityProfilesManager.parse_cascade_profile(priority_profile)
+
+            if cascade_error:
+                # Invalid cascade syntax - fall back to default
+                profile = criteria.get_default_profile()
+            elif is_cascade:
+                # Resolve cascade profile with specified strategy
+                # Normalize strategy alias (e.g., "avg" -> "average", "wgt" -> "weighted")
+                strategy = PriorityProfilesManager.normalize_strategy_alias(cascade_strategy) if cascade_strategy else "average"
+
+                profile = PriorityProfilesManager.resolve_cascade_profile(
+                    priority_profile,
+                    Path(project_root) if project_root else None,
+                    strategy=strategy
+                )
+                if profile is None:
+                    # Cascade resolution failed - fall back to default
+                    profile = criteria.get_default_profile()
+            else:
+                # Single profile
+                profile = criteria.get_priority_profile(priority_profile, project_root)
+                if profile is None:
+                    # Fall back to default if specified profile not found
+                    profile = criteria.get_default_profile()
 
         # Get active rules for phase
         active_rules = self.rule_manager.get_rules_for_phase(criteria, phase_enum)
@@ -66,31 +105,62 @@ class Evaluator:
             passed, reason = self._check_rule(rule, artifact)
 
             if passed:
-                passed_rules.append(rule.id)
+                passed_rules.append(rule)
             elif rule.severity.value == "fail":
-                failed_rules.append(FailedRule(rule_id=rule.id, reason=reason))
+                failed_rules.append(FailedRule(rule_id=rule.id, reason=reason, category=rule.category))
             else:  # warn or info
-                warnings.append(FailedRule(rule_id=rule.id, reason=reason))
+                warnings.append(FailedRule(rule_id=rule.id, reason=reason, category=rule.category))
 
-        # Calculate score
+        # Calculate score with priority weighting
         score = self.scorer.calculate_score(
-            passed_rules=[r for r in active_rules if r.id in passed_rules],
-            all_rules=active_rules
+            passed_rules=passed_rules,
+            all_rules=active_rules,
+            priority_profile=profile,
         )
 
         # Check if passed
         threshold = criteria.get_phase_config(phase_enum).threshold
         passed = self.scorer.check_passed(score, threshold, failed_rules)
 
+        # Exp 55: Calculate category scores and severity counts for quality gates
+        category_scores = self.scorer.get_category_scores(
+            passed_rules=passed_rules,
+            failed_rules=failed_rules,
+            all_rules=active_rules,
+        )
+        severity_counts = self.scorer.get_severity_counts(
+            failed_rules=failed_rules,
+            warnings=warnings,
+        )
+
+        # Build category breakdown for JSON reports
+        category_breakdown = {
+            "categories": [
+                {
+                    "name": cat,
+                    "score": stats["score"],
+                    "passed": stats["passed"],
+                    "failed": stats["failed"],
+                    "total": stats["total"],
+                }
+                for cat, stats in category_scores.items()
+            ],
+            "total_issues": len(failed_rules) + len(warnings),
+        }
+
         return EvaluationResult(
             score=score,
             passed=passed,
             threshold=threshold,
             phase=phase,
-            passed_rules=passed_rules,
+            passed_rules=[r.id for r in passed_rules],
             failed_rules=failed_rules,
             warnings=warnings,
             evaluated_at=datetime.now().isoformat(),
+            priority_profile=priority_profile,
+            category_breakdown=category_breakdown,  # Exp 55
+            category_scores=category_scores,  # Exp 55
+            severity_counts=severity_counts,  # Exp 55
         )
 
     def _check_rule(
@@ -262,7 +332,7 @@ class Evaluator:
         has_hash_comment = "#" in artifact
         has_double_slash = "//" in artifact
         has_docstring = '"""' in artifact or "'''" in artifact
-        return any([has_hash_comment, has_double_slip, has_docstring]), "Has comments or docstrings"
+        return any([has_hash_comment, has_double_slash, has_docstring]), "Has comments or docstrings"
 
     def _check_type_hints(self, artifact: str, artifact_lower: str) -> Tuple[bool, str]:
         """Check for type hints"""

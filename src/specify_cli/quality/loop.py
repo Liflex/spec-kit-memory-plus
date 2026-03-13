@@ -2,6 +2,7 @@
 Quality Loop
 
 Main quality loop coordinator that runs iterative quality improvement.
+Supports priority-aware scoring with domain multipliers.
 """
 
 from typing import Optional, Dict, Any
@@ -21,10 +22,68 @@ from specify_cli.quality.scorer import Scorer
 from specify_cli.quality.critique import Critique
 from specify_cli.quality.refiner import Refiner
 from specify_cli.quality.state import LoopStateManager
+from specify_cli.quality.priority_profiles import PriorityProfilesManager
+from specify_cli.quality.html_report import generate_html_report
+from specify_cli.quality.report_exporter import generate_markdown_report
+from specify_cli.quality.json_report import generate_json_report
+from specify_cli.quality.gate_policies import evaluate_quality_gate, GatePolicyManager
+from specify_cli.quality.gate_policies import recommend_gate_policy, format_recommendation
+from specify_cli.quality.quality_history import save_quality_run
+from specify_cli.quality.quality_goals import QualityGoalsManager, format_goal_progress, format_goals_summary
+# Exp 71: Goal-Based Quality Gates - Integration with quality loop
+from specify_cli.quality.goal_gates import (
+    GoalGateMode,
+    GoalGateConfig,
+    create_aware_gate,
+    evaluate_goal_gate,
+    format_goal_gate_result,
+    format_goal_gate_result_json,
+    recommend_goal_gate,
+)
+# Exp 75: Smart Goal Suggestions - Integration with quality loop
+from specify_cli.quality.goal_suggester import (
+    GoalSuggester,
+    suggest_goals,
+    format_suggestions_report,
+    format_suggestions_json,
+)
+# Exp 87: Quality Feedback Loop - Collect results for adaptive configuration
+from specify_cli.quality.feedback_loop import (
+    FeedbackAnalyzer,
+    create_quality_result,
+)
+# Exp 101: Real-time Quality Progress Updates
+from specify_cli.quality.live_progress import (
+    ProgressState,
+    ProgressPhase,
+    ProgressCallback,
+    LiveProgressContext,
+    track_quality_progress,
+)
+# Exp 102: Final Result Card with Actionable Summary
+from specify_cli.quality.result_card import (
+    format_result_card,
+    print_result_card,
+    create_result_card_data,
+    ResultCardFormatter,
+    ColorTheme,
+)
+# Exp 104: Multi-Format Report Export Integration
+from specify_cli.quality.report_exporter import (
+    export_quality_reports,
+    ExportConfig,
+    ReportFormat,
+)
+from typing import List, Optional, Set
+from pathlib import Path
+import time
+
+# Exp 128: Template registry for automatic template selection based on project type
+from specify_cli.quality.template_registry import get_registry
 
 
 class QualityLoop:
-    """Main quality loop coordinator"""
+    """Main quality loop coordinator with priority-aware scoring"""
 
     def __init__(
         self,
@@ -60,7 +119,49 @@ class QualityLoop:
         max_iterations: int = 4,
         threshold_a: float = 0.8,
         threshold_b: float = 0.9,
-        llm_client=None
+        # Exp 128: Project type for automatic template selection
+        project_type: Optional[str] = None,
+        # Exp 132: Blend preset for automatic template blending
+        blend_preset: Optional[str] = None,
+        priority_profile: Optional[str] = None,
+        cascade_strategy: Optional[str] = None,
+        strict_mode: bool = False,
+        lenient_mode: bool = False,
+        llm_client=None,
+        html_output: Optional[str] = None,
+        markdown_output: Optional[str] = None,
+        json_output: Optional[str] = None,
+        include_categories: Optional[List[str]] = None,
+        exclude_categories: Optional[List[str]] = None,
+        # Exp 55: Quality gate policy parameters
+        gate_preset: Optional[str] = None,
+        gate_policy_name: Optional[str] = None,
+        gate_policy_auto: bool = False,
+        # Exp 64: Quality history tracking
+        save_history: bool = True,
+        # Exp 68: Quality goals tracking
+        check_goals: bool = False,
+        # Exp 71: Goal-based quality gates
+        gate_goal_mode: Optional[str] = None,
+        auto_update_goals: bool = False,
+        # Exp 75: Smart goal suggestions
+        suggest_goals: bool = False,
+        auto_apply_goals: bool = False,
+        # Exp 87: Quality feedback collection
+        collect_feedback: bool = False,
+        # Exp 101: Real-time progress updates
+        progress_callback: Optional[ProgressCallback] = None,
+        show_progress: bool = False,
+        progress_animation: str = "spinner",
+        progress_compact: bool = False,
+        # Exp 102: Final result card display
+        show_result_card: bool = False,
+        result_card_compact: bool = False,
+        result_card_theme: str = "default",
+        # Exp 104: Multi-format report export (unified interface)
+        export_reports: Optional[List[str]] = None,
+        export_dir: Optional[str] = None,
+        export_prefix: str = "quality_report",
     ) -> Dict:
         """Run quality loop
 
@@ -71,11 +172,107 @@ class QualityLoop:
             max_iterations: Maximum iterations
             threshold_a: Phase A threshold
             threshold_b: Phase B threshold
+            priority_profile: Optional priority profile name for domain-based weighting
+            project_type: Optional project type for automatic template selection (Exp 128).
+                          Options: web-app, microservice, ml-service, mobile-app, graphql-api,
+                          serverless, desktop, infrastructure. If specified, overrides criteria_name.
+            blend_preset: Optional blend preset name for automatic template blending (Exp 132).
+                          Options: full_stack_secure, microservices_robust, api_first, mobile_backend,
+                          data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform,
+                          devsecops. Takes precedence over project_type if both specified.
+            cascade_strategy: Optional cascade merge strategy (avg/max/min/wgt/weighted)
+            strict_mode: If True, use strict mode (web-app+mobile-app with max strategy)
+            lenient_mode: If True, use lenient mode (default profile with min strategy)
             llm_client: Optional LLM client for refinements
+            html_output: Optional path to save HTML report (e.g., "quality-report.html")
+            markdown_output: Optional path to save Markdown report (e.g., "quality-report.md")
+            json_output: Optional path to save JSON report with category breakdown (e.g., "quality-report.json")
+            include_categories: Only include these categories in JSON report (e.g., ["security", "performance"])
+            exclude_categories: Exclude these categories from JSON report (e.g., ["docs"])
+            gate_preset: Optional quality gate preset name (production, staging, development, ci, strict, lenient) or custom policy name from .speckit/gate-policies.yml
+            gate_policy_name: Optional custom gate policy name from project config (alias for gate_preset)
+            gate_policy_auto: If True, automatically recommend and apply gate policy based on CI environment, branch, project type (Exp 60)
+            save_history: If True, save quality run to history for trend analysis (Exp 64)
+            check_goals: If True, check and update quality goals after run (Exp 68)
+            gate_goal_mode: Optional goal gate mode (strict, moderate, lenient, conservative, balanced) for goal-based quality gates (Exp 71)
+            auto_update_goals: If True, automatically update goal progress during evaluation when using gate_goal_mode (Exp 71)
+            suggest_goals: If True, generate and display goal suggestions after quality run (Exp 75)
+            auto_apply_goals: If True, automatically apply top suggested goal (requires suggest_goals=True) (Exp 75)
+            collect_feedback: If True, collect quality results for feedback loop analysis (Exp 87)
+            progress_callback: Optional callback function for real-time progress updates (Exp 101)
+            show_progress: If True, show animated progress bar during quality loop (Exp 101)
+            progress_animation: Animation style for progress display (spinner, dots, bar, pulse, none) (Exp 101)
+            progress_compact: If True, use compact single-line progress display (Exp 101)
+            show_result_card: If True, display final result card after quality loop completes (Exp 102)
+            result_card_compact: If True, use compact single-line result card format (Exp 102)
+            result_card_theme: Color theme for result card (default, dark, high-contrast, minimal) (Exp 102)
+            export_reports: List of report formats to export (Exp 104). Options: "console", "json", "html", "markdown", "csv"
+                          If specified, overrides html_output, markdown_output, json_output parameters
+            export_dir: Directory to save exported reports (Exp 104)
+            export_prefix: Filename prefix for exported reports (Exp 104)
 
         Returns:
-            Final result with score, status, changes
+            Final result with score, status, changes, and gate evaluation
+
+        Note on project_type (Exp 128):
+            If project_type is specified (e.g., "web-app", "microservice", "ml-service"),
+            it will automatically select the best template combination for that project type.
+            This takes precedence over criteria_name if both are provided.
+            Available project types: web-app, microservice, ml-service, mobile-app,
+            graphql-api, serverless, desktop, infrastructure.
+
+        Note on blend_preset (Exp 132):
+            If blend_preset is specified (e.g., "full_stack_secure", "microservices_robust"),
+            it will automatically apply a pre-configured blend of templates optimized for
+            specific use cases. This takes precedence over both project_type and criteria_name.
+            Available presets: full_stack_secure, microservices_robust, api_first, mobile_backend,
+            data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform, devsecops.
         """
+        # Get project root for custom profiles
+        project_root = str(Path.cwd())
+
+        # Exp 132: Apply blend preset if specified (takes precedence over project_type)
+        if blend_preset:
+            registry = get_registry()
+            preset = registry.get_blend_preset(blend_preset)
+            if preset:
+                # Apply blend preset to create merged criteria
+                resolved_templates = ",".join(preset.templates)
+                criteria_name = resolved_templates
+            else:
+                # Blend preset not found - fall back to criteria_name
+                pass
+
+        # Exp 128: Auto-select templates based on project type (only if blend_preset not used)
+        elif project_type:
+            registry = get_registry()
+            # First, try to get a blend preset recommendation for this project type
+            blend_preset = registry.recommend_blend_preset(project_type)
+            if blend_preset:
+                # Use blend preset if available
+                resolved_templates = ",".join(blend_preset.templates)
+                criteria_name = resolved_templates
+            else:
+                # Fall back to regular template recommendations
+                recommendations = registry.get_recommendations(project_type)
+                if recommendations:
+                    # Use the best matching recommendation (first one)
+                    best_match = recommendations[0]
+                    resolved_templates = ",".join(best_match.templates)
+
+                    # If criteria_name is provided, project_type overrides it
+                    if criteria_name and criteria_name != "default":
+                        # User specified both - use resolved templates but log the override
+                        criteria_name = resolved_templates
+                    else:
+                        # Use project_type-based templates
+                        criteria_name = resolved_templates
+                else:
+                    # No recommendations found for this project type
+                    # Fall back to criteria_name if provided, otherwise use default
+                    if not criteria_name or criteria_name == "default":
+                        criteria_name = "backend"  # Sensible default
+
         # Load criteria (supports comma-separated merge)
         if "," in criteria_name:
             criteria = self.rule_manager.load_merged_criteria(criteria_name)
@@ -88,8 +285,75 @@ class QualityLoop:
         if threshold_b != 0.9:
             criteria.phases["b"].threshold = threshold_b
 
+        # Handle shortcuts: strict_mode and lenient_mode override priority_profile and cascade_strategy
+        # These shortcuts provide convenient presets for common quality scenarios
+        if strict_mode:
+            # Strict mode: most demanding quality checks for fullstack apps
+            # Uses cascade profile web-app+mobile-app with max strategy (highest multipliers per domain)
+            if priority_profile is None:
+                priority_profile = "web-app+mobile-app"
+            if cascade_strategy is None:
+                cascade_strategy = "max"
+        elif lenient_mode:
+            # Lenient mode: relaxed requirements for faster iteration
+            # Uses default profile (all 1.0x multipliers) with min strategy (lowest multipliers)
+            if priority_profile is None:
+                priority_profile = "default"
+            if cascade_strategy is None:
+                cascade_strategy = "min"
+
+        # Validate priority profile if specified
+        if priority_profile:
+            # Handle "auto" - detect from project files
+            if priority_profile == "auto":
+                detected_profile = PriorityProfilesManager.detect_profile(Path(project_root))
+                priority_profile = detected_profile
+            else:
+                # Check for cascade profile syntax (e.g., "web-app+mobile-app")
+                is_cascade, profile_names, cascade_error = PriorityProfilesManager.parse_cascade_profile(priority_profile)
+
+                if cascade_error:
+                    # Invalid cascade syntax - fall back to default
+                    priority_profile = "default"
+                elif not is_cascade:
+                    # Single profile - validate it exists
+                    available_profiles = criteria.list_priority_profiles(project_root)
+                    if priority_profile not in available_profiles and priority_profile != "default":
+                        # Fall back to default if specified profile not found
+                        priority_profile = "default"
+                # else: cascade profile - validation will happen in evaluator
+
         # Set refiner LLM client
         self.refiner.llm_client = llm_client
+
+        # Track start time for history (Exp 64)
+        start_time = time.time()
+
+        # Exp 101: Setup progress tracking
+        progress_context = None
+        if show_progress:
+            progress_context = track_quality_progress(
+                enabled=True,
+                animation=progress_animation,
+                compact=progress_compact,
+            )
+            progress_context.__enter__()
+
+        def _update_progress(phase: ProgressPhase, message: str = "", **kwargs):
+            """Helper to update progress display"""
+            if progress_callback:
+                state = ProgressState(
+                    phase=phase,
+                    iteration=state.iteration,
+                    max_iterations=state.max_iterations,
+                    current_phase_letter=state.phase.value if hasattr(state, 'phase') else "A",
+                    score=state.current_score,
+                    message=message,
+                    details=kwargs,
+                )
+                progress_callback(state)
+            if progress_context:
+                progress_context.update(phase=phase, message=message, **kwargs)
 
         # Initialize state
         run_id = f"{task_alias}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -102,6 +366,7 @@ class QualityLoop:
             phase=Phase.A,
             current_step="PLAN",
             started_at=datetime.now().isoformat(),
+            priority_profile=priority_profile,
         )
         self.state_manager.save_state(state)
         self.state_manager.save_artifact(artifact, task_alias)
@@ -112,7 +377,11 @@ class QualityLoop:
             event_type="plan_created",
             iteration=1,
             phase="A",
-            details={"criteria": criteria_name, "max_iterations": max_iterations}
+            details={
+                "criteria": criteria_name,
+                "max_iterations": max_iterations,
+                "priority_profile": priority_profile,
+            }
         )
 
         # Run iterations
@@ -127,7 +396,21 @@ class QualityLoop:
                 phase=state.phase.value,
             )
 
-            result = self.evaluator.evaluate(artifact, criteria, state.phase.value)
+            # Exp 101: Update progress for evaluation
+            _update_progress(
+                ProgressPhase.EVALUATE,
+                f"Evaluating iteration {state.iteration} Phase {state.phase.value}",
+                iteration=state.iteration,
+            )
+
+            result = self.evaluator.evaluate(
+                artifact,
+                criteria,
+                state.phase.value,
+                priority_profile=priority_profile,
+                cascade_strategy=cascade_strategy,
+                project_root=project_root,
+            )
             state.evaluation = result
             state.current_score = result.score
 
@@ -136,7 +419,19 @@ class QualityLoop:
                 event_type="evaluation_done",
                 iteration=state.iteration,
                 phase=state.phase.value,
-                details={"score": result.score, "passed": result.passed}
+                details={
+                    "score": result.score,
+                    "passed": result.passed,
+                    "priority_profile": priority_profile,
+                }
+            )
+
+            # Exp 101: Update progress with score
+            _update_progress(
+                ProgressPhase.EVALUATE,
+                f"Score: {result.score:.2f} ({'PASS' if result.passed else 'FAIL'})",
+                score=result.score,
+                failed_rules_count=len(result.failed_rules) if hasattr(result, 'failed_rules') else 0,
             )
 
             # Check if passed Phase B
@@ -157,6 +452,13 @@ class QualityLoop:
             if result.passed and state.phase == Phase.A:
                 state.phase = Phase.B
                 self.state_manager.save_state(state)
+
+                # Exp 101: Update progress for phase transition
+                _update_progress(
+                    ProgressPhase.EVALUATE,
+                    "Phase A complete! Switching to Phase B...",
+                )
+
                 self._log_event(
                     task_alias=task_alias,
                     event_type="phase_switched",
@@ -169,6 +471,13 @@ class QualityLoop:
             # CRITIQUE + REFINE (only if failed)
             if not result.passed:
                 state.current_step = "CRITIQUE"
+
+                # Exp 101: Update progress for critique
+                _update_progress(
+                    ProgressPhase.CRITIQUE,
+                    f"Analyzing {len(result.failed_rules)} failed rules",
+                )
+
                 failed_rules_list = [fr.to_dict() for fr in result.failed_rules]
                 critique_result = self.critique.generate(failed_rules_list, artifact)
                 state.critique = critique_result
@@ -182,6 +491,13 @@ class QualityLoop:
                 )
 
                 state.current_step = "REFINE"
+
+                # Exp 101: Update progress for refinement
+                _update_progress(
+                    ProgressPhase.REFINE,
+                    f"Refining artifact ({critique_result.get('addressed', 0)} issues to fix)",
+                )
+
                 artifact = self.refiner.apply(artifact, critique_result)
                 self.state_manager.save_artifact(artifact, task_alias)
 
@@ -215,13 +531,378 @@ class QualityLoop:
         # Clear active loop
         self.state_manager.clear_active_loop()
 
-        return {
+        # Exp 101: Final progress update
+        if progress_context:
+            final_message = "Quality check complete!" if state.status == LoopStatus.completed else "Quality check stopped"
+            progress_context.update(
+                phase=ProgressPhase.COMPLETE,
+                message=final_message,
+                score=state.current_score,
+            )
+
+        result = {
             "state": state.to_dict(),
             "artifact": artifact,
             "score": state.current_score,
             "passed": state.stop.get("passed", False) if state.stop else False,
             "stop_reason": state.stop.get("reason", "") if state.stop else "",
+            "priority_profile": priority_profile,
+            # Exp 105: Additional metadata for enhanced CSV export (trend analysis, BI integration)
+            "run_id": state.run_id,
+            "timestamp": state.started_at,
+            "criteria": criteria_name,
+            "iterations": state.iteration - 1,  # Actual iterations used
+            "max_iterations": state.max_iterations,
         }
+
+        # Exp 55: Evaluate quality gate if specified
+        # Exp 56: Support custom gate policies from project config
+        # Exp 60: Auto-recommend gate policy if requested
+        if gate_policy_auto and not (gate_preset or gate_policy_name):
+            # Auto-recommend gate policy based on context
+            # Get failed categories for recommendation
+            failed_categories = []
+            if result.get("state", {}).get("evaluation", {}).get("failed_rules"):
+                failed_categories = list(set(
+                    r.get("category", "general")
+                    for r in result["state"]["evaluation"]["failed_rules"]
+                ))
+
+            # Get recommendation
+            recommendation = recommend_gate_policy(
+                project_root=Path(project_root),
+                current_score=state.current_score,
+                failed_categories=failed_categories,
+            )
+
+            # Use recommended policy
+            policy_name = recommendation.policy_name
+            gate_result = evaluate_quality_gate(
+                evaluation_result=result,
+                gate_preset=policy_name,
+                project_root=project_root,
+            )
+            gate_result["recommendation"] = recommendation.to_dict()
+            result["gate_result"] = gate_result
+        elif gate_preset or gate_policy_name:
+            # Use gate_policy_name if provided, otherwise use gate_preset
+            policy_name = gate_policy_name or gate_preset
+            gate_result = evaluate_quality_gate(
+                evaluation_result=result,
+                gate_preset=policy_name,
+                project_root=project_root,
+            )
+            result["gate_result"] = gate_result
+
+        # Exp 104: Multi-format report export (unified interface)
+        # If export_reports is specified, use unified ReportExporter
+        if export_reports is not None:
+            try:
+                # Normalize formats: handle comma-separated string and convert to set
+                if isinstance(export_reports, str):
+                    export_reports = [f.strip() for f in export_reports.split(",")]
+                export_formats: Set[ReportFormat] = set(export_reports) & {"console", "json", "html", "markdown", "csv"}
+
+                # Use export_dir if specified, otherwise use legacy parameters for backward compatibility
+                output_directory = export_dir
+                if not output_directory:
+                    # Extract directory from legacy parameters for backward compatibility
+                    if html_output:
+                        output_directory = str(Path(html_output).parent)
+                    elif markdown_output:
+                        output_directory = str(Path(markdown_output).parent)
+                    elif json_output:
+                        output_directory = str(Path(json_output).parent)
+
+                # Export reports using unified interface
+                export_result = export_quality_reports(
+                    result=result,
+                    previous_score=None,  # Could be fetched from history
+                    formats=list(export_formats) if export_formats else None,
+                    output_dir=output_directory,
+                    filename_prefix=export_prefix,
+                    include_timeline=True,
+                    include_details=True,
+                    compact_console=result_card_compact,
+                    console_theme=result_card_theme,
+                    json_pretty=True,
+                )
+
+                # Add export results to output
+                result["export_result"] = {
+                    "formats_generated": list(export_result.reports.keys()),
+                    "output_dir": output_directory,
+                    "total_size_bytes": export_result.total_size_bytes,
+                }
+
+                # Add individual file paths for backward compatibility
+                if "json" in export_result.reports and export_result.reports["json"].path:
+                    result["json_report_path"] = export_result.reports["json"].path
+                if "html" in export_result.reports and export_result.reports["html"].path:
+                    result["html_report_path"] = export_result.reports["html"].path
+                if "markdown" in export_result.reports and export_result.reports["markdown"].path:
+                    result["markdown_report_path"] = export_result.reports["markdown"].path
+                if "csv" in export_result.reports and export_result.reports["csv"].path:
+                    result["csv_report_path"] = export_result.reports["csv"].path
+
+                # Store console output for later display
+                if "console" in export_result.reports:
+                    result["console_output"] = export_result.get_console_output()
+
+            except Exception as e:
+                # Export failure should not break the loop
+                result["export_error"] = str(e)
+        else:
+            # Legacy mode: use individual report generators for backward compatibility
+            # Generate HTML report if requested
+            if html_output:
+                try:
+                    generate_html_report(result, output_path=html_output)
+                    result["html_report_path"] = html_output
+                except Exception as e:
+                    # HTML generation failure should not break the loop
+                    result["html_report_error"] = str(e)
+
+            # Generate Markdown report if requested
+            if markdown_output:
+                try:
+                    generate_markdown_report(result, output_path=markdown_output)
+                    result["markdown_report_path"] = markdown_output
+                except Exception as e:
+                    # Markdown generation failure should not break the loop
+                    result["markdown_report_error"] = str(e)
+
+            # Generate JSON report if requested (Exp 51: JSON Export for CI/CD, Exp 52: Schema validation and category filtering)
+            if json_output:
+                try:
+                    generate_json_report(
+                        result,
+                        output_path=json_output,
+                        pretty=True,
+                        validate=True,
+                        include_categories=include_categories,
+                        exclude_categories=exclude_categories,
+                    )
+                    result["json_report_path"] = json_output
+                except Exception as e:
+                    # JSON generation failure should not break the loop
+                    result["json_report_error"] = str(e)
+
+        # Exp 64: Save to quality history if enabled
+        if save_history:
+            try:
+                duration_seconds = time.time() - start_time
+                history_path = save_quality_run(
+                    result=result,
+                    criteria_name=criteria_name,
+                    duration_seconds=duration_seconds,
+                )
+                if history_path:
+                    result["history_saved"] = True
+                    result["history_path"] = history_path
+            except Exception as e:
+                # History save failure should not break the loop
+                result["history_save_error"] = str(e)
+
+        # Exp 68: Check quality goals if requested
+        if check_goals:
+            try:
+                goals_manager = QualityGoalsManager()
+                goals = goals_manager.get_all_goals()
+
+                if goals:
+                    goal_updates = []
+                    for goal in goals:
+                        progress = goals_manager.update_goal_progress(goal)
+                        goal_updates.append(progress.to_dict())
+
+                    result["goals_checked"] = True
+                    result["goal_updates"] = goal_updates
+
+                    # Get summary
+                    summary = goals_manager.get_goal_summary()
+                    if summary:
+                        result["goal_summary"] = summary.to_dict()
+            except Exception as e:
+                # Goals checking failure should not break the loop
+                result["goals_check_error"] = str(e)
+
+        # Exp 71: Goal-based quality gate evaluation if requested
+        if gate_goal_mode:
+            try:
+                # Validate goal gate mode
+                valid_modes = ["strict", "moderate", "lenient", "conservative", "balanced"]
+                if gate_goal_mode not in valid_modes:
+                    result["goal_gate_error"] = f"Invalid gate_goal_mode: {gate_goal_mode}. Valid modes: {', '.join(valid_modes)}"
+                else:
+                    # Get category scores from evaluation result
+                    category_scores = {}
+                    if "state" in result and "evaluation" in result["state"]:
+                        eval_data = result["state"]["evaluation"]
+                        if "category_scores" in eval_data:
+                            category_scores = eval_data["category_scores"]
+                        elif "categories" in eval_data:
+                            # Fallback: extract from categories dict
+                            category_scores = {
+                                cat: data.get("score", 0.0)
+                                for cat, data in eval_data["categories"].items()
+                            }
+
+                    # Create goal-aware gate with auto-update if requested
+                    gate = create_aware_gate(
+                        name=f"goal-gate-{gate_goal_mode}",
+                        mode=gate_goal_mode,
+                        auto_update=auto_update_goals,
+                    )
+
+                    # Evaluate gate
+                    if auto_update_goals:
+                        # Update goals and evaluate in one call
+                        gate_result = gate.evaluate_and_update(
+                            evaluation_result=result,
+                            score=state.current_score,
+                            category_scores=category_scores,
+                        )
+                    else:
+                        # Just evaluate without updating
+                        gate_result = gate.evaluate(evaluation_result=result)
+
+                    # Add gate result to output
+                    result["goal_gate_result"] = {
+                        "passed": gate_result.passed,
+                        "policy_name": gate_result.policy_name,
+                        "message": gate_result.message,
+                        "details": gate_result.details,
+                        "mode": gate_goal_mode,
+                        "auto_updated": auto_update_goals,
+                    }
+
+                    # Add formatted text output
+                    result["goal_gate_text"] = format_goal_gate_result(gate_result)
+            except Exception as e:
+                # Goal gate evaluation failure should not break the loop
+                result["goal_gate_error"] = str(e)
+
+        # Exp 75: Smart goal suggestions if requested
+        if suggest_goals:
+            try:
+                # Generate goal suggestions
+                suggester = GoalSuggester(
+                    history_dir=None,  # Use default
+                    goals_dir=None,   # Use default
+                )
+
+                # Generate suggestions with correlation analysis
+                suggestion_report = suggester.generate_suggestions(
+                    max_suggestions=10,
+                    include_presets=True,
+                    task_alias=task_alias,
+                    use_correlations=True,
+                )
+
+                # Add suggestions to result
+                result["goal_suggestions"] = suggestion_report.to_dict()
+                result["goal_suggestions_text"] = format_suggestions_report(suggestion_report)
+                result["goal_suggestions_json"] = format_suggestions_json(suggestion_report)
+
+                # Auto-apply top suggestion if requested
+                if auto_apply_goals and suggestion_report.suggestions:
+                    top_suggestion = suggestion_report.suggestions[0]
+
+                    # Apply the suggestion
+                    goals_manager = QualityGoalsManager()
+                    created_goal = goals_manager.create_goal(
+                        name=top_suggestion.name,
+                        description=top_suggestion.description,
+                        goal_type=top_suggestion.goal_type,
+                        target_value=top_suggestion.suggested_target,
+                        category=top_suggestion.category,
+                        window_size=10,
+                    )
+
+                    result["auto_applied_goal"] = created_goal.to_dict()
+                    result["auto_applied_goal_name"] = top_suggestion.name
+            except Exception as e:
+                # Goal suggestion failure should not break the loop
+                result["goal_suggestions_error"] = str(e)
+
+        # Exp 87: Collect feedback for adaptive configuration if requested
+        if collect_feedback:
+            try:
+                # Extract category scores from evaluation result
+                category_scores = {}
+                if "state" in result and "evaluation" in result["state"]:
+                    eval_data = result["state"]["evaluation"]
+                    if "category_scores" in eval_data:
+                        category_scores = eval_data["category_scores"]
+                    elif "categories" in eval_data:
+                        # Fallback: extract from categories dict
+                        category_scores = {
+                            cat: data.get("score", 0.0)
+                            for cat, data in eval_data["categories"].items()
+                        }
+
+                # Extract failed rules
+                failed_rules = []
+                if "state" in result and "evaluation" in result["state"]:
+                    eval_data = result["state"]["evaluation"]
+                    if "failed_rules" in eval_data:
+                        failed_rules = [
+                            fr.get("id", fr.get("rule_id", "unknown"))
+                            for fr in eval_data["failed_rules"]
+                        ]
+
+                # Create quality result
+                quality_result = create_quality_result(
+                    score=state.current_score,
+                    passed=result.get("passed", False),
+                    iteration_count=state.iteration - 1,  # Actual iterations used
+                    criteria=criteria_name.split(",") if "," in criteria_name else [criteria_name],
+                    category_scores=category_scores,
+                    failed_rules=failed_rules,
+                    warnings=[],  # Could extract from evaluation if needed
+                    config_id=priority_profile,
+                    task_alias=task_alias,
+                )
+
+                # Save to feedback analyzer
+                feedback_analyzer = FeedbackAnalyzer()
+                feedback_analyzer.collect_result(quality_result)
+
+                result["feedback_collected"] = True
+            except Exception as e:
+                # Feedback collection failure should not break the loop
+                result["feedback_collect_error"] = str(e)
+
+        # Exp 101: Close progress context
+        if progress_context:
+            progress_context.__exit__(None, None, None)
+
+        # Exp 102: Display final result card if requested
+        if show_result_card:
+            try:
+                # Get previous score for trend indicator (from history if available)
+                previous_score = None
+                if result.get("history_saved") or result.get("history_path"):
+                    # Try to get previous run score
+                    from specify_cli.quality.quality_history import QualityHistoryManager
+                    history_mgr = QualityHistoryManager()
+                    runs = history_mgr.get_recent_runs(task_alias, limit=2)
+                    if len(runs) >= 2:
+                        previous_score = runs[1].score  # Second most recent run
+
+                # Display result card
+                print_result_card(
+                    result=result,
+                    previous_score=previous_score,
+                    compact=result_card_compact,
+                    theme=result_card_theme,
+                )
+            except Exception as e:
+                # Result card display failure should not break the loop
+                result["result_card_error"] = str(e)
+
+        return result
 
     def _check_stagnation(self, state: LoopState, stagnation_count: int) -> bool:
         """Check if score is stagnating

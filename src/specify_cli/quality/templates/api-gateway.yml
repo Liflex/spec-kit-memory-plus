@@ -1,0 +1,802 @@
+name: API Gateway
+version: 1.0
+description: Quality rules for API Gateway configuration (Kong, AWS API Gateway, NGINX, Traefik, Envoy)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  web-app:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.2
+      microservices: 1.0
+      async: 1.0
+      auth: 1.5
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.3
+      ml: 0.5
+      graphql: 1.2
+      microservices: 1.0
+      async: 1.0
+      auth: 1.5
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.3
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.2
+      auth: 1.0
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.2
+      data: 1.5
+      infrastructure: 1.2
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.3
+      auth: 0.8
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.2
+      async: 1.2
+      auth: 1.3
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.2
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.3
+      microservices: 2.0
+      async: 1.3
+      auth: 1.3
+    category_multipliers:
+      security: 1.8
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.3
+      reliability: 1.5
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: gateway.auth_required
+  description: Authentication required for all protected endpoints
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify authentication plugins enabled (JWT, OAuth2, API keys) for protected routes
+  check_type: content
+  category: security
+- id: gateway.auth_mtls
+  description: Mutual TLS (mTLS) configured for sensitive services
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  - infrastructure
+  check: verify mTLS enabled for service-to-service communication
+  check_type: content
+  category: security
+- id: gateway.auth_validation
+  description: JWT/OAuth token validation at gateway edge
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify token validation (signature, expiration, issuer) performed at gateway before routing
+  check_type: content
+  category: security
+- id: gateway.auth_forwarding
+  description: User identity forwarded to upstream services
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify user ID/claims forwarded via headers (X-User-ID, X-Email) to backend services
+  check_type: content
+  category: security
+- id: gateway.rbac_configured
+  description: Role-based access control (RBAC) configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify role/permission checks at gateway level for route access control
+  check_type: content
+  category: security
+- id: gateway.rate_limiting
+  description: Rate limiting configured per route/global
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  check: verify rate limiting plugins enabled with configured limits (requests per minute/hour)
+  check_type: content
+  category: general
+- id: gateway.rate_limiting_strategy
+  description: Appropriate rate limiting strategy (sliding window, token bucket)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify rate limiting algorithm configured for precision (sliding window recommended)
+  check_type: content
+  category: performance
+- id: gateway.throttling_per_client
+  description: Client-specific throttling based on API key or IP
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  check: verify differentiated rate limits for different client tiers (free, premium, enterprise)
+  check_type: content
+  category: performance
+- id: gateway.burst_protection
+  description: Burst protection configured for traffic spikes
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify burst capacity configured to handle temporary traffic spikes
+  check_type: content
+  category: performance
+- id: gateway.cors_configured
+  description: CORS headers properly configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  check: verify CORS configuration with allowed origins, methods, headers (avoid wildcard for production)
+  check_type: content
+  category: general
+- id: gateway.secret_protection
+  description: API keys and secrets not exposed in logs
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify sensitive headers (Authorization, API-Key) redacted from access logs
+  check_type: content
+  category: security
+- id: gateway.tls_enabled
+  description: TLS/HTTPS enabled for all endpoints
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify TLS certificates configured and HTTP redirected to HTTPS
+  check_type: content
+  category: infrastructure
+- id: gateway.tls_version
+  description: Modern TLS version (1.2+) enforced
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify TLS 1.2+ required, TLS 1.0/1.1 disabled
+  check_type: content
+  category: infrastructure
+- id: gateway.waf_integration
+  description: Web Application Firewall (WAF) integrated
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify WAF rules enabled for SQL injection, XSS, and common attack patterns
+  check_type: content
+  category: infrastructure
+- id: gateway.ip_whitelist
+  description: IP whitelist/blacklist configured where appropriate
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify IP allowlist/denylist for admin endpoints or sensitive routes
+  check_type: content
+  category: infrastructure
+- id: gateway.request_validation
+  description: Request validation at gateway (schema, size, type)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  check: verify request payload validation (JSON schema, max size, content type)
+  check_type: content
+  category: security
+- id: gateway.response_transformation
+  description: Response transformation configured for consistency
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify response normalization (envelope, headers, format) applied at gateway
+  check_type: content
+  category: code_quality
+- id: gateway.header_modification
+  description: Request/response headers added/removed as needed
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify header manipulation plugins (add security headers, remove internal headers)
+  check_type: content
+  category: general
+- id: gateway.body_size_limit
+  description: Request body size limits configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  check: verify max request body size configured to prevent oversized payload attacks
+  check_type: content
+  category: performance
+- id: gateway.cache_configured
+  description: Response caching enabled for GET endpoints
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  - caching
+  check: verify cache configuration for cacheable responses (status codes, TTL)
+  check_type: content
+  category: performance
+- id: gateway.cache_keys
+  description: Appropriate cache keys configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - caching
+  check: verify cache key includes relevant parameters (path, query params, auth headers)
+  check_type: content
+  category: performance
+- id: gateway.cache_invalidation
+  description: Cache invalidation strategy defined
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - caching
+  check: verify cache purge/invalidate mechanism for stale data
+  check_type: content
+  category: security
+- id: gateway.circuit_breaker
+  description: Circuit breaker configured for upstream services
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - async
+  check: verify circuit breaker enabled to fail fast when backend is unhealthy
+  check_type: content
+  category: reliability
+- id: gateway.timeouts
+  description: Connect, read, and write timeouts configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify timeout values for connect, send, and receive operations
+  check_type: content
+  category: performance
+- id: gateway.retries_configured
+  description: Retry policy with exponential backoff
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - async
+  check: verify retry configuration with backoff strategy for failed requests
+  check_type: content
+  category: reliability
+- id: gateway.health_checks
+  description: Active health checks for upstream services
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify active health check endpoints configured for backend service monitoring
+  check_type: content
+  category: infrastructure
+- id: gateway.bulkhead
+  description: Bulkhead isolation for concurrent requests
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify concurrent request limits per service to prevent cascading failures
+  check_type: content
+  category: performance
+- id: gateway.load_balancing
+  description: Load balancing strategy configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify load balancing algorithm (round-robin, least-connections, IP hash)
+  check_type: content
+  category: infrastructure
+- id: gateway.service_discovery
+  description: Service discovery integration configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify integration with service registry (Consul, Eureka, etcd) for dynamic routing
+  check_type: content
+  category: infrastructure
+- id: gateway.canary_deployment
+  description: Canary deployment support configured
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify traffic splitting for canary releases (percentage-based routing)
+  check_type: content
+  category: infrastructure
+- id: gateway.blue_green_deployment
+  description: Blue-green deployment support
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify ability to switch traffic between blue and green environments
+  check_type: content
+  category: infrastructure
+- id: gateway.versioning_strategy
+  description: API versioning strategy implemented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify versioning approach (URL path /v1/, header, or query parameter)
+  check_type: content
+  category: general
+- id: gateway.version_deprecation
+  description: Deprecated API version handling
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify sunset headers and warnings for deprecated API versions
+  check_type: content
+  category: reliability
+- id: gateway.metrics_export
+  description: Metrics export to monitoring system
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify metrics export (Prometheus, Datadog) for requests, errors, latency
+  check_type: content
+  category: infrastructure
+- id: gateway.access_logging
+  description: Structured access logging configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify structured logs (JSON format) with request ID, timestamp, status, latency
+  check_type: content
+  category: infrastructure
+- id: gateway.distributed_tracing
+  description: Distributed tracing integration
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify tracing integration (Jaeger, Zipkin, X-Ray) with trace context propagation
+  check_type: content
+  category: infrastructure
+- id: gateway.request_id
+  description: Unique request ID generated and propagated
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify X-Request-ID or similar header generated and forwarded to upstream
+  check_type: content
+  category: infrastructure
+- id: gateway.openapi_export
+  description: OpenAPI/Swagger specification available
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify OpenAPI spec exposed via gateway for API documentation
+  check_type: content
+  category: general
+- id: gateway.developer_portal
+  description: Developer portal or API documentation link
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify developer portal or documentation URL available for API consumers
+  check_type: content
+  category: documentation
+- id: gateway.testing_configuration
+  description: Gateway configuration tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify gateway configuration tests (routes, plugins, policies)
+  check_type: content
+  category: testing
+- id: gateway.chaos_testing
+  description: Chaos testing for failure scenarios
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify resilience testing for backend failures, timeouts, and circuit breaker trips
+  check_type: content
+  category: testing
+- id: gateway.connection_pooling
+  description: Connection pooling configured for upstream connections
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify keepalive connections and pool limits for upstream services
+  check_type: content
+  category: performance
+- id: gateway.compression
+  description: Response compression enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify gzip/brotli compression configured for API responses
+  check_type: content
+  category: performance
+- id: gateway.http2_enabled
+  description: HTTP/2 support enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - performance
+  check: verify HTTP/2 enabled for improved performance and multiplexing
+  check_type: content
+  category: performance
+- id: gateway.config_version_control
+  description: Gateway configuration under version control
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify gateway configuration stored in Git with change history
+  check_type: content
+  category: infrastructure
+- id: gateway.declarative_config
+  description: Declarative configuration (Infrastructure as Code)
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify gateway config defined declaratively (YAML, Terraform, Helm)
+  check_type: content
+  category: infrastructure
+- id: gateway.rolling_updates
+  description: Rolling updates configured for zero downtime
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify rolling update strategy for gateway deployments
+  check_type: content
+  category: infrastructure
+- id: gateway.backup_restore
+  description: Backup and restore procedure documented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  - infrastructure
+  check: verify backup process for gateway configuration and data
+  check_type: content
+  category: documentation
+- id: gateway.security_headers
+  description: Security headers added to responses
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify security headers (X-Frame-Options, X-Content-Type-Options, CSP, HSTS)
+  check_type: content
+  category: general
+- id: gateway.csrf_protection
+  description: CSRF protection enabled for state-changing operations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - gateway
+  check: verify CSRF tokens or same-site cookie policies configured
+  check_type: content
+  category: security
+- id: gateway.api_key_rotation
+  description: API key rotation policy defined
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify API key rotation policy and enforcement mechanism
+  check_type: content
+  category: security
+- id: gateway.api_key_scopes
+  description: API key scopes for permission limits
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - auth
+  - gateway
+  check: verify API keys have scope restrictions (read-only, read-write, admin)
+  check_type: content
+  category: security

@@ -1,267 +1,186 @@
-<div align="center">
-    <img src="./media/logo_large.webp" alt="Spec Kit Logo" width="200" height="200"/>
-    <h1>Spec Kit</h1>
-    <p><strong>Spec-driven development with persistent agent memory</strong></p>
-    <p><a href="docs/ru/README.md">Русская версия</a></p>
-</div>
+# Spec Kit
+
+> **AI-Powered Quality Assurance for Software Specifications**
+
+[![Python](https://img.shields.io/badge/python-3.11+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+
+Spec Kit — система автоматической оценки качества спецификаций ПО. Итеративно проверяет артефакты по набору правил, генерирует критику и применяет улучшения через Quality Loop.
 
 ---
 
-## The Problem
-
-AI coding agents are stateless. Every session starts from zero — no memory of past bugs, no knowledge of proven patterns, no recall of architecture decisions. Your agent makes the same mistakes, asks the same questions, and rediscovers the same solutions. Over and over.
-
-## The Solution
-
-Spec Kit turns your AI agent into a learning system. Every command in the spec-driven workflow — from writing specifications to implementing code — reads from and writes to a persistent memory layer. The agent accumulates project knowledge across sessions: lessons learned, reusable patterns, architecture decisions. Knowledge is saved immediately when discovered, not at the end of a session that might never finish.
-
-**Memory is not a feature bolted onto the workflow. Memory *is* the workflow.**
-
----
-
-## How It Works
-
-```
-Session 1: /speckit.specify → discovers domain rules → saves to memory
-Session 2: /speckit.plan    → reads past lessons → avoids known pitfalls
-Session 3: /speckit.tasks   → recalls patterns → generates better task breakdown
-Session 4: /speckit.implement → applies architecture knowledge → consistent code
-Session 5: bug fix          → learns from mistake → never repeats it
-```
-
-Every command follows the same cycle:
-
-1. **Read** memory at the start (lessons, patterns, architecture decisions)
-2. **Execute** the task with accumulated context
-3. **Write** insights immediately when recognized — don't wait for completion
-
----
-
-## Memory Architecture
-
-Three levels, each serving a different purpose:
-
-| Level | Storage | Purpose | Overhead |
-|-------|---------|---------|----------|
-| **Session** | Native context | Current conversation state | None |
-| **File** | `.claude/memory/*.md` | Persistent project knowledge | ~1-2% tokens |
-| **Vector** | Ollama embeddings | Semantic search across sessions | Optional |
-
-### File Memory (always available)
-
-Three markdown files, auto-created when missing:
-
-| File | Contains | Written when |
-|------|----------|-------------|
-| `lessons.md` | Bugs fixed, pitfalls discovered, non-obvious rules | Agent encounters a non-trivial problem |
-| `patterns.md` | Reusable solutions, proven approaches | A pattern is used successfully 2+ times |
-| `architecture.md` | Technical decisions with rationale | Significant design choices are made |
-
-Before writing, the agent scans existing headers to prevent duplicates. Knowledge accumulates cleanly over time.
-
-### Vector Memory (optional, requires Ollama)
-
-Semantic search via `vector_memory.py` CLI. Finds relevant past experience even when keywords don't match. Useful for large projects with hundreds of memory entries. Gracefully disabled when Ollama is not installed — no checks, no prompts, no errors.
-
----
-
-## Commands
-
-### Core Workflow
-
-The full spec-driven development pipeline. Each command reads memory, executes its task, and saves new insights inline.
-
-| Command | Purpose |
-|---------|---------|
-| `/speckit.specify` | Create feature specification from natural language |
-| `/speckit.clarify` | Ask up to 5 targeted questions to reduce spec ambiguity |
-| `/speckit.plan` | Generate architecture and implementation plan |
-| `/speckit.tasks` | Break plan into dependency-ordered, actionable tasks |
-| `/speckit.analyze` | Cross-artifact consistency analysis (read-only) |
-| `/speckit.implement` | Execute all tasks from tasks.md |
-| `/speckit.checklist` | Generate requirements quality checklist |
-| `/speckit.constitution` | Define project principles and constraints |
-
-### Quick & Combined
-
-| Command | Purpose |
-|---------|---------|
-| `/speckit.features` | Quick feature for small tasks (< 4 hours) — spec + plan + implement |
-| `/speckit.loop` | Quality loop on existing code — iterative evaluate/critique/refine |
-| `/speckit.implementloop` | Implement tasks + quality loop in one command |
-
-### Integration
-
-| Command | Purpose |
-|---------|---------|
-| `/speckit.tobeads` | Import tasks into Beads issue tracker |
-| `/speckit.taskstoissues` | Convert tasks to GitHub issues |
-
----
-
-## Quickstart
-
-### Quick Feature (< 4 hours)
+## Quick Start
 
 ```bash
-/speckit.features Fix the login timeout issue on mobile
+# Clone & install
+git clone https://github.com/github/spec-kit.git
+cd spec-kit
+pip install -r requirements.txt
 ```
 
-The agent will research the codebase, create a minimal plan, implement the fix, suggest tests, and save what it learned to memory.
+### Python API
 
-### Full Workflow
+```python
+from specify_cli.quality import QualityLoop, RuleManager, Evaluator, Scorer, Critique, Refiner
+
+loop = QualityLoop(RuleManager(), Evaluator(), Scorer(), Critique(), Refiner())
+
+result = loop.run(
+    artifact="My software specification...",
+    task_alias="my-spec",
+    criteria_name="backend",
+    max_iterations=4,
+)
+
+print(f"Score: {result['score']:.2f}, Passed: {result['passed']}")
+```
+
+### CLI (Claude Code)
 
 ```bash
-# 1. Write the specification
-/speckit.specify Build a user authentication system with OAuth2
-
-# 2. Clarify ambiguities (optional but recommended)
-/speckit.clarify
-
-# 3. Create architecture plan
-/speckit.plan Using Next.js with PostgreSQL
-
-# 4. Generate tasks
-/speckit.tasks
-
-# 5. Analyze consistency before implementation (optional)
-/speckit.analyze
-
-# 6. Implement
-/speckit.implement
+/speckit.loop --criteria backend                    # Run quality loop
+/speckit.loop --project-type web-app                # Auto-select templates
+/speckit.qa overview                                # Quality dashboard
+/speckit.goals check                                # Check quality goals
+/speckit.alerts check                               # Check for alerts
 ```
 
-### Quality Loop
+---
 
-```bash
-# Improve existing code quality iteratively
-/speckit.loop --criteria code-gen
+## Features
 
-# Security review
-/speckit.loop --criteria security --max-iterations 6
+### Core Engine
 
-# Combine criteria
-/speckit.loop --criteria backend,live-test
+- **Quality Loop** — evaluate, critique, refine (iterative cycle)
+- **13 Criteria Templates** — backend, frontend, security, performance, testing, api-spec, database, docs, config, infrastructure, ui-ux, live-test, code-gen
+- **Priority Profiles** — domain-weighted scoring (web-app, microservice, ml-service, mobile-app, etc.)
+- **Auto Template Selection** — `--project-type` picks the right templates automatically
 
-# Implement + quality loop in one step
-/speckit.implementloop --criteria code-gen --max-iterations 4
-```
+### Quality Management
 
-### Quality Loop Criteria (13 built-in)
+- **Goals** — define targets, track progress, get suggestions
+- **History** — track trends, statistics, run comparison
+- **Insights** — AI-powered recommendations and optimization
+- **Anomalies** — statistical anomaly detection
+- **Benchmarks** — percentile ranking, historical baselines
+- **Alerts** — proactive notifications for quality issues
+- **Debt** — track and prioritize quality debt
+- **Feedback Loop** — adaptive configuration learning
 
-| Criteria | Use for |
-|----------|---------|
-| `api-spec` | API specifications, OpenAPI |
-| `code-gen` | Code generation, functions, classes |
-| `docs` | Documentation, README, guides |
-| `config` | Configuration files, YAML/JSON |
-| `database` | Database schemas, SQL, migrations |
-| `frontend` | Frontend code, React/Vue/Angular |
-| `backend` | Backend services, APIs |
-| `infrastructure` | DevOps, Docker, Kubernetes |
-| `testing` | Test files, unit/integration tests |
-| `security` | Security, auth, XSS/SQLi prevention |
+### Advanced
+
+- **Gate Policies** — environment-specific quality gates (production, staging, ci, etc.)
+- **Quality Plans** — unified improvement strategies with presets
+- **Industry Presets** — fintech, healthcare, ecommerce, saas, gaming, government, education, iot
+- **Auto-Configuration** — one-command project setup with industry detection
+- **Simulation** — what-if analysis before applying changes
+- **Optimization** — Bayesian, genetic, annealing and other methods
+- **Multi-Variant Testing** — A/B/C/n comparison with statistical analysis
+- **Template Blending** — combine templates with union/consensus/weighted modes
+
+### Reporting
+
+- **HTML** — interactive reports with charts
+- **Markdown** — human-readable for documentation
+- **JSON** — machine-readable for CI/CD
+- **Result Cards** — rich console output
+
+---
+
+## Criteria Templates
+
+| Template | Description |
+|----------|-------------|
+| `backend` | Backend API and server-side quality |
+| `frontend` | Frontend UI/UX quality |
+| `security` | Security best practices |
 | `performance` | Performance optimization |
-| `ui-ux` | UI/UX design, accessibility |
-| `live-test` | Real HTTP requests, browser automation, DB verification |
+| `testing` | Test coverage and quality |
+| `api-spec` | API specification completeness |
+| `database` | Database schema and queries |
+| `docs` | Documentation quality |
+| `config` | Configuration management |
+| `infrastructure` | Infrastructure as code |
+| `ui-ux` | User interface and experience |
+| `live-test` | Live testing validation |
+| `code-gen` | Code generation quality |
 
-Combine with commas: `--criteria backend,live-test`
+---
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `/speckit.loop` | Run quality evaluation loop |
+| `/speckit.qa` | QA Dashboard |
+| `/speckit.goals` | Quality goals management |
+| `/speckit.history` | Quality history and trends |
+| `/speckit.insights` | AI-powered insights |
+| `/speckit.anomalies` | Anomaly detection |
+| `/speckit.benchmarks` | Benchmarking |
+| `/speckit.gates` | Gate policies |
+| `/speckit.alerts` | Quality alerts |
+| `/speckit.feedback` | Feedback loop analysis |
+| `/speckit.debt` | Quality debt tracking |
+| `/speckit.simulate` | What-if simulation |
+| `/speckit.plans` | Quality plans |
+| `/speckit.industries` | Industry presets |
+| `/speckit.autoconfig` | Smart auto-configuration |
+| `/speckit.templates` | Template registry |
+| `/speckit.configs` | Loop configurations |
+| `/speckit.profiles` | Priority profiles |
+| `/speckit.optimize` | Quality optimization |
+
+See [docs/cli-reference.md](docs/cli-reference.md) for detailed usage and examples.
+
+---
+
+## Configuration
+
+Basic project config in `.speckit/config.yml`:
+
+```yaml
+quality:
+  criteria: backend
+  max_iterations: 4
+  threshold_a: 0.8
+  threshold_b: 0.9
+  priority_profile: web-app
+  gate_preset: production
+```
+
+See [docs/configuration.md](docs/configuration.md) for full configuration reference.
 
 ---
 
 ## Installation
 
-### Via AI Assistant
+### Prerequisites
 
-Tell your AI assistant:
+- Python 3.11+
+- Git
+- (Optional) Ollama for vector memory
 
-```
-Execute the installation instructions from INSTALL.md
-```
+### Detailed Setup
 
-The assistant will:
-- Copy Spec Kit templates and commands
-- Configure your editor (Claude Code or Cursor)
-- Create memory directory structure
-- Optionally set up Ollama for vector search
-
-See [INSTALL.md](INSTALL.md) for detailed editor-specific instructions.
-
-### Supported Editors
-
-| Editor | Support Level |
-|--------|-------------|
-| **Claude Code** | Full: slash commands, memory, vector search |
-| **Cursor** | Rules-based: `.cursor/rules/`, memory, terminal vector search |
+See [INSTALL.md](INSTALL.md) for comprehensive installation:
+- AI assistant integration (Claude Code, Cursor)
+- Vector memory setup with Ollama
+- CLI command configuration
 
 ---
 
-## Memory in Practice
+## Documentation
 
-### What gets saved
-
-Real examples of memory entries the agent creates:
-
-**lessons.md** — after fixing a bug:
-```markdown
-## PostgreSQL JSONB Index Ignored on Nested Queries
-
-**Date:** 2026-03-10
-**Problem:** GIN index on metadata column not used when querying nested keys with @> operator inside a subquery
-**Solution:** Rewrite as a JOIN with lateral unnest — index is now hit, query time dropped from 4.2s to 12ms
-**Tags:** #postgresql #performance #jsonb
-```
-
-**patterns.md** — after discovering a reusable approach:
-```markdown
-## Optimistic Locking with Version Column
-
-**When to use:** Any entity with concurrent write access from multiple users/services
-**How to implement:** Add `version INT DEFAULT 0` column, include `WHERE version = :expected` in UPDATE, handle StaleObjectError with retry
-```
-
-**architecture.md** — after a design decision:
-```markdown
-## Event Sourcing for Audit Trail
-
-**Date:** 2026-03-08
-**Context:** Regulatory requirement for complete change history on financial transactions
-**Decision:** Event sourcing for transaction aggregate, CQRS with read projections
-**Rationale:** Append-only log satisfies audit requirements; projections keep query performance acceptable
-```
-
-### How memory flows through the workflow
-
-```
-/speckit.specify
-  READ:  lessons.md — "Last auth spec missed OAuth refresh token flow"
-  WRITE: patterns.md — "Domain rule: all API tokens must have configurable TTL"
-
-/speckit.plan
-  READ:  architecture.md — "Project uses event sourcing for audit"
-  READ:  patterns.md — "Optimistic locking pattern for concurrent writes"
-  WRITE: architecture.md — "Chose Redis for session store over JWT"
-
-/speckit.tasks
-  READ:  All three files for comprehensive context
-  WRITE: patterns.md — "Task decomposition: always separate migration from seed data"
-  WRITE: lessons.md — "Non-obvious: auth middleware must come before rate limiter"
-
-/speckit.implement
-  READ:  All three files before each task phase
-  WRITE: Deferred to completion (intentional — avoids mid-implementation noise)
-```
-
----
-
-## Performance
-
-| Metric | Value |
-|--------|-------|
-| Memory read overhead | ~130-280 tokens (headers-first) |
-| Local file search | < 200ms |
-| Vector semantic search | < 1s |
-| Quality loop iteration | < 60s |
+| Document | Description |
+|----------|-------------|
+| [Quality Subsystems](docs/subsystems.md) | Goals, History, Insights, Alerts, Benchmarks, and more |
+| [CLI Reference](docs/cli-reference.md) | All commands with examples |
+| [Configuration](docs/configuration.md) | Config files, profiles, gate policies, alerts |
+| [Templates & Blending](docs/templates.md) | Template registry, blending, presets |
+| [Optimization](docs/optimization.md) | Optimization methods, Pareto, simulation |
+| [Quality Loop](docs/quality-loop.md) | Architecture and internals |
+| [Installation](INSTALL.md) | Full installation guide |
 
 ---
 
@@ -269,32 +188,46 @@ Real examples of memory entries the agent creates:
 
 ```
 spec-kit/
-  templates/
-    commands/         # All slash command templates (12 commands)
-    spec-template.md  # Feature specification template
-    plan-template.md  # Implementation plan template
-    tasks-template.md # Tasks breakdown template
-    checklist-template.md
-    constitution-template.md
-  scripts/
-    bash/             # Shell scripts for prerequisites and setup
-    powershell/       # PowerShell equivalents for Windows
-  docs/               # Documentation
-  media/              # Logos and images
-  INSTALL.md          # AI-executable installation guide
-  CLAUDE.md           # Agent instructions (loaded into every session)
+├── src/specify_cli/quality/   # Core quality engine
+│   ├── models.py              # Data models
+│   ├── rules.py               # Rule management
+│   ├── evaluator.py           # Quality evaluation
+│   ├── scorer.py              # Scoring
+│   ├── critique.py            # Critique generation
+│   ├── refiner.py             # Artifact refinement
+│   ├── loop.py                # Quality loop coordinator
+│   ├── loop_config.py         # Loop configuration
+│   ├── gate_policies.py       # Gate policies
+│   ├── quality_goals.py       # Goals system
+│   ├── quality_history.py     # History tracking
+│   ├── quality_insights.py    # Insights engine
+│   ├── quality_alerting.py    # Alert system
+│   ├── template_registry.py   # Template registry
+│   └── ...                    # Other modules
+├── templates/commands/        # CLI command templates
+├── tests/                     # Test suite
+├── docs/                      # Documentation
+├── INSTALL.md                 # Installation guide
+└── README.md                  # This file
+```
+
+---
+
+## Contributing
+
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -e ".[dev]"
+pytest tests/
 ```
 
 ---
 
 ## License
 
-This project extends [SpecKit](https://github.com/github/spec-kit), licensed under MIT.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## Support
-
-- Open an issue in the repository
-- See [Installation Guide](INSTALL.md) for setup help
-- Check [docs/](docs/) for detailed documentation
+**Spec Kit** — AI-Powered Quality Assurance for Software Specifications

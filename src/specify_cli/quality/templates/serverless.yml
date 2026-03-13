@@ -1,0 +1,881 @@
+name: Serverless & Functions-as-a-Service
+version: 1.0
+description: Quality rules for serverless functions and FaaS platforms (AWS Lambda, Cloud Functions, Azure Functions)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+    category_multipliers:
+      security: 1.5
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.8
+      observability: 1.5
+      reliability: 1.2
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  lambda:
+    multipliers:
+      web: 0.8
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.5
+      mobile: 0.8
+      ml: 0.8
+      graphql: 1.0
+      microservices: 1.2
+      async: 1.2
+      auth: 1.0
+      serverless: 2.0
+    category_multipliers:
+      security: 1.5
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.8
+      observability: 1.5
+      reliability: 1.2
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  serverless-api:
+    multipliers:
+      web: 1.0
+      api: 1.8
+      data: 1.0
+      infrastructure: 1.3
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.3
+      async: 1.5
+      auth: 1.2
+      serverless: 2.0
+    category_multipliers:
+      security: 1.5
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.8
+      observability: 1.5
+      reliability: 1.2
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+  event-driven:
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 1.5
+      infrastructure: 1.5
+      mobile: 0.3
+      ml: 1.0
+      graphql: 0.5
+      microservices: 1.5
+      async: 2.0
+      auth: 0.8
+      serverless: 1.8
+    category_multipliers:
+      security: 1.5
+      performance: 1.2
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.8
+      observability: 1.5
+      reliability: 1.2
+      cicd: 1.0
+      correctness: 1.2
+      accessibility: 0.5
+      ux_quality: 0.5
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: serverless.stateless_design
+  description: Functions are stateless and self-contained
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify no local state stored between invocations; use external services (DynamoDB, S3, Redis) for state management
+  check_type: content
+  category: infrastructure
+- id: serverless.timeout_configuration
+  description: Function timeout configured appropriately
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify timeout set based on expected execution time (max 15 min for Lambda, 60 min for Cloud Functions); avoid max timeout for better cost control
+  check_type: content
+  category: infrastructure
+- id: serverless.memory_configuration
+  description: Memory limit configured based on workload
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify memory allocation (128MB-10GB for Lambda); use power tuning to find optimal balance between memory and cost
+  check_type: content
+  category: infrastructure
+- id: serverless.idempotency
+  description: Functions are idempotent for safe retries
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - api
+  - async
+  check: verify functions handle duplicate executions safely; use idempotency keys or deduplication logic
+  check_type: content
+  category: infrastructure
+- id: serverless.error_handling
+  description: Proper error handling and logging
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - api
+  check: verify try-catch blocks, structured error responses, and error logging with context (request ID, timestamp, error details)
+  check_type: content
+  category: infrastructure
+- id: serverless.security.secrets_management
+  description: No hardcoded secrets; use secret managers
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - auth
+  - infrastructure
+  check: verify secrets stored in AWS Secrets Manager, Parameter Store, Azure Key Vault, or Google Secret Manager; never in environment variables or code
+  check_type: content
+  category: security
+- id: serverless.security.iam_permissions
+  description: Least-privilege IAM permissions configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - auth
+  - infrastructure
+  check: verify IAM roles have minimal required permissions; avoid wildcard permissions; use resource-specific policies
+  check_type: content
+  category: security
+- id: serverless.environment_variables
+  description: Environment variables documented and validated
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify environment variables documented in config/README; validate required variables at function startup
+  check_type: content
+  category: documentation
+- id: serverless.logging_structured
+  description: Structured logging with correlation IDs
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: 'verify JSON-structured logs with fields: timestamp, level, message, request_id, function_name, and optional user_id'
+  check_type: content
+  category: infrastructure
+- id: serverless.monitoring.metrics
+  description: Function metrics and monitoring configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: 'verify CloudWatch Metrics, Prometheus, or platform metrics for: invocations, errors, duration, throttles, concurrent executions'
+  check_type: content
+  category: infrastructure
+- id: serverless.cold_start_optimization
+  description: Cold start optimization implemented
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - performance
+  check: verify minimal dependencies, lazy loading outside handler, connection pooling, or provisioned concurrency for latency-sensitive functions
+  check_type: content
+  category: performance
+- id: serverless.dead_letter_queue
+  description: Dead Letter Queue configured for failed events
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - async
+  check: verify DLQ (SQS, SNS, Pub/Sub) configured for async invocations to capture failed events for analysis and retry
+  check_type: content
+  category: infrastructure
+- id: serverless.retry_policy
+  description: Retry policy configured for async invocations
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - async
+  check: verify retry configuration (max attempts, backoff strategy); exponential backoff recommended with max 2-3 retries
+  check_type: content
+  category: infrastructure
+- id: serverless.concurrency_limits
+  description: Concurrency limits configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify reserved concurrency limits to prevent runaway costs and downstream resource exhaustion
+  check_type: content
+  category: infrastructure
+- id: serverless.input_validation
+  description: Input validation on all function inputs
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - serverless
+  - api
+  check: validate event payload, query parameters, and path parameters before processing; use schema validation (JSON Schema, Zod, Joi)
+  check_type: content
+  category: security
+- id: serverless.response_format
+  description: Consistent response format
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - serverless
+  - api
+  check: 'verify standardized response structure: {statusCode, body (stringified JSON), headers} or appropriate platform format'
+  check_type: content
+  category: code_quality
+- id: serverless.package_optimization
+  description: Deployment package size optimized
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify package size < 50MB (uncompressed); use .zip with minified code, exclude unnecessary files, or use container images for larger packages
+  check_type: content
+  category: performance
+- id: serverless.layer_usage
+  description: Lambda layers for shared dependencies
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify Lambda layers used for shared dependencies across multiple functions to reduce package size and deployment time
+  check_type: content
+  category: infrastructure
+- id: serverless.bundle_size
+  description: Bundle size within platform limits
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: 'verify bundled code size: < 50MB for .zip, < 250MB for container images; use tree-shaking and code splitting'
+  check_type: content
+  category: performance
+- id: serverless.dependency_management
+  description: Dependencies explicitly declared and locked
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify package.json/requirements.txt/Gemfile with lock files (package-lock.json, poetry.lock); use only required dependencies
+  check_type: content
+  category: infrastructure
+- id: serverless.runtime_version
+  description: Runtime version specified and up-to-date
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify runtime version (nodejs20.x, python3.11, etc.) specified; avoid deprecated runtimes; plan upgrades before EOL
+  check_type: content
+  category: infrastructure
+- id: serverless.power_tuning
+  description: Memory-power tuning performed
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify AWS Lambda Power Tuning or similar tool used to find optimal memory allocation for cost and performance
+  check_type: content
+  category: performance
+- id: serverless.provisioned_concurrency
+  description: Provisioned concurrency for latency-critical functions
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify provisioned concurrency enabled for functions requiring consistent start time; use with scheduled scaling for cost optimization
+  check_type: content
+  category: performance
+- id: serverless.observability.tracing
+  description: Distributed tracing enabled
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify X-Ray, OpenTelemetry, or platform tracing enabled for distributed tracing across function boundaries
+  check_type: content
+  category: infrastructure
+- id: serverless.observability.alerts
+  description: Alerts configured for critical failures
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: 'verify alerts for: high error rate (>5%), throttling, timeout spike, DLQ growth, and unusual latency'
+  check_type: content
+  category: infrastructure
+- id: serverless.cost_monitoring
+  description: Cost budgeting and monitoring configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify cost budgets (AWS Budgets), anomaly detection alerts, and regular cost reviews; monitor invocations, duration, and memory
+  check_type: content
+  category: infrastructure
+- id: serverless.graceful_shutdown
+  description: Graceful shutdown handling
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify handling of freezing shutdown signal; close connections, flush logs, complete in-flight requests within shutdown timeout
+  check_type: content
+  category: performance
+- id: serverless.connection_pooling
+  description: Connection pooling reusing across invocations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  - data
+  check: verify database/HTTP clients initialized outside handler for connection reuse; use keep-alive settings
+  check_type: content
+  category: performance
+- id: serverless.warm_invocations
+  description: Keep-warm strategy for cold start mitigation
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify scheduled ping events or provisioned concurrency for functions requiring low latency; avoid for cost-sensitive workloads
+  check_type: content
+  category: performance
+- id: serverless.async_event_processing
+  description: Async event processing patterns
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  check: verify use of event sources (S3, SNS, EventBridge) for async processing; avoid chaining synchronous invocations
+  check_type: content
+  category: infrastructure
+- id: serverless.event_validation
+  description: Event schema validation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - api
+  check: verify event schema validation using platform tools (EventBridge schema registry, API Gateway models) or custom validation
+  check_type: content
+  category: security
+- id: serverless.tests.integration
+  description: Integration tests with real event sources
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - testing
+  check: verify integration tests with actual event sources (localstack, SAM local, or cloud testing) for end-to-end validation
+  check_type: content
+  category: testing
+- id: serverless.tests.unit_coverage
+  description: Unit tests for business logic
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - testing
+  check: verify unit tests for core business logic with mocked event context; target 80%+ coverage
+  check_type: content
+  category: testing
+- id: serverless.security.vulnerability_scan
+  description: Dependency vulnerability scanning
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify vulnerability scanning in CI (npm audit, Snyk, Trivy) for dependencies; fix critical/high vulnerabilities
+  check_type: content
+  category: security
+- id: serverless.security.input_sanitization
+  description: Input sanitization to prevent injection attacks
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  - api
+  check: verify sanitization of user input to prevent SQL injection, NoSQL injection, command injection, and XSS
+  check_type: content
+  category: security
+- id: serverless.security.encryption_transit
+  description: TLS for all external communications
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  check: verify HTTPS/TLS for all external API calls; use encryption SDK for sensitive data
+  check_type: content
+  category: security
+- id: serverless.security.encryption_at_rest
+  description: Encryption at rest for sensitive data
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  - data
+  check: verify encrypted storage (S3 SSE-KMS, DynamoDB encryption, EBS encryption); customer-managed keys for compliance
+  check_type: content
+  category: security
+- id: serverless.security.environment_encryption
+  description: Environment variables and secrets encrypted
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  - auth
+  check: verify environment variables encrypted at rest; use secret managers instead of plaintext env vars for secrets
+  check_type: content
+  category: security
+- id: serverless.security.resource_policies
+  description: Resource-based policies configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  - infrastructure
+  check: verify resource policies restrict access; use source ARN/IP conditions; avoid public access
+  check_type: content
+  category: security
+- id: serverless.infrastructure_as_code
+  description: Infrastructure defined as code
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify functions deployed via IaC (SAM, CDK, Serverless Framework, Terraform, Pulumi); no console deployments
+  check_type: content
+  category: infrastructure
+- id: serverless.deployment_pipeline
+  description: Automated deployment pipeline configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify CI/CD pipeline for automated testing and deployment; stage deployments (dev → staging → prod)
+  check_type: content
+  category: infrastructure
+- id: serverless.canary_deployment
+  description: Canary deployment support
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify canary deployment capability (Lambda versions, aliases, traffic shifting) for safe rollouts
+  check_type: content
+  category: infrastructure
+- id: serverless.observability.cloudwatch_dashboards
+  description: CloudWatch dashboards for monitoring
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: 'verify CloudWatch dashboards with key metrics: invocations, errors, duration, throttles, concurrent executions, and async failures'
+  check_type: content
+  category: infrastructure
+- id: serverless.observability.log_retention
+  description: Log retention policy configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify log retention policy set (minimum 7 days for dev, 30 days for prod); avoid 'Never expire' for cost control
+  check_type: content
+  category: infrastructure
+- id: serverless.s3_event_notifications
+  description: S3 event notifications configured correctly
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  - data
+  check: verify S3 event notifications with proper filters (suffix, prefix); use SQS/SNS for decoupling to avoid throttling
+  check_type: content
+  category: infrastructure
+- id: serverless.dynamodb_streams
+  description: DynamoDB Streams processing configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  - data
+  check: verify DynamoDB Streams processed with batch window; handle errors with partial batch failure and retry
+  check_type: content
+  category: infrastructure
+- id: serverless.scheduled_functions
+  description: Scheduled functions use appropriate rate expressions
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  check: verify rate expressions or cron expressions correctly configured; account for function duration in schedule frequency
+  check_type: content
+  category: infrastructure
+- id: serverless.api_gateway_integration
+  description: API Gateway integration configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - api
+  check: verify API Gateway integration (Lambda proxy vs non-proxy); use HTTP APIs for cost optimization; configure CORS properly
+  check_type: content
+  category: infrastructure
+- id: serverless.cors_configuration
+  description: CORS configured for API endpoints
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - api
+  check: verify CORS headers configured in API Gateway or function response; explicit allowed origins (not '*')
+  check_type: content
+  category: infrastructure
+- id: serverless.request_validation
+  description: API Gateway request validation models
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - api
+  check: verify API Gateway request validation models or Lambda middleware for input validation
+  check_type: content
+  category: security
+- id: serverless.throttling_configuration
+  description: Throttling limits configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - api
+  check: verify API Gateway throttling (rate/burst) and function concurrency limits to protect downstream resources
+  check_type: content
+  category: performance
+- id: serverless.stage_variables
+  description: Stage variables for environment management
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify stage variables (dev/staging/prod) for environment-specific configurations; avoid hardcoding environment values
+  check_type: content
+  category: infrastructure
+- id: serverless.alias_routing
+  description: Alias routing for version management
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify Lambda aliases with weighted routing for canary deployments; use separate aliases for each environment
+  check_type: content
+  category: infrastructure
+- id: serverless.local_development
+  description: Local development environment configured
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify local development tools (SAM local, Serverless offline, localstack) for faster development iteration
+  check_type: content
+  category: infrastructure
+- id: serverless.documentation
+  description: Function documentation complete
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - docs
+  check: 'verify each function documented with: purpose, input schema, output format, event sources, and dependencies'
+  check_type: content
+  category: documentation
+- id: serverless.step_functions
+  description: Step Functions for orchestration
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  - infrastructure
+  check: verify Step Functions used for complex workflows; avoid chaining Lambda synchronously; use wait states for external API calls
+  check_type: content
+  category: infrastructure
+- id: serverless.eventbridge_rules
+  description: EventBridge rules for event routing
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  check: verify EventBridge rules for decoupled event routing; use event schemas for validation
+  check_type: content
+  category: infrastructure
+- id: serverless.sqs_trigger
+  description: SQS trigger with batch processing
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  check: verify SQS trigger configured with appropriate batch size (1-10); handle partial batch failures; use FIFO queues for ordering
+  check_type: content
+  category: infrastructure
+- id: serverless.kinesis_streams
+  description: Kinesis stream processing configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  - data
+  check: verify Kinesis stream processing with batch window; handle errors with retry and DLQ; use enhanced fan-out for low latency
+  check_type: content
+  category: infrastructure
+- id: serverless.mqtt_iot
+  description: MQTT/IoT topic processing
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - async
+  check: verify IoT topic rule processing; batch messages when possible; handle device-specific routing
+  check_type: content
+  category: infrastructure
+- id: serverless.auth_lambda_authorizer
+  description: Lambda authorizer for API authentication
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - auth
+  - api
+  check: verify Lambda authorizer or JWT authorizer for API Gateway; validate JWTs; implement caching for authorizers
+  check_type: content
+  category: security
+- id: serverless.auth.cognito_user_pools
+  description: Cognito user pools configured
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - auth
+  check: verify Cognito user pools for authentication; use JWT authorizer for API Gateway; configure MFA for security
+  check_type: content
+  category: security
+- id: serverless.resource_cleanup
+  description: Automatic cleanup of unused resources
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - infrastructure
+  check: verify lifecycle policies for old log groups, unused versions/aliases, and retired functions; use tags for automation
+  check_type: content
+  category: infrastructure
+- id: serverless.compliance_gdpr
+  description: GDPR compliance for data processing
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  check: verify data minimization, right to erasure implementation, consent management, and data residency compliance
+  check_type: content
+  category: security
+- id: serverless.compliance_audit_logging
+  description: Audit logging for compliance
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - serverless
+  - security
+  - infrastructure
+  check: verify CloudTrail enabled for API calls; audit logging for data access; log retention per compliance requirements
+  check_type: content
+  category: security
+- id: serverless.resilience.circuit_breaker
+  description: Circuit breaker for downstream failures
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify circuit breaker pattern for external API calls; fail fast on repeated failures; implement exponential backoff
+  check_type: content
+  category: performance
+- id: serverless.resilience.bulkhead
+  description: Bulkhead pattern for resource isolation
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - performance
+  check: verify separate Lambda functions for different criticality levels; use concurrency limits for isolation
+  check_type: content
+  category: performance
+- id: serverless.test_event_samples
+  description: Test event samples provided
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - serverless
+  - testing
+  check: verify test event samples saved in console or code repository for each event source
+  check_type: content
+  category: testing

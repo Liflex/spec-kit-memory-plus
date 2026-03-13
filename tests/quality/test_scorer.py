@@ -84,13 +84,13 @@ class TestScorer:
         all_rules = [self.rule1, self.rule2]
         passed_rules = all_rules
         failed_rules = [
-            FailedRule(rule_id="test.rule1", reason="Failed")
+            FailedRule(rule_id="security.rule1", reason="Failed")
         ]
 
         score = self.scorer.calculate_score(passed_rules, all_rules)
         passed = self.scorer.check_passed(score, 0.8, failed_rules)
 
-        # High score but has fail-severity failure
+        # High score but has fail-severity failure (security prefix)
         assert not passed
 
     def test_check_passed_no_fail_severity(self):

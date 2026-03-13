@@ -1,0 +1,1550 @@
+# Desktop Application Quality Rules (Electron/Tauri)
+# Comprehensive quality criteria for cross-platform desktop applications
+
+version: 1.0.0
+criteria_name: Desktop Application Quality
+domain: desktop
+
+priority_profiles:
+  default:
+    weight: 1.0
+    description: Standard desktop application quality requirements
+
+  desktop-first:
+    weight: 2.0
+    description: Projects focused primarily on desktop applications
+    multipliers:
+      desktop: 2.5
+      frontend: 1.5
+      security: 1.8
+
+  cross-platform:
+    weight: 2.2
+    description: Projects targeting multiple desktop platforms (Windows, macOS, Linux)
+    multipliers:
+      desktop: 2.5
+      testing: 1.8
+      infrastructure: 1.3
+
+  electron-app:
+    weight: 2.0
+    description: Electron-based desktop applications
+    multipliers:
+      desktop: 2.5
+      frontend: 2.0
+      security: 1.5
+
+  tauri-app:
+    weight: 2.0
+    description: Tauri-based desktop applications (Rust backend)
+    multipliers:
+      desktop: 2.5
+      backend: 1.8
+      security: 1.8
+
+# ============================================================================
+# PHASE A: Critical Security & Architecture (must-pass)
+# ============================================================================
+
+phase_a:
+  # -------------------------------------------------------------------------
+  # Security: Process Isolation & Context Bridge
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A001
+    severity: fail
+    category: Security
+    title: Enable Context Bridge for IPC Communication
+    description: |
+      Enable contextBridge to securely expose APIs from main process to renderer.
+      Disabling or misconfiguring contextBridge exposes entire Node.js/Electron API
+      to renderer process, creating severe security vulnerabilities.
+    patterns:
+      - file: "**/main.js"
+        must_contain: "contextBridge"
+      - file: "**/preload.js"
+        must_contain: "contextBridge.exposeInMainWorld"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/context-isolation
+      - https://tauri.app/v1/guides/security/
+
+  - id: DESKTOP_A002
+    severity: fail
+    category: Security
+    title: Enable Node Integration in Renderer Must Be Disabled
+    description: |
+      nodeIntegration must be disabled in renderer processes to prevent
+      arbitrary code execution. With nodeIntegration enabled, renderer
+      can access Node.js APIs directly.
+    patterns:
+      - file: "**/main.js"
+        must_not_contain: "nodeIntegration: true"
+      - file: "**/main.js"
+        should_contain: "nodeIntegration: false"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_A003
+    severity: fail
+    category: Security
+    title: Enable Context Isolation for All Windows
+    description: |
+      contextIsolation must be enabled to prevent prototype pollution attacks
+      and isolate renderer's JavaScript context from preload scripts.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "contextIsolation: true"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/context-isolation
+
+  - id: DESKTOP_A004
+    severity: fail
+    category: Security
+    title: Sandbox Renderer Processes
+    description: |
+      Enable sandbox mode for renderer processes to restrict system access.
+      Sandboxed renderers cannot access Node.js APIs directly and must
+      communicate via IPC.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "sandbox: true"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/sandbox
+
+  - id: DESKTOP_A005
+    severity: fail
+    category: Security
+    title: Validate All IPC Messages
+    description: |
+      All IPC messages from renderer must be validated on the main process
+      before execution. Do not trust any input from renderer.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "ipcMain"
+      - file: "**/main.js"
+        should_contain_pattern: "(validate|sanitize|check|verify)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_A006
+    severity: fail
+    category: Security
+    title: Disable Remote Module
+    description: |
+      The remote module is deprecated and dangerous. It allows renderer
+      to access main process modules directly, bypassing security boundaries.
+    patterns:
+      - file: "**/main.js"
+        must_not_contain: "require('@electron/remote')"
+      - file: "**/renderer.js"
+        must_not_contain: "require('@electron/remote')"
+      - file: "**/preload.js"
+        must_not_contain: "require('@electron/remote')"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Security: Content Security & Permissions
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A007
+    severity: fail
+    category: Security
+    title: Implement Content Security Policy (CSP)
+    description: |
+      Define strict CSP headers to prevent XSS attacks and restrict
+      resource loading. CSP is critical for Electron apps loading web content.
+    patterns:
+      - file: "**/index.html"
+        should_contain: "content-security-policy"
+      - file: "**/main.js"
+        should_contain: "Content-Security-Policy"
+    examples:
+      good: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      bad: "default-src *"
+    references:
+      - https://content-security-policy.com
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_A008
+    severity: fail
+    category: Security
+    title: Restrict Navigation to Trusted URLs
+    description: |
+      Implement navigation handlers to prevent loading untrusted content.
+      Only allow navigation to your application's domains.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "will-navigate"
+      - file: "**/main.js"
+        should_contain: "onHeadersReceived"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_A009
+    severity: fail
+    category: Security
+    title: Disable or Restrict DevTools in Production
+    description: |
+      DevTools should be disabled or restricted in production builds to prevent
+      users from inspecting and modifying application behavior.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "openDevTools"
+      - file: "**/main.js"
+        should_contain_pattern: "(isDevelopment|isProd|process.env.NODE_ENV)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_A010
+    severity: fail
+    category: Security
+    title: Securely Handle Native Modules
+    description: |
+      Native modules require special security considerations. Only use
+      reputable native modules and audit their code.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_not_contain_unusual_native_modules: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules
+
+  # -------------------------------------------------------------------------
+  # Security: Secrets & Credentials
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A011
+    severity: fail
+    category: Security
+    title: Never Hardcode Secrets in Desktop App Code
+    description: |
+      Desktop apps are distributed as binaries. Secrets hardcoded in source
+      can be extracted by reverse engineering. Use secure storage APIs.
+    patterns:
+      - file: "**/*.js"
+        must_not_contain: "api_key"
+      - file: "**/*.js"
+        must_not_contain: "secret_key"
+      - file: "**/*.js"
+        must_not_contain: "password="
+      - file: "**/*.js"
+        must_not_contain: "token="
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+      - https://tauri.app/v1/guides/security/
+
+  - id: DESKTOP_A012
+    severity: fail
+    category: Security
+    title: Use Platform Credential Storage
+    description: |
+      Use operating system's credential storage (Keychain on macOS, Credential
+      Manager on Windows, Secret Service API on Linux) instead of storing
+      credentials in plain text or app storage.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(keytar|electron-store-safe|secure-electron-store)"
+      - file: "**/main.js"
+        should_contain_pattern: "(Keychain|CredentialManager|secret-storage)"
+    references:
+      - https://github.com/atom/node-keytar
+
+  # -------------------------------------------------------------------------
+  # Security: Auto-Update & Signing
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A013
+    severity: fail
+    category: Security
+    title: Implement Secure Auto-Update Mechanism
+    description: |
+      Auto-updates must be cryptographically signed and verified before
+      installation. Prevents man-in-the-middle attacks on updates.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(autoUpdater|electron-updater)"
+      - file: "**/main.js"
+        should_contain: "setFeedURL"
+      - file: "package.json"
+        key: "build"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/auto-updater
+      - https://www.electron.build/auto-update
+
+  - id: DESKTOP_A014
+    severity: fail
+    category: Security
+    title: Code Sign Application Binaries
+    description: |
+      Application binaries must be code signed for distribution. Unsigned
+      apps trigger security warnings on macOS and Windows.
+    patterns:
+      - file: "package.json"
+        key: "build"
+        should_contain: "certificateFile"
+      - file: "electron-builder.json"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/code-signing
+      - https://www.electron.build/code-signing
+
+  # -------------------------------------------------------------------------
+  # Tauri-Specific Security
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A015
+    severity: fail
+    category: Security
+    title: Configure Tauri CSP Correctly
+    description: |
+      Tauri requires strict CSP configuration in tauri.conf.json. The default
+      restricts eval(), inline scripts, and dangerous sources.
+    patterns:
+      - file: "src-tauri/tauri.conf.json"
+        key: "tauri.security.csp"
+        should_exist: true
+    references:
+      - https://tauri.app/v1/guides/security/
+
+  - id: DESKTOP_A016
+    severity: fail
+    category: Security
+    title: Restrict Tauri API Allowlist
+    description: |
+      Only expose necessary Tauri APIs to frontend via allowlist configuration.
+      Default-deny all APIs, explicitly enable only what's needed.
+    patterns:
+      - file: "src-tauri/tauri.conf.json"
+        key: "tauri.allowlist"
+        should_exist: true
+    references:
+      - https://tauri.app/v1/guides/features/
+
+  # -------------------------------------------------------------------------
+  # Architecture
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_A017
+    severity: fail
+    category: Architecture
+    title: Implement Proper Application Lifecycle Management
+    description: |
+      Handle application lifecycle events (ready, window-all-closed, activate,
+      before-quit) properly for cross-platform compatibility.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.on('ready'"
+      - file: "**/main.js"
+        should_contain: "app.on('window-all-closed'"
+      - file: "**/main.js"
+        should_contain: "app.on('activate'"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/app-lifecycle
+
+  - id: DESKTOP_A018
+    severity: fail
+    category: Architecture
+    title: Prevent Multiple Application Instances
+    description: |
+      Implement single instance lock to prevent multiple app instances from
+      running simultaneously, which can cause data corruption and confusion.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.requestSingleInstanceLock"
+      - file: "**/main.js"
+        should_contain: "app.on('second-instance'"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/app-lifecycle
+
+# ============================================================================
+# PHASE B: Best Practices & Performance (should-pass)
+# ============================================================================
+
+phase_b:
+  # -------------------------------------------------------------------------
+  # Performance: Resource Management
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B001
+    severity: warn
+    category: Performance
+    title: Implement Memory Leak Prevention
+    description: |
+      Desktop apps run for long periods. Memory leaks accumulate and cause
+      performance degradation. Properly clean up event listeners and references.
+    patterns:
+      - file: "**/renderer.js"
+        should_contain: "(removeEventListener|cleanup|dispose)"
+      - file: "**/main.js"
+        should_contain: "garbage-collect"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  - id: DESKTOP_B002
+    severity: warn
+    category: Performance
+    title: Lazy Load Non-Critical Modules
+    description: |
+      Lazy load modules that aren't needed immediately to reduce startup time
+    and initial memory footprint.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "dynamic import"
+      - file: "**/renderer.js"
+        should_contain: "import("
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  - id: DESKTOP_B003
+    severity: warn
+    category: Performance
+    title: Implement Efficient IPC Communication
+    description: |
+      Batch IPC calls, use synchronous IPC sparingly, and prefer one-way
+      messages when response isn't needed.
+    patterns:
+      - file: "**/renderer.js"
+        should_contain: "ipcRenderer.invoke"
+      - file: "**/main.js"
+        should_contain: "ipcMain.handle"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/ipc
+
+  - id: DESKTOP_B004
+    severity: warn
+    category: Performance
+    title: Enable V8 Optimization Flags
+    description: |
+      Enable V8 optimization flags for better JavaScript performance in
+      renderer processes.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.commandLine.appendSwitch"
+    examples:
+      good: "app.commandLine.appendSwitch('--js-flags', '--max-old-space-size=4096')"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  - id: DESKTOP_B005
+    severity: warn
+    category: Performance
+    title: Optimize Application Bundle Size
+    description: |
+      Large bundle sizes increase download time and disk usage. Use
+      compression, code splitting, and remove unused dependencies.
+    patterns:
+      - file: "package.json"
+        key: "build.compression"
+        should_exist: true
+      - file: "package.json"
+        key: "build.asar"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  # -------------------------------------------------------------------------
+  # Performance: Graphics & Rendering
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B006
+    severity: warn
+    category: Performance
+    title: Enable Hardware Acceleration
+    description: |
+      Hardware acceleration should be enabled for better graphics performance.
+      Disable only if compatibility issues arise.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.disableHardwareAcceleration"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  - id: DESKTOP_B007
+    severity: warn
+    category: Performance
+    title: Use Efficient Web Workers for Heavy Tasks
+    description: |
+      Offload heavy computation to Web Workers to prevent UI freezing.
+      Never block main thread in renderer process.
+    patterns:
+      - file: "**/renderer.js"
+        should_contain: "new Worker("
+      - file: "**/renderer.js"
+        should_contain: "worker.js"
+    references:
+      - https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
+
+  - id: DESKTOP_B008
+    severity: warn
+    category: Performance
+    title: Implement Virtual Scrolling for Large Lists
+    description: |
+      Use virtual scrolling for large data sets to render only visible items.
+      Reduces DOM size and improves scrolling performance.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(react-window|react-virtualized|vue-virtual-scroller)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  # -------------------------------------------------------------------------
+  # UX: Native Platform Integration
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B009
+    severity: warn
+    category: UX
+    title: Implement Native Menus
+    description: |
+      Use platform-native menus (Menu API) for consistency with OS conventions.
+      Include standard menu items (Edit, View, Help).
+    patterns:
+      - file: "**/main.js"
+        should_contain: "Menu.buildFromTemplate"
+      - file: "**/main.js"
+        should_contain: "Menu.setApplicationMenu"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B010
+    severity: warn
+    category: UX
+    title: Implement Native System Tray
+    description: |
+      Use system tray (or taskbar) for quick access and background operation.
+      Follow platform conventions for tray behavior.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "new Tray("
+      - file: "**/main.js"
+        should_contain: "tray.setToolTip"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B011
+    severity: warn
+    category: UX
+    title: Implement Native Notifications
+    description: |
+      Use native notification APIs (Notification API) instead of in-app
+      notifications for better user experience.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "new Notification("
+      - file: "**/renderer.js"
+        should_contain: "new Notification("
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B012
+    severity: warn
+    category: UX
+    title: Implement Native File Dialogs
+    description: |
+      Use platform-native file dialogs (dialog API) instead of custom
+      implementations for consistency and better UX.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "dialog.showOpenDialog"
+      - file: "**/main.js"
+        should_contain: "dialog.showSaveDialog"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B013
+    severity: warn
+    category: UX
+    title: Implement Native Window Controls
+    description: |
+      Use frame: true for native window controls (close, minimize, maximize)
+      unless custom frame is required by design.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "frame:"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  - id: DESKTOP_B014
+    severity: warn
+    category: UX
+    title: Implement Keyboard Shortcuts
+    description: |
+      Implement standard keyboard shortcuts (Cmd/Ctrl+C, Cmd/Ctrl+V, Cmd/Ctrl+Q)
+      and provide customizable shortcuts for common actions.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(globalShortcut|accelerator)"
+      - file: "**/accelerators.js"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B015
+    severity: warn
+    category: UX
+    title: Respect Platform UI Conventions
+    description: |
+      Follow platform-specific UI conventions (macOS traffic lights, Windows
+      controls placement, menu bar location).
+    patterns:
+      - file: "**/main.js"
+        should_contain: "process.platform"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  # -------------------------------------------------------------------------
+  # UX: Window Management
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B016
+    severity: warn
+    category: UX
+    title: Save and Restore Window State
+    description: |
+      Persist window position, size, and state across sessions. Users expect
+      windows to reopen where they left them.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(getPosition|getSize|setPosition|setSize)"
+      - file: "**/store.js"
+        should_contain: "(windowState|bounds)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  - id: DESKTOP_B017
+    severity: warn
+    category: UX
+    title: Implement Splash Screen for Slow Loading
+    description: |
+      Show splash screen if app takes more than 2 seconds to load. Perceived
+      performance is as important as actual performance.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "splashScreen"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  - id: DESKTOP_B018
+    severity: warn
+    category: UX
+    title: Support Multiple Monitors Correctly
+    description: |
+      Handle window positioning across multiple monitors correctly. Remember
+      which monitor window was on.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "screen.getDisplayMatching"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  # -------------------------------------------------------------------------
+  # Accessibility
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B019
+    severity: warn
+    category: Accessibility
+    title: Support Screen Readers
+    description: |
+      Ensure application is accessible via screen readers. Use ARIA attributes
+      and semantic HTML.
+    patterns:
+      - file: "**/index.html"
+        should_contain: "(aria-|role=)"
+      - file: "**/renderer.js"
+        should_contain: "(aria|accessibility)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/accessibility
+
+  - id: DESKTOP_B020
+    severity: warn
+    category: Accessibility
+    title: Support High Contrast and Dark Mode
+    description: |
+      Detect and respect system color scheme preferences. Support high
+      contrast mode for better visibility.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "nativeTheme.shouldUseDarkColors"
+      - file: "**/renderer.js"
+        should_contain: "(prefers-color-scheme|dark-mode)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/accessibility
+
+  # -------------------------------------------------------------------------
+  # Testing
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B021
+    severity: warn
+    category: Testing
+    title: Implement Unit Tests for Main Process
+    description: |
+      Test main process logic (IPC handlers, window management, app lifecycle)
+      with proper mocking of Electron APIs.
+    patterns:
+      - file: "**/*.test.js"
+        should_exist: true
+      - file: "package.json"
+        key: "devDependencies"
+        should_contain: "(spectron|electron-mocha)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/testing
+
+  - id: DESKTOP_B022
+    severity: warn
+    category: Testing
+    title: Implement Integration Tests for IPC
+    description: |
+      Test IPC communication between main and renderer processes. Verify
+      message passing, error handling, and async behavior.
+    patterns:
+      - file: "**/*.spec.js"
+        should_exist: true
+      - file: "**/*.test.js"
+        should_contain: "(ipcMain|ipcRenderer)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/testing
+
+  - id: DESKTOP_B023
+    severity: warn
+    category: Testing
+    title: Implement E2E Tests for User Workflows
+    description: |
+      Test complete user workflows (file operations, settings changes, data
+      persistence) across main and renderer processes.
+    patterns:
+      - file: "**/e2e/**"
+        should_exist: true
+      - file: "package.json"
+        key: "devDependencies"
+        should_contain: "(playwright|spectron)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/testing
+
+  - id: DESKTOP_B024
+    severity: warn
+    category: Testing
+    title: Test on All Target Platforms
+    description: |
+      Test application on all target platforms (Windows, macOS, Linux) to catch
+      platform-specific bugs. Platform differences are common.
+    patterns:
+      - file: "**/.github/workflows/**"
+        should_contain: "(windows|macos|linux)"
+      - file: "**/ci.yml"
+        should_contain: "test"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/testing
+
+  # -------------------------------------------------------------------------
+  # Distribution & Packaging
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B025
+    severity: warn
+    category: Distribution
+    title: Configure Application Metadata
+    description: |
+      Properly configure application metadata (name, version, description,
+      author, license) in package.json and build config.
+    patterns:
+      - file: "package.json"
+        key: "name"
+        should_exist: true
+      - file: "package.json"
+        key: "version"
+        should_exist: true
+      - file: "package.json"
+        key: "description"
+        should_exist: true
+      - file: "package.json"
+        key: "author"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  - id: DESKTOP_B026
+    severity: warn
+    category: Distribution
+    title: Configure Application Icons
+    description: |
+      Provide high-quality application icons for all platforms (.ico for Windows,
+      .icns for macOS, .png for Linux). Icons should be at least 512x512.
+    patterns:
+      - file: "build/**"
+        should_exist: true
+      - file: "build/icon.ico"
+        should_exist: true
+      - file: "package.json"
+        key: "build.icon"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  - id: DESKTOP_B027
+    severity: warn
+    category: Distribution
+    title: Use ASAR Archive for Production
+    description: |
+      Package application code as ASAR archive for protection and performance.
+      ASAR is the default and recommended format for Electron apps.
+    patterns:
+      - file: "package.json"
+        key: "build.asar"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  - id: DESKTOP_B028
+    severity: warn
+    category: Distribution
+    title: Configure Installer for Windows
+    description: |
+      Create proper Windows installer (NSIS or Squirrel) for easy installation
+      and updates. Include desktop shortcut and auto-launch options.
+    patterns:
+      - file: "package.json"
+        key: "build.win"
+        should_exist: true
+    references:
+      - https://www.electron.build/configuration/win
+
+  - id: DESKTOP_B029
+    severity: warn
+    category: Distribution
+    title: Configure DMG for macOS
+    description: |
+      Create DMG disk image for macOS distribution with proper branding and
+      EULA acceptance.
+    patterns:
+      - file: "package.json"
+        key: "build.dmg"
+        should_exist: true
+    references:
+      - https://www.electron.build/configuration/dmg
+
+  - id: DESKTOP_B030
+    severity: warn
+    category: Distribution
+    title: Configure AppImage/DEB/RPM for Linux
+    description: |
+      Create Linux packages in multiple formats (AppImage, DEB, RPM) for
+      different distributions.
+    patterns:
+      - file: "package.json"
+        key: "build.linux"
+        should_exist: true
+    references:
+      - https://www.electron.build/configuration/linux
+
+  # -------------------------------------------------------------------------
+  # Developer Experience
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B031
+    severity: info
+    category: DX
+    title: Implement Hot Reload for Development
+    description: |
+      Enable hot reload for faster development iteration. Renderer changes
+      should refresh without restarting main process.
+    patterns:
+      - file: "package.json"
+        key: "devDependencies"
+        should_contain: "(electron-reload|hot-reload)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/quick-start
+
+  - id: DESKTOP_B032
+    severity: info
+    category: DX
+    title: Separate Development and Production Configurations
+    description: |
+      Use separate configurations for development and production builds.
+      Development should have debugging enabled, production should not.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(isDevelopment|isProd|process.env.NODE_ENV)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/quick-start
+
+  - id: DESKTOP_B033
+    severity: info
+    category: DX
+    title: Implement Source Maps for Debugging
+    description: |
+      Generate source maps for production builds to enable debugging of
+      minified code.
+    patterns:
+      - file: "package.json"
+        key: "build"
+        should_contain: "sourceMaps"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  - id: DESKTOP_B034
+    severity: info
+    category: DX
+    title: Document Build and Release Process
+    description: |
+      Document the build and release process for contributors. Include
+      code signing instructions and update server setup.
+    patterns:
+      - file: "**/BUILD.md"
+        should_exist: true
+      - file: "**/RELEASE.md"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  # -------------------------------------------------------------------------
+  # Cross-Platform Compatibility
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B035
+    severity: warn
+    category: Compatibility
+    title: Handle Platform-Specific Paths
+    description: |
+      Use app.getPath() API for platform-agnostic path handling. Different
+      platforms use different path separators and conventions.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.getPath"
+      - file: "**/main.js"
+        should_not_contain: "C:\\"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/file-paths
+
+  - id: DESKTOP_B036
+    severity: warn
+    category: Compatibility
+    title: Handle Platform-Specific File System Differences
+    description: |
+      Account for file system differences (case sensitivity, permission models,
+      max path length) across platforms.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(process.platform|fs.constants)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/file-paths
+
+  - id: DESKTOP_B037
+    severity: warn
+    category: Compatibility
+    title: Test on Different Screen Densities (DPI)
+    description: |
+      Test application on different screen densities (Retina, 4K, normal DPI).
+      Handle scaling correctly for sharp rendering.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "screen.getPrimaryDisplay()"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  # -------------------------------------------------------------------------
+  # Error Handling & Logging
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B038
+    severity: warn
+    category: Reliability
+    title: Implement Global Error Handlers
+    description: |
+      Catch unhandled errors and promise rejections to prevent app crashes.
+      Log errors for debugging.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "process.on('uncaughtException'"
+      - file: "**/main.js"
+        should_contain: "process.on('unhandledRejection'"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/error-handling
+
+  - id: DESKTOP_B039
+    severity: warn
+    category: Reliability
+    title: Implement Structured Logging
+    description: |
+      Use structured logging with levels (debug, info, warn, error) for
+      better debugging and monitoring.
+    patterns:
+      - file: "**/logger.js"
+        should_exist: true
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(winston|pino|electron-log)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/error-handling
+
+  - id: DESKTOP_B040
+    severity: warn
+    category: Reliability
+    title: Implement Crash Reporting
+    description: |
+      Integrate crash reporting (Sentry, Crashpad, Breakpad) to track and
+      fix production crashes.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(crashReporter|@sentry/electron)"
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "@sentry/electron"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/error-handling
+
+  # -------------------------------------------------------------------------
+  # Tauri-Specific Best Practices
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B041
+    severity: warn
+    category: Performance
+    title: Leverage Tauri's Small Bundle Size
+    description: |
+      Tauri apps are significantly smaller than Electron apps. Take advantage
+      of this by avoiding unnecessary dependencies.
+    patterns:
+      - file: "src-tauri/Cargo.toml"
+        should_exist: true
+      - file: "src-tauri/tauri.conf.json"
+        key: "tauri.bundle"
+        should_exist: true
+    references:
+      - https://tauri.app/v1/guides/bundle/
+
+  - id: DESKTOP_B042
+    severity: warn
+    category: Security
+    title: Use Rust's Memory Safety in Tauri Backend
+    description: |
+      Leverage Rust's memory safety for backend operations. Prefer Rust
+      implementations over Node.js for sensitive operations.
+    patterns:
+      - file: "src-tauri/src/**"
+        should_exist: true
+      - file: "src-tauri/Cargo.toml"
+        key: "dependencies"
+        should_exist: true
+    references:
+      - https://tauri.app/v1/guides/features/
+
+  - id: DESKTOP_B043
+    severity: info
+    category: DX
+    title: Use Tauri CLI for Development
+    description: |
+      Use Tauri CLI (tauri dev, tauri build) for development and building.
+      It handles dev server and hot reload automatically.
+    patterns:
+      - file: "package.json"
+        key: "scripts"
+        should_contain: "tauri"
+    references:
+      - https://tauri.app/v1/guides/development/
+
+  - id: DESKTOP_B044
+    severity: info
+    category: Distribution
+    title: Configure Tauri Updater
+    description: |
+      Configure Tauri's built-in updater for automatic updates. Supports
+      both static and dynamic update servers.
+    patterns:
+      - file: "src-tauri/tauri.conf.json"
+        key: "tauri.updater"
+        should_exist: true
+    references:
+      - https://tauri.app/v1/guides/distribution/update
+
+  # -------------------------------------------------------------------------
+  # Internationalization
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B045
+    severity: info
+    category: Internationalization
+    title: Implement i18n for Multiple Languages
+    description: |
+      Support multiple languages with proper i18n implementation. Use
+      established i18n libraries.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(i18next|vue-i18n|react-intl)"
+      - file: "**/locales/**"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B046
+    severity: info
+    category: Internationalization
+    title: Respect Locale Settings
+    description: |
+      Detect and respect system locale settings for date/time formatting,
+      number formatting, and text direction.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.getLocale"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  # -------------------------------------------------------------------------
+  # Analytics & Telemetry
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B047
+    severity: info
+    category: Analytics
+    title: Implement Privacy-Conscious Analytics
+    description: |
+      Implement analytics with user consent. Track usage patterns without
+      collecting personal information.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(posthog-rn|segment|mixpanel)"
+      - file: "**/analytics.js"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  - id: DESKTOP_B048
+    severity: info
+    category: Analytics
+    title: Provide Opt-Out for Telemetry
+    description: |
+      Always provide opt-out mechanism for telemetry. Respect user privacy
+      choices and make it easy to disable.
+    patterns:
+      - file: "**/settings.js"
+        should_contain: "(telemetry|analytics|optOut)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Documentation
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B049
+    severity: info
+    category: Documentation
+    title: Document Platform-Specific Features
+    description: |
+      Document platform-specific features and limitations. Users need to know
+      what works on their platform.
+    patterns:
+      - file: "**/PLATFORM_SUPPORT.md"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B050
+    severity: info
+    category: Documentation
+    title: Document Keyboard Shortcuts
+    description: |
+      Document all keyboard shortcuts in help documentation. Users expect
+      keyboard shortcuts to be discoverable.
+    patterns:
+      - file: "**/SHORTCUTS.md"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  # -------------------------------------------------------------------------
+  # Compliance & Legal
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B051
+    severity: warn
+    category: Compliance
+    title: Include LICENSE File in Distribution
+    description: |
+      Include LICENSE file in application distribution. Electron apps should
+      display license in about dialog or help menu.
+    patterns:
+      - file: "LICENSE"
+        should_exist: true
+      - file: "**/about.js"
+        should_contain: "(license|LICENSE)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging
+
+  - id: DESKTOP_B052
+    severity: warn
+    category: Compliance
+    title: Comply with GDPR/Privacy Regulations
+    description: |
+      If collecting user data, comply with GDPR and other privacy regulations.
+      Provide privacy policy and data export/deletion mechanisms.
+    patterns:
+      - file: "**/privacy.md"
+        should_exist: true
+      - file: "**/privacy.js"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Performance Monitoring
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B053
+    severity: info
+    category: Performance
+    title: Monitor App Startup Time
+    description: |
+      Track application startup time in production. Slow startup affects user
+      satisfaction. Target < 3 seconds on average hardware.
+    patterns:
+      - file: "**/metrics.js"
+        should_contain: "(startupTime|performance.now)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  - id: DESKTOP_B054
+    severity: info
+    category: Performance
+    title: Monitor Memory Usage
+    description: |
+      Track memory usage in production. Memory leaks cause performance issues.
+      Alert if memory grows continuously.
+    patterns:
+      - file: "**/metrics.js"
+        should_contain: "(memoryUsage|process.memoryUsage)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/performance
+
+  # -------------------------------------------------------------------------
+  # Offline Support
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B055
+    severity: info
+    category: Reliability
+    title: Implement Offline Mode
+    description: |
+      Desktop apps should work without internet connection. Cache data locally
+      and handle offline state gracefully.
+    patterns:
+      - file: "**/offline.js"
+        should_exist: true
+      - file: "**/renderer.js"
+        should_contain: "(navigator.onLine|offline)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/offline
+
+  # -------------------------------------------------------------------------
+  # Database & Storage
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B056
+    severity: warn
+    category: Data
+    title: Use Appropriate Database for Local Storage
+    description: |
+      Use SQLite or LevelDB for local storage. These are designed for
+      embedded use and work well with desktop apps.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(better-sqlite3|sqlite3|level)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/data-storage
+
+  - id: DESKTOP_B057
+    severity: warn
+    category: Data
+    title: Implement Data Migration Strategy
+    description: |
+      Plan for data migration when app schema changes. Users upgrade apps
+      and expect their data to work across versions.
+    patterns:
+      - file: "**/migrations/**"
+        should_exist: true
+      - file: "**/migrate.js"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/data-storage
+
+  # -------------------------------------------------------------------------
+  # Window Behavior
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B058
+    severity: info
+    category: UX
+    title: Implement Minimize to Tray
+    description: |
+      Allow minimizing to system tray instead of taskbar. Common for
+      background apps (music players, chat apps).
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(minimize|tray|hide)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/native-ui
+
+  - id: DESKTOP_B059
+    severity: info
+    category: UX
+    title: Implement Confirm Dialog on Quit with Unsaved Changes
+    description: |
+      Show confirmation dialog when user tries to quit with unsaved changes.
+      Prevent data loss.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "before-quit"
+      - file: "**/confirm.js"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/window-customization
+
+  # -------------------------------------------------------------------------
+  # Accessibility (Extended)
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B060
+    severity: info
+    category: Accessibility
+    title: Support Keyboard Navigation
+    description: |
+      Ensure all functionality is accessible via keyboard. Include proper
+      tab order and focus management.
+    patterns:
+      - file: "**/renderer.js"
+        should_contain: "(focus|tabIndex|keyboard)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/accessibility
+
+  # -------------------------------------------------------------------------
+  # Custom Protocol
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B061
+    severity: warn
+    category: Security
+    title: Use Custom Protocol for Local Resources
+    description: |
+      Use custom protocol (app://) instead of file:// for loading local
+      resources. file:// has security restrictions.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "protocol.registerFileProtocol"
+      - file: "**/main.js"
+        should_contain: "app://"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/online-offline-events
+
+  # -------------------------------------------------------------------------
+  # URL Scheme Handling
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B062
+    severity: info
+    category: Features
+    title: Register Custom URL Scheme
+    description: |
+      Register custom URL scheme (myapp://) for deep linking from other apps
+      and browsers.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "app.setAsDefaultProtocolClient"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app
+
+  # -------------------------------------------------------------------------
+  # Background Tasks
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B063
+    severity: warn
+    category: Performance
+    title: Use Power Saver Features for Background Tasks
+    description: |
+      Use native APIs to schedule background tasks efficiently. Respect
+      battery life and system power states.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(powerMonitor|powerSaveBlocker)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/offline
+
+  # -------------------------------------------------------------------------
+  # Native Modules
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B064
+    severity: warn
+    category: Compatibility
+    title: Handle Native Module Rebuilds
+    description: |
+      Native modules must be rebuilt for each Electron version. Implement
+      automatic rebuild in postinstall script.
+    patterns:
+      - file: "package.json"
+        key: "scripts.postinstall"
+        should_contain: "(electron-rebuild|npm rebuild)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules
+
+  # -------------------------------------------------------------------------
+  # Window Persistence
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B065
+    severity: info
+    category: UX
+    title: Persist User Preferences
+    description: |
+      Persist user preferences (theme, language, settings) across sessions.
+      Use electron-store or similar for easy key-value storage.
+    patterns:
+      - file: "package.json"
+        key: "dependencies"
+        should_contain: "(electron-store|conf)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/data-storage
+
+  # -------------------------------------------------------------------------
+  # Security Headers
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B066
+    severity: warn
+    category: Security
+    title: Set Security Headers for Web Content
+    description: |
+      Set security headers (X-Content-Type-Options, X-Frame-Options) for
+      web content loaded in the app.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "session.fromPartition"
+      - file: "**/main.js"
+        should_contain: "(webRequest|headers)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Child Processes
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B067
+    severity: warn
+    category: Security
+    title: Sanitize Child Process Arguments
+    description: |
+      When spawning child processes, sanitize all arguments. Never pass
+      unsanitized user input to child processes.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(spawn|exec|child_process)"
+      - file: "**/main.js"
+        should_contain: "(sanitize|validate)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Window Opener
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B068
+    severity: warn
+    category: Security
+    title: Restrict Window Opener Navigation
+    description: |
+      Restrict navigation from window.open() calls. Validate or block
+      external URLs opened via window opener.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "new-window"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Embedded Content
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B069
+    severity: warn
+    category: Security
+    title: Validate Embedded Content Permissions
+    description: |
+      When embedding content (iframe, webview), validate permissions and
+      restrict access to dangerous APIs.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "(webview|iframe)"
+      - file: "**/main.js"
+        should_contain: "(preload|permission)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # External Protocol Handling
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B070
+    severity: warn
+    category: Security
+    title: Validate External Protocol Handlers
+    description: |
+      Validate external protocol handlers (mailto://, custom:// schemes).
+      Prevent protocol injection attacks.
+    patterns:
+      - file: "**/main.js"
+        should_contain: "setAsDefaultProtocolClient"
+      - file: "**/main.js"
+        should_contain: "(validate|sanitize)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app
+
+  # -------------------------------------------------------------------------
+  # Session Storage
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B071
+    severity: info
+    category: Data
+    title: Use Session Storage for Temporary Data
+    description: |
+      Use session storage for temporary data that should be cleared when
+      app closes. Use persistent storage for user data.
+    patterns:
+      - file: "**/renderer.js"
+        should_contain: "(sessionStorage|localStorage)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/data-storage
+
+  # -------------------------------------------------------------------------
+  # Certificate Validation
+  #---------
+  - id: DESKTOP_B072
+    severity: warn
+    category: Security
+    title: Validate SSL/TLS Certificates
+    description: |
+      Do not disable certificate validation. Properly validate SSL/TLS
+      certificates for all HTTPS requests.
+    patterns:
+      - file: "**/main.js"
+        must_not_contain: "rejectUnauthorized: false"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/security
+
+  # -------------------------------------------------------------------------
+  # Update Privacy
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B073
+    severity: info
+    category: Privacy
+    title: Respect User Privacy for Auto-Updates
+    description: |
+      Allow users to opt-out of automatic updates. Provide manual update
+      checking option. Collect minimal update telemetry.
+    patterns:
+      - file: "**/settings.js"
+        should_contain: "(autoUpdate|checkForUpdates)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/auto-update
+
+  # -------------------------------------------------------------------------
+  # Documentation for Developers
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B074
+    severity: info
+    category: Documentation
+    title: Document IPC Communication Patterns
+    description: |
+      Document IPC channel names, message formats, and response patterns
+      for other developers working on the codebase.
+    patterns:
+      - file: "**/IPC.md"
+        should_exist: true
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/ipc
+
+  # -------------------------------------------------------------------------
+  # Build Optimization
+  # -------------------------------------------------------------------------
+  - id: DESKTOP_B075
+    severity: info
+    category: Performance
+    title: Optimize Build for Target Architectures
+    description: |
+      Build separate binaries for different architectures (x64, arm64).
+      Universal binaries are larger but more convenient.
+    patterns:
+      - file: "package.json"
+        key: "build"
+        should_contain: "(arch|target)"
+    references:
+      - https://www.electronjs.org/docs/latest/tutorial/tutorial-packaging

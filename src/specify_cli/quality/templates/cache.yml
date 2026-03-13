@@ -1,0 +1,870 @@
+name: Cache
+version: 1.0
+description: Quality rules for caching systems (Redis, Memcached, CDN, in-memory caches) covering configuration, invalidation, security, and observability
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.0
+      grpc: 1.0
+      messaging: 1.0
+      caching: 1.0
+    category_multipliers:
+      security: 1.2
+      performance: 1.8
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.2
+      reliability: 1.0
+      cicd: 0.8
+      correctness: 1.0
+      accessibility: 0.5
+      ux_quality: 0.5
+  high-traffic:
+    multipliers:
+      web: 1.8
+      api: 1.5
+      data: 1.3
+      infrastructure: 1.4
+      mobile: 1.2
+      ml: 0.6
+      graphql: 1.3
+      microservices: 1.3
+      async: 1.2
+      auth: 1.0
+      serverless: 0.8
+      realtime: 1.0
+      grpc: 1.2
+      messaging: 0.8
+      caching: 2.0
+    description: High-traffic web application with aggressive caching strategy
+    category_multipliers: &id001
+      security: 1.0
+      performance: 2.0
+      testing: 0.8
+      documentation: 0.5
+      code_quality: 0.8
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.2
+      cicd: 0.8
+      correctness: 1.0
+      accessibility: 0.5
+      ux_quality: 1.0
+  distributed-system:
+    multipliers:
+      web: 1.0
+      api: 1.3
+      data: 1.5
+      infrastructure: 1.8
+      mobile: 0.8
+      ml: 0.8
+      graphql: 1.0
+      microservices: 2.0
+      async: 1.3
+      auth: 1.2
+      serverless: 0.7
+      realtime: 1.0
+      grpc: 1.5
+      messaging: 1.5
+      caching: 2.0
+    description: Distributed microservices with shared distributed cache
+    category_multipliers:
+      security: 1.2
+      performance: 1.8
+      testing: 1.0
+      documentation: 0.6
+      code_quality: 0.8
+      infrastructure: 1.3
+      observability: 1.2
+      reliability: 1.0
+      cicd: 0.8
+      correctness: 1.0
+      accessibility: 0.5
+      ux_quality: 0.5
+  real-time-api:
+    multipliers:
+      web: 1.5
+      api: 2.0
+      data: 1.2
+      infrastructure: 1.0
+      mobile: 1.2
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.2
+      async: 1.5
+      auth: 1.0
+      serverless: 1.2
+      realtime: 1.8
+      grpc: 1.5
+      messaging: 1.0
+      caching: 1.8
+    description: Real-time API with low-latency caching requirements
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: cache.config.ttl_configured
+  description: Cache entries have Time-To-Live (TTL) configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify all cache entries have explicit TTL (no infinite TTL, appropriate expiration based on data freshness requirements)
+  check_type: content
+  category: performance
+- id: cache.config.ttl_hierarchy
+  description: TTL values follow hierarchy (L1 > L2 > L3)
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify multi-layer cache has descending TTL (browser > CDN > application cache > database)
+  check_type: content
+  category: performance
+- id: cache.config.max_memory_limit
+  description: Cache has max memory limit configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache server has maxmemory limit (Redis maxmemory, Memcached -m) to prevent OOM
+  check_type: content
+  category: performance
+- id: cache.config.eviction_policy
+  description: Cache eviction policy configured appropriately
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify eviction policy matches use case (LRU for general, LFU for hot data, allkeys-lru for simple caching)
+  check_type: content
+  category: performance
+- id: cache.config.max_entries_limit
+  description: In-memory cache has max entries limit
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify in-memory caches (guava, caffeine, lru-cache) have maximum size configured
+  check_type: content
+  category: performance
+- id: cache.config.expiration_strategy
+  description: Expiration strategy matches data access patterns
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify expiration strategy (sliding vs absolute TTL) matches how data is accessed
+  check_type: content
+  category: performance
+- id: cache.config.connection_pooling
+  description: Cache client uses connection pooling
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify cache client uses connection pool or persistent connections (no reconnect per operation)
+  check_type: content
+  category: performance
+- id: cache.config.timeouts_configured
+  description: Cache operations have timeouts configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - async
+  check: verify cache get/set operations have connect timeout and read timeout configured
+  check_type: content
+  category: performance
+- id: cache.config.serializer_configured
+  description: Cache serialization strategy configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify serialization format (JSON, MessagePack, Protobuf) chosen and versioned for compatibility
+  check_type: content
+  category: performance
+- id: cache.invalidation.write_invalidate
+  description: Write operations invalidate corresponding cache entries
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: 'verify writes trigger cache invalidation (cache-aside pattern: delete on update, not update cache)'
+  check_type: content
+  category: security
+- id: cache.invalidation.tag_based_invalidation
+  description: Tag-based invalidation for related entries
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify related cache entries share tags for bulk invalidation (e.g., user:123:* invalidates all user 123 data)
+  check_type: content
+  category: security
+- id: cache.invalidation.versioned_keys
+  description: Cache keys include version for forced invalidation
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify cache keys include data version or checksum for cache busting on schema changes
+  check_type: content
+  category: security
+- id: cache.invalidation.warmup_strategy
+  description: Cache warmup strategy after invalidation
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify cache is pre-warmed after bulk invalidation or restart to prevent thundering herd
+  check_type: content
+  category: security
+- id: cache.invalidation.predictive_invalidation
+  description: Predictive invalidation for time-sensitive data
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify cache invalidates before TTL expiration for predictable data changes (scheduled updates)
+  check_type: content
+  category: security
+- id: cache.stampede.lock_on_miss
+  description: Cache miss uses lock to prevent stampede
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - async
+  check: verify cache miss acquires distributed lock (Redis SETNX, Memcached ADD) before fetching from source
+  check_type: content
+  category: performance
+- id: cache.stampede.early_expiration
+  description: Probabilistic early expiration for hot keys
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify hot keys use probabilistic early expiration (expire randomly within 10% of TTL) to spread load
+  check_type: content
+  category: performance
+- id: cache.stampede.request_coalescing
+  description: Concurrent requests coalesced on cache miss
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - async
+  check: verify multiple concurrent requests for same key wait for single source fetch (not multiple fetches)
+  check_type: content
+  category: performance
+- id: cache.distributed.consistency_strategy
+  description: Distributed cache has consistency strategy
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify distributed cache uses consistent hashing or has strategy for handling node failures
+  check_type: content
+  category: performance
+- id: cache.distributed.replication_configured
+  description: Cache data replicated for high availability
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache cluster uses replication (Redis Replica, Memcached replication) for failover
+  check_type: content
+  category: performance
+- id: cache.distributed.cluster_topology
+  description: Cluster topology configured for locality
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache cluster topology optimizes for data locality (client-side routing, proximity-based sharding)
+  check_type: content
+  category: performance
+- id: cache.distributed.failover_handling
+  description: Client handles cache node failure gracefully
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - async
+  check: verify cache client handles node failure (retry, fail-open to source, circuit breaker)
+  check_type: content
+  category: performance
+- id: cache.distributed.sharding_strategy
+  description: Sharding strategy distributes load evenly
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify sharding strategy (consistent hashing, rendezvous hashing) prevents hotspots
+  check_type: content
+  category: performance
+- id: cache.security.authentication_enabled
+  description: Cache requires authentication
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify cache server requires authentication (Redis AUTH, Memcached SASL, AWS ElastiCache IAM)
+  check_type: content
+  category: security
+- id: cache.security.tls_encryption
+  description: Cache connections use TLS
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify client connections use TLS (rediss://, memcached+tls://) for in-transit encryption
+  check_type: content
+  category: security
+- id: cache.security.sensitive_data_not_cached
+  description: Sensitive data not cached or encrypted
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify no passwords, tokens, or full PII in cache (cache encrypted references or hashed values only)
+  check_type: content
+  category: security
+- id: cache.security.key_naming_convention
+  description: Cache keys follow naming convention
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - docs
+  check: verify cache keys use structured naming (namespace:type:id) for management and debugging
+  check_type: content
+  category: performance
+- id: cache.security.vpc_isolation
+  description: Cache accessible only from VPC
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache endpoints in private subnets with VPC-only access (no public IP)
+  check_type: content
+  category: performance
+- id: cache.security.command_filtering
+  description: Dangerous cache commands disabled
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify dangerous commands disabled (Redis FLUSHDB, KEYS, CONFIG) or restricted to admin
+  check_type: content
+  category: security
+- id: cache.security.encryption_at_rest
+  description: Cache data encrypted at rest
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify cache enables encryption at rest (AWS ElastiCache encryption, Redis Enterprise) for sensitive data
+  check_type: content
+  category: security
+- id: cache.pattern.cache_aside
+  description: Cache-aside pattern implemented correctly
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: 'verify cache-aside: check cache, if miss fetch from source then populate cache (lazy loading)'
+  check_type: content
+  category: performance
+- id: cache.pattern.read_through
+  description: Read-through cache configured
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify read-through cache configured (cache provider fetches from source on miss) simplifies application code
+  check_type: content
+  category: performance
+- id: cache.pattern.write_through
+  description: Write-through cache configured
+  severity: info
+  weight: 0
+  phase: A
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify write-through cache synchronously writes to cache and source (stronger consistency)
+  check_type: content
+  category: performance
+- id: cache.pattern.write_behind
+  description: Write-behind (write-back) cache with durability
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - data
+  check: verify write-behind cache has persistence/durability strategy for pending writes on failure
+  check_type: content
+  category: performance
+- id: cache.pattern.refresh_ahead
+  description: Refresh-ahead for hot keys
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify hot keys use refresh-ahead (asynchronously refresh before expiration) to prevent misses
+  check_type: content
+  category: performance
+- id: cache.observability.hit_rate_metrics
+  description: Cache hit rate monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache hit rate tracked (hits / (hits + misses)) and alerted if below threshold
+  check_type: content
+  category: performance
+- id: cache.observability.latency_metrics
+  description: Cache operation latency monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache get/set latency tracked at p50, p95, p99 percentiles
+  check_type: content
+  category: performance
+- id: cache.observability.memory_usage
+  description: Cache memory usage monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify memory usage tracked and alerted when approaching maxmemory limit
+  check_type: content
+  category: performance
+- id: cache.observability.eviction_metrics
+  description: Cache eviction rate monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify eviction rate tracked (high evictions indicate undersized cache or poor TTL strategy)
+  check_type: content
+  category: performance
+- id: cache.observability.error_rate
+  description: Cache error rate monitored
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache errors tracked and alerted (connection failures, timeouts)
+  check_type: content
+  category: performance
+- id: cache.observability.connection_pool_metrics
+  description: Connection pool utilization monitored
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify connection pool usage tracked (active, idle, wait time)
+  check_type: content
+  category: performance
+- id: cache.observability.hot_keys_tracking
+  description: Hot keys identified and tracked
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify hot keys identified (high request rate) for optimization or sharding
+  check_type: content
+  category: performance
+- id: cache.testing.cache_miss_handling
+  description: Cache miss behavior tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests simulate cache miss and validate fallback to data source
+  check_type: content
+  category: performance
+- id: cache.testing.cache_hit_testing
+  description: Cache hit behavior tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests validate cache hit returns cached data without source query
+  check_type: content
+  category: performance
+- id: cache.testing.ttl_expiration_tested
+  description: TTL expiration tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests validate entries expire after TTL and trigger refetch
+  check_type: content
+  category: performance
+- id: cache.testing.invalidation_tested
+  description: Cache invalidation tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests validate writes invalidate or update cache entries correctly
+  check_type: content
+  category: security
+- id: cache.testing.failure_scenarios
+  description: Cache failure scenarios tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests simulate cache unavailability and validate graceful degradation
+  check_type: content
+  category: performance
+- id: cache.testing.stampede_prevention_tested
+  description: Cache stampede prevention tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify concurrent miss test validates only single source fetch occurs
+  check_type: content
+  category: performance
+- id: cache.testing.serialization_compatibility
+  description: Cache serialization compatibility tested
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - testing
+  check: verify tests validate serialization/deserialization round-trip and version compatibility
+  check_type: content
+  category: performance
+- id: cache.performance.pipeline_batching
+  description: Pipeline/batching for multi-key operations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify multi-key operations use pipelines (Redis pipeline, Memcached multi-get) for network efficiency
+  check_type: content
+  category: performance
+- id: cache.performance.compression_enabled
+  description: Large cached values compressed
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify values above size threshold compressed (gzip, lz4, zstd) to save memory
+  check_type: content
+  category: performance
+- id: cache.performance.async_operations
+  description: Non-blocking cache operations
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - async
+  check: verify cache operations use async client to avoid blocking request threads
+  check_type: content
+  category: performance
+- id: cache.performance.local_cache_layer
+  description: Multi-layer caching with local L1 cache
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - performance
+  check: verify multi-layer cache (L1 local + L2 distributed) for hot data and reduced network calls
+  check_type: content
+  category: performance
+- id: cache.documentation.caching_strategy_documented
+  description: Caching strategy documented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - docs
+  check: verify caching strategy documented (what's cached, TTL values, invalidation rules)
+  check_type: content
+  category: performance
+- id: cache.documentation.key_convention_documented
+  description: Cache key naming convention documented
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - docs
+  check: verify cache key format documented with examples for different data types
+  check_type: content
+  category: performance
+- id: cache.documentation.ttl_choices_documented
+  description: TTL choices explained
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - docs
+  check: verify TTL values documented with rationale (business vs technical freshness requirements)
+  check_type: content
+  category: performance
+- id: cache.deployment.resource_limits
+  description: Cache resource limits configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache deployment has CPU/memory limits matching expected load
+  check_type: content
+  category: performance
+- id: cache.deployment.backup_strategy
+  description: Cache backup/restore strategy
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache persistence/backup configured (Redis RDB/AOF, export/import) for disaster recovery
+  check_type: content
+  category: performance
+- id: cache.deployment.health_checks
+  description: Cache health check endpoints
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify cache exposes health checks (ping, info) for orchestration and monitoring
+  check_type: content
+  category: performance
+- id: cache.cdn.cache_headers_configured
+  description: CDN cache headers configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - web
+  check: verify CDN cache headers configured (Cache-Control, s-maxage, Vary) for static assets
+  check_type: content
+  category: performance
+- id: cache.cdn.cache_invalidation
+  description: CDN cache invalidation mechanism
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - web
+  check: verify CDN cache invalidation configured (API invalidation, versioned URLs for busting)
+  check_type: content
+  category: security
+- id: cache.cdn.origin_failover
+  description: CDN origin failover configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - infrastructure
+  check: verify CDN has origin failover (secondary origin) for high availability
+  check_type: content
+  category: performance
+- id: cache.cdn.signed_urls
+  description: CDN signed URLs for private content
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - api
+  - caching
+  - auth
+  check: verify private content uses signed URLs (CloudFront signed URLs, Cloudflare signed URLs)
+  check_type: content
+  category: security

@@ -1,0 +1,799 @@
+name: Real-time Communication & WebSocket
+version: 1.0
+description: Quality rules for WebSocket, Server-Sent Events (SSE), and real-time communication systems
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.0
+    category_multipliers: &id001
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+      infrastructure: 1.0
+      observability: 1.0
+      reliability: 1.0
+      cicd: 1.0
+      correctness: 1.0
+      accessibility: 1.0
+      ux_quality: 1.0
+  websocket-app:
+    multipliers:
+      web: 1.5
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 0.8
+      microservices: 1.2
+      async: 1.5
+      auth: 1.3
+      serverless: 0.8
+      realtime: 2.0
+    category_multipliers: *id001
+  realtime-api:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 0.5
+      graphql: 0.8
+      microservices: 1.3
+      async: 1.8
+      auth: 1.2
+      serverless: 0.8
+      realtime: 2.0
+    category_multipliers: *id001
+  event-stream:
+    multipliers:
+      web: 1.0
+      api: 1.3
+      data: 1.5
+      infrastructure: 1.2
+      mobile: 0.8
+      ml: 0.8
+      graphql: 0.5
+      microservices: 1.5
+      async: 2.0
+      auth: 1.0
+      serverless: 1.0
+      realtime: 1.8
+    category_multipliers: *id001
+phases:
+  a:
+    threshold: 0.8
+    active_levels:
+    - A
+  b:
+    threshold: 0.9
+    active_levels:
+    - A
+    - B
+rules:
+- id: websocket.connection_authentication
+  description: WebSocket connections are authenticated
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  - api
+  check: verify WebSocket handshake includes authentication (JWT token in query/header, cookie, or initial message); validate auth before accepting connection
+  check_type: content
+  category: security
+- id: websocket.connection_authorization
+  description: WebSocket messages are authorized
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  - api
+  check: verify each message type has authorization checks; users can only access/modify resources they have permission for
+  check_type: content
+  category: security
+- id: websocket.message_validation
+  description: WebSocket messages are validated
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify all incoming messages validated against schema (JSON Schema, Zod, Joi); reject malformed messages with clear error
+  check_type: content
+  category: security
+- id: websocket.error_handling
+  description: Proper error handling for WebSocket errors
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify try-catch blocks for WebSocket errors; send error messages to client; log errors with context (connection ID, timestamp, error details)
+  check_type: content
+  category: reliability
+- id: websocket.rate_limiting
+  description: Rate limiting for WebSocket connections
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify rate limiting on connection attempts (max connections per IP/user) and message rate (max messages per second/minute)
+  check_type: content
+  category: general
+- id: websocket.connection_limits
+  description: Connection limits configured
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify maximum concurrent connections per server and per user; prevent resource exhaustion
+  check_type: content
+  category: infrastructure
+- id: websocket.reconnection_strategy
+  description: Client reconnection strategy implemented
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - web
+  - mobile
+  check: verify client implements exponential backoff reconnection; max retry attempts; connection state handling (connecting, open, closed)
+  check_type: content
+  category: general
+- id: websocket.heartbeat_ping_pong
+  description: Heartbeat/ping-pong mechanism
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify periodic ping/pong messages to detect dead connections; close connections that don't respond; interval 30-60 seconds recommended
+  check_type: content
+  category: infrastructure
+- id: websocket.message_acknowledgment
+  description: Message acknowledgment for critical messages
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - async
+  check: verify critical messages have acknowledgment mechanism; client confirms receipt; server handles non-acknowledged messages
+  check_type: content
+  category: general
+- id: websocket.connection_cleanup
+  description: Proper connection cleanup on disconnect
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify cleanup on disconnect: unsubscribe from channels, release resources, close database connections, remove from connection tracking'
+  check_type: content
+  category: infrastructure
+- id: websocket.secure_transport
+  description: WebSocket uses secure transport (WSS)
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  check: verify WebSocket connections use WSS (WebSocket Secure) over TLS; never use unencrypted WS in production
+  check_type: content
+  category: security
+- id: websocket.input_sanitization
+  description: WebSocket input sanitization
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  check: verify sanitization of user input to prevent XSS, SQL injection, command injection; never execute user input as code
+  check_type: content
+  category: security
+- id: websocket.message_size_limits
+  description: Message size limits configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify maximum message size limit (e.g., 1MB); reject oversized messages; prevent memory exhaustion attacks
+  check_type: content
+  category: performance
+- id: websocket.cors_configuration
+  description: CORS configured for WebSocket connections
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  check: verify CORS configuration for WebSocket handshake; explicit allowed origins (not '*'); validate Origin header
+  check_type: content
+  category: security
+- id: websocket.message_format
+  description: Consistent message format
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: 'verify standardized message structure: {type, payload, timestamp, correlationId, messageId} or similar'
+  check_type: content
+  category: code_quality
+- id: websocket.logging_structured
+  description: Structured logging for WebSocket events
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify JSON-structured logs with fields: timestamp, level, message, connection_id, event_type, and optional user_id'
+  check_type: content
+  category: infrastructure
+- id: websocket.message_ordering
+  description: Message ordering for sequential operations
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - async
+  check: verify sequential message ordering using sequence numbers; handle out-of-order messages; buffer and reorder if needed
+  check_type: content
+  category: general
+- id: websocket.idempotency
+  description: Idempotent message handling
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - async
+  - api
+  check: verify message handlers are idempotent; duplicate messages (from retry) don't cause side effects; use message IDs
+  check_type: content
+  category: reliability
+- id: websocket.broadcast_optimization
+  description: Efficient broadcast to multiple connections
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - performance
+  check: verify efficient broadcast mechanism; avoid O(n^2) operations; use pub/sub (Redis, NATS) for multi-server deployments
+  check_type: content
+  category: performance
+- id: websocket.scaling_horizontal
+  description: Horizontal scaling with connection stickiness
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify horizontal scaling strategy; use Redis adapter for Socket.IO; sticky sessions via load balancer; connection-aware routing
+  check_type: content
+  category: infrastructure
+- id: websocket.state_synchronization
+  description: State synchronization across reconnections
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify client state restored after reconnection; server can send current state; client requests sync on connect
+  check_type: content
+  category: general
+- id: websocket.room_channel_management
+  description: Room/channel management for grouped messages
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify room/channel system for targeted broadcasts; users join/leave rooms; cleanup empty rooms
+  check_type: content
+  category: reliability
+- id: websocket.presence_tracking
+  description: User presence tracking
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify presence tracking (online/offline, last seen); notify other users of presence changes; handle multiple connections per user
+  check_type: content
+  category: general
+- id: websocket.typing_indicators
+  description: Typing indicators implementation
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify typing indicators with debouncing (300-500ms); stop typing indicator after inactivity; handle multiple users typing
+  check_type: content
+  category: general
+- id: websocket.message_history
+  description: Message history and replay
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  - data
+  check: verify message history storage; replay missed messages after reconnection; limit history size; pagination for large history
+  check_type: content
+  category: general
+- id: websocket.compression
+  description: WebSocket compression enabled
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - performance
+  check: verify per-message compression (permessage-deflate) enabled; balance compression vs CPU; disable for small messages
+  check_type: content
+  category: performance
+- id: websocket.binary_messages
+  description: Binary message support
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify support for binary messages (Blob, ArrayBuffer); handle file uploads via WebSocket; proper encoding/decoding
+  check_type: content
+  category: general
+- id: websocket.reconnection_backoff_max
+  description: Maximum reconnection backoff configured
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - web
+  - mobile
+  check: verify maximum reconnection delay (e.g., 30-60 seconds); prevent infinite exponential growth; user can manually retry
+  check_type: content
+  category: general
+- id: websocket.graceful_shutdown
+  description: Graceful shutdown handling
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify graceful shutdown: stop accepting new connections, notify existing connections of shutdown, wait for cleanup or timeout'
+  check_type: content
+  category: infrastructure
+- id: websocket.monitoring.metrics
+  description: WebSocket metrics and monitoring
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify metrics for: active connections, messages sent/received, error rate, reconnection rate, message latency'
+  check_type: content
+  category: infrastructure
+- id: websocket.alerts
+  description: Alerts configured for critical failures
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify alerts for: high error rate, connection failures, unusual message patterns, resource exhaustion'
+  check_type: content
+  category: infrastructure
+- id: websocket.tests.integration
+  description: Integration tests for WebSocket
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - testing
+  check: verify integration tests with real WebSocket connections; test connection lifecycle, message flow, error scenarios
+  check_type: content
+  category: testing
+- id: websocket.tests.load
+  description: Load testing for WebSocket
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - testing
+  - performance
+  check: verify load tests with concurrent connections; test message throughput; identify bottlenecks and limits
+  check_type: content
+  category: performance
+- id: websocket.tests.reconnection
+  description: Reconnection testing
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - testing
+  check: verify reconnection tests; simulate server restart, network failure, timeout; verify state restoration
+  check_type: content
+  category: testing
+- id: websocket.security.origin_validation
+  description: Origin header validation
+  severity: fail
+  weight: 2
+  phase: B
+  domain_tags:
+  - realtime
+  - auth
+  check: validate Origin header during handshake; reject connections from unauthorized origins; prevent CSRF attacks
+  check_type: content
+  category: security
+- id: websocket.security.message_encryption
+  description: End-to-end message encryption
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - auth
+  check: verify end-to-end encryption for sensitive messages; client-side encryption before send; server cannot read payload
+  check_type: content
+  category: security
+- id: websocket.security.rate_limit_per_user
+  description: Per-user rate limiting
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - auth
+  check: verify per-user rate limits (not just per IP); prevent authenticated users from abusing system
+  check_type: content
+  category: security
+- id: websocket.security.ip_blocking
+  description: IP blocking for abusive behavior
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - auth
+  check: verify IP blocking mechanism for abusive behavior; temporary and permanent blocks; block duration escalation
+  check_type: content
+  category: security
+- id: websocket.documentation.api
+  description: WebSocket API documentation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - docs
+  check: 'verify documentation for: connection URL, authentication, message types, message format, event types, error codes'
+  check_type: content
+  category: documentation
+- id: websocket.documentation.client_examples
+  description: Client integration examples
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - docs
+  check: verify client integration examples in multiple languages (JavaScript, Python, etc.); sample code for common operations
+  check_type: content
+  category: documentation
+- id: sse.authentication
+  description: SSE connections are authenticated
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  - api
+  check: verify SSE requests include authentication (JWT token, cookie, session); validate before establishing connection
+  check_type: content
+  category: security
+- id: sse.content_type
+  description: SSE uses correct content-type
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify Content-Type header set to 'text/event-stream'; required for proper SSE client handling
+  check_type: content
+  category: correctness
+- id: sse.message_format
+  description: SSE message format specification
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: 'verify SSE messages follow format: ''data: {json}\n\n''; use ''event:'' for event types; use ''id:'' for event IDs'
+  check_type: content
+  category: code_quality
+- id: sse.reconnection_strategy
+  description: SSE reconnection with Last-Event-ID
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify server sends 'id:' field with events; client sends Last-Event-ID on reconnect; server resumes from last event
+  check_type: content
+  category: general
+- id: sse.keep_alive
+  description: SSE keep-alive mechanism
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: 'verify periodic keep-alive comments ('': keep-alive\n\n'') every 30-60s; prevent connection timeout from proxies/load balancers'
+  check_type: content
+  category: infrastructure
+- id: sse.error_handling
+  description: SSE error handling and reconnection
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify client handles connection errors; implements exponential backoff reconnection; max retry attempts
+  check_type: content
+  category: reliability
+- id: sse.rate_limiting
+  description: SSE rate limiting configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: verify rate limiting on SSE connections (max connections per user/IP); limit event frequency per connection
+  check_type: content
+  category: general
+- id: sse.connection_limits
+  description: SSE connection limits configured
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify maximum concurrent SSE connections; prevent resource exhaustion; consider server limits
+  check_type: content
+  category: infrastructure
+- id: sse.caching_headers
+  description: SSE caching headers disabled
+  severity: warn
+  weight: 1
+  phase: A
+  domain_tags:
+  - realtime
+  - api
+  check: 'verify caching headers disabled (Cache-Control: no-cache, no-store); prevent proxies from caching SSE responses'
+  check_type: content
+  category: performance
+- id: sse.secure_transport
+  description: SSE uses HTTPS
+  severity: fail
+  weight: 2
+  phase: A
+  domain_tags:
+  - realtime
+  - auth
+  check: verify SSE connections use HTTPS; never use unencrypted HTTP in production
+  check_type: content
+  category: security
+- id: sse.event_validation
+  description: SSE event payload validation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify SSE event payloads validated before sending; consistent data structure; error handling for malformed events
+  check_type: content
+  category: security
+- id: sse.scaling_horizontal
+  description: SSE horizontal scaling strategy
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify scaling strategy for SSE; use pub/sub (Redis, Kafka) for event distribution; sticky sessions not required for SSE
+  check_type: content
+  category: infrastructure
+- id: sse.client_disconnect_handling
+  description: SSE client disconnect detection
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify server detects client disconnects; cleanup resources; stop sending events to closed connections
+  check_type: content
+  category: infrastructure
+- id: sse.tests.integration
+  description: SSE integration tests
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - testing
+  check: verify integration tests with EventSource; test connection lifecycle, event flow, reconnection with Last-Event-ID
+  check_type: content
+  category: testing
+- id: sse.documentation
+  description: SSE API documentation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - docs
+  check: 'verify documentation for: endpoint URL, authentication, event types, event format, reconnection behavior'
+  check_type: content
+  category: documentation
+- id: realtime.event_schema_versioning
+  description: Event schema versioning strategy
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - api
+  check: verify event schema versioning (version field in event); support multiple versions; deprecation policy for old versions
+  check_type: content
+  category: correctness
+- id: realtime.event_documentation
+  description: Event catalog documentation
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - docs
+  check: verify event catalog with all event types, schemas, and descriptions; keep in sync with code; version controlled
+  check_type: content
+  category: documentation
+- id: realtime.dead_letter_queue
+  description: Dead letter queue for failed events
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - async
+  check: verify DLQ for failed event processing; retry mechanism; monitoring for DLQ size; alert on DLQ growth
+  check_type: content
+  category: general
+- id: realtime.event_replay
+  description: Event replay capability
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - async
+  check: verify ability to replay events from event log; useful for debugging and recovery; time-range based replay
+  check_type: content
+  category: general
+- id: realtime.circuit_breaker
+  description: Circuit breaker for downstream failures
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - performance
+  check: verify circuit breaker for external service calls; prevent cascade failures; graceful degradation when services are down
+  check_type: content
+  category: performance
+- id: realtime.connection_monitoring
+  description: Connection health monitoring
+  severity: warn
+  weight: 1
+  phase: B
+  domain_tags:
+  - realtime
+  - infrastructure
+  check: verify connection health monitoring; track connection duration, message latency, error rates; dashboard for visibility
+  check_type: content
+  category: infrastructure
+- id: realtime.performance_optimization
+  description: Message batching for efficiency
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - performance
+  check: verify message batching for high-frequency events; batch window 100-500ms; reduce per-message overhead
+  check_type: content
+  category: performance
+- id: realtime.client_library
+  description: Client library provided
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - docs
+  check: verify official client library (JavaScript SDK); handles reconnection, authentication, message parsing; well documented
+  check_type: content
+  category: documentation
+- id: realtime.testing_tools
+  description: Testing tools for real-time features
+  severity: info
+  weight: 0
+  phase: B
+  domain_tags:
+  - realtime
+  - testing
+  check: 'verify testing tools: mock WebSocket server, event generator, load testing tools; facilitate development and testing'
+  check_type: content
+  category: testing

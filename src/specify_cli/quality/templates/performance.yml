@@ -1,6 +1,122 @@
 name: "Performance Optimization"
-version: 1.0
-description: "Правила производительности (latency, throughput, caching, scaling)"
+version: 1.3
+description: "Правила производительности (latency, throughput, caching, scaling) с категорийной приоритизацией (Exp 47)"
+
+# Priority Profiles for different project types (Exp 13)
+# Each profile defines multipliers for rule domain_tags and categories (Exp 47)
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+      code_quality: 1.0
+
+  web-app:
+    multipliers:
+      web: 1.5
+      api: 1.3
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.5  # Performance-focused for web apps
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.2
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 2.0
+      ml: 0.5
+      graphql: 0.8
+    category_multipliers:
+      security: 1.0
+      performance: 1.5  # Mobile performance critical
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.0
+      data: 1.8
+      infrastructure: 1.3
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+    category_multipliers:
+      security: 1.0
+      performance: 1.3  # ML model performance important
+      testing: 0.8
+      documentation: 1.0
+      code_quality: 0.8
+
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.0
+      data: 2.0
+      infrastructure: 1.5
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.5
+    category_multipliers:
+      security: 1.0
+      performance: 1.5  # Pipeline throughput critical
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 0.8
+
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+    category_multipliers:
+      security: 1.0
+      performance: 1.5  # Query performance critical
+      testing: 1.0
+      documentation: 0.8
+      code_quality: 1.0
+
+  # NEW (Exp 47): Performance-focused profile for high-performance applications
+  performance-focused:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+    category_multipliers:
+      security: 0.8
+      performance: 2.0  # Double weight for ALL performance rules
+      testing: 1.0
+      documentation: 0.5
+      code_quality: 0.8
 
 phases:
   a:
@@ -16,6 +132,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify cache decorators, caching layer, or CDN usage"
     check_type: "content"
 
@@ -24,6 +142,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["web", "api", "data", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify async/await for database and external calls"
     check_type: "content"
 
@@ -32,6 +152,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["data", "api", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify indexed columns, no N+1 queries, query limits"
     check_type: "content"
 
@@ -40,6 +162,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "A"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
     check: "verify lazy loading for images, components, data"
     check_type: "content"
 
@@ -48,6 +172,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    domain_tags: ["api", "data", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify LIMIT/OFFSET or cursor-based pagination"
     check_type: "content"
 
@@ -56,6 +182,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "A"
+    domain_tags: ["web", "api", "infrastructure"]
+    category: "performance"  # Exp 47
     check: "verify compression middleware or headers"
     check_type: "content"
 
@@ -64,6 +192,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["data", "api", "infrastructure"]
+    category: "performance"  # Exp 47
     check: "verify connection pool configuration"
     check_type: "content"
 
@@ -72,6 +202,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["data", "api", "ml"]
+    category: "performance"  # Exp 47
     check: "verify bulk insert, batch processing, or bulk API calls"
     check_type: "content"
 
@@ -80,6 +212,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "B"
+    domain_tags: ["web", "api", "data", "mobile", "ml", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify proper cleanup, close() calls, using statements"
     check_type: "content"
 
@@ -88,5 +222,118 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    domain_tags: ["web", "api", "data", "infrastructure", "mobile", "graphql"]
+    category: "performance"  # Exp 47
     check: "verify performance metrics collection or APM integration"
+    check_type: "content"
+
+  - id: "performance.bundle_size"
+    description: "Контроль размера bundle JavaScript/CSS (treeshaking, code-splitting)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify bundle size limits, treeshaking enabled, dynamic imports for code splitting"
+    check_type: "content"
+
+  - id: "performance.lighthouse_metrics"
+    description: "Lighthouse метрики производительности (FCP, LCP, CLS, TBT)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify Core Web Vitals targets: FCP < 1.8s, LCP < 2.5s, CLS < 0.1, TBT < 200ms"
+    check_type: "content"
+
+  # === FRONTEND-SPECIFIC PERFORMANCE RULES (Exp 31) ===
+  - id: "performance.image_optimization"
+    description: "Оптимизация изображений (форматы, lazy loading, responsive)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify modern image formats (WebP, AVIF), responsive images with srcset, lazy loading for below-fold images, image compression"
+    check_type: "content"
+
+  - id: "performance.font_optimization"
+    description: "Оптимизация шрифтов (preloading, font-display, subset)"
+    severity: "warn"
+    weight: 1
+    phase: "A"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify font-display: swap for web fonts, preconnect to font domains, font subsetting for CJK, avoid web fonts for critical text"
+    check_type: "content"
+
+  - id: "performance.critical_css"
+    description: "Critical CSS inlined, non-critical CSS deferred"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify critical CSS inline in <head>, async loading for non-critical CSS, CSS purged of unused styles (PurgeCSS)"
+    check_type: "content"
+
+  - id: "performance.resource_preloading"
+    description: "Preloading критических ресурсов"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify <link rel=\"preload\"> for critical CSS, fonts, and above-fold images; <link rel=\"prefetch\"> for navigation URLs"
+    check_type: "content"
+
+  - id: "performance.javascript_execution"
+    description: "Minimizing JavaScript execution time"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify code splitting for routes, defer non-critical JS, avoid long tasks (>50ms), use Web Workers for heavy computation"
+    check_type: "content"
+
+  - id: "performance.third_party_optimization"
+    description: "Оптимизация third-party скриптов (analytics, widgets)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify defer/async for third-party scripts, consider self-hosting alternatives, limit number of trackers, use facade patterns for slow scripts"
+    check_type: "content"
+
+  - id: "performance.budget_configuration"
+    description: "Performance budgets настроены для предотвращения регрессии"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify webpack-bundle-analyzer, Lighthouse budgets, or CI performance checks with limits for bundle size (e.g., JS < 200KB gzipped)"
+    check_type: "content"
+
+  - id: "performance.service_worker_caching"
+    description: "Service Worker для offline caching"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify service worker registration (Workbox, PWA) for caching static assets and API responses"
+    check_type: "content"
+
+  - id: "performance.http2_push"
+    description: "HTTP/2 push или HTTP/3 для критических ресурсов"
+    severity: "info"
+    weight: 0
+    phase: "B"
+    domain_tags: ["web", "mobile"]
+    category: "performance"  # Exp 47
+    check: "verify HTTP/2 push hints or early hints for critical resources, HTTP/3 (QUIC) support on server"
     check_type: "content"

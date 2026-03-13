@@ -1763,6 +1763,10 @@ def version():
     console.print()
 
 
+# ===== Quality Template Commands (Exp 126) =====
+# TODO: Add templates subcommand after fixing circular imports
+# For now, run templates CLI directly: python -m specify_cli.quality.templates_cli
+
 # ===== Extension Commands =====
 
 extension_app = typer.Typer(

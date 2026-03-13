@@ -1,6 +1,152 @@
 name: "Backend Services"
-version: 1.0
-description: "Quality rules for backend services (API, business logic, services)"
+version: 1.3
+description: "Quality rules for backend services (API, business logic, services, GraphQL best practices)"
+
+priority_profiles:
+  default:
+    multipliers:
+      web: 1.0
+      api: 1.0
+      data: 1.0
+      infrastructure: 1.0
+      mobile: 1.0
+      ml: 1.0
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.0
+      auth: 1.0
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.0
+      performance: 1.0
+      testing: 1.0
+      documentation: 1.0
+  web-app:
+    multipliers:
+      web: 1.2
+      api: 1.5
+      data: 1.2
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 1.2
+      microservices: 1.0
+      async: 1.2
+      auth: 1.5
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.5
+      performance: 1.2
+      testing: 1.0
+      documentation: 1.0
+  mobile-app:
+    multipliers:
+      web: 0.8
+      api: 1.5
+      data: 1.2
+      infrastructure: 0.8
+      mobile: 1.2
+      ml: 0.5
+      graphql: 1.0
+      microservices: 1.0
+      async: 1.2
+      auth: 1.5
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.5
+      performance: 1.3
+      testing: 1.0
+      documentation: 1.0
+  ml-service:
+    multipliers:
+      web: 0.5
+      api: 1.3
+      data: 1.5
+      infrastructure: 1.0
+      mobile: 0.3
+      ml: 2.0
+      graphql: 0.5
+      microservices: 1.2
+      async: 1.3
+      auth: 1.0
+    category_multipliers:
+      code_quality: 1.2
+      security: 1.0
+      performance: 1.5
+      testing: 1.2
+      documentation: 1.0
+  data-pipeline:
+    multipliers:
+      web: 0.3
+      api: 1.2
+      data: 2.0
+      infrastructure: 1.3
+      mobile: 0.2
+      ml: 1.5
+      graphql: 0.3
+      microservices: 1.3
+      async: 1.5
+      auth: 0.8
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.0
+      performance: 2.0
+      testing: 1.0
+      documentation: 1.0
+  graphql-api:
+    multipliers:
+      web: 1.0
+      api: 1.5
+      data: 1.3
+      infrastructure: 0.8
+      mobile: 0.8
+      ml: 0.5
+      graphql: 2.0
+      microservices: 1.2
+      async: 1.2
+      auth: 1.3
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.3
+      performance: 1.2
+      testing: 1.0
+      documentation: 1.2
+  microservice:
+    multipliers:
+      web: 0.5
+      api: 1.5
+      data: 1.3
+      infrastructure: 1.3
+      mobile: 0.5
+      ml: 0.8
+      graphql: 1.2
+      microservices: 2.0
+      async: 1.5
+      auth: 1.3
+    category_multipliers:
+      code_quality: 1.0
+      security: 1.3
+      performance: 1.3
+      testing: 1.2
+      documentation: 1.0
+  backend-focused:
+    multipliers:
+      web: 0.8
+      api: 2.0
+      data: 1.5
+      infrastructure: 1.0
+      mobile: 0.5
+      ml: 0.5
+      graphql: 1.5
+      microservices: 1.3
+      async: 1.3
+      auth: 1.5
+    category_multipliers:
+      code_quality: 2.0
+      security: 2.0
+      performance: 1.5
+      testing: 1.5
+      documentation: 1.2
 
 phases:
   a:
@@ -16,6 +162,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["api", "graphql"]
     check: "verify proper HTTP method mapping (GET/POST/PUT/DELETE)"
     check_type: "content"
 
@@ -24,6 +172,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["api"]
     check: "verify service classes separate from controllers"
     check_type: "content"
 
@@ -32,6 +182,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "code_quality"
+    domain_tags: ["api"]
     check: "verify DI container or constructor injection patterns"
     check_type: "content"
 
@@ -40,6 +192,8 @@ rules:
     severity: "fail"
     weight: 2
     "phase": "A"
+    category: "code_quality"
+    domain_tags: ["api", "graphql"]
     check: "verify error responses with status codes and messages"
     check_type: "content"
 
@@ -48,6 +202,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["api", "graphql"]
     check: "validate request parameters before processing"
     check_type: "content"
 
@@ -56,6 +212,8 @@ rules:
     severity: "warn"
     weight: 1
     phase: "A"
+    category: "documentation"
+    domain_tags: ["api", "graphql"]
     check: "verify log statements with context and levels"
     check_type: "content"
 
@@ -64,6 +222,8 @@ rules:
     severity: "fail"
     weight: 2
     phase: "A"
+    category: "security"
+    domain_tags: ["api", "graphql", "auth"]
     check: "verify auth decorators or middleware on endpoints"
     check_type: "content"
 
@@ -72,6 +232,8 @@ rules:
     severity: "fail"
     weight: "2"
     phase: "A"
+    category: "security"
+    domain_tags: ["api", "graphql", "auth"]
     check: "verify permission checks before resource access"
     check_type: "content"
 
@@ -80,6 +242,8 @@ rules:
     severity: "info"
     weight: 0
     phase: "B"
+    category: "performance"
+    domain_tags: ["api"]
     check: "verify cache decorators or caching layer"
     check_type: "content"
 
@@ -88,5 +252,198 @@ rules:
     severity: "warn"
     weight: 1
     phase: "B"
+    category: "performance"
+    domain_tags: ["api", "async"]
     check: "verify async/await for database and external calls"
+    check_type: "content"
+
+  - id: "quality.http_status_codes"
+    description: "Proper HTTP status codes for responses"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api"]
+    check: "verify appropriate status codes: 200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 409 (Conflict), 422 (Unprocessable Entity), 429 (Too Many Requests), 500 (Internal Server Error), 503 (Service Unavailable)"
+    check_type: "content"
+
+  - id: "correctness.content_negotiation"
+    description: "Content negotiation with Accept headers"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api"]
+    check: "verify support for Accept headers (application/json, text/html) and proper Content-Type responses"
+    check_type: "content"
+
+  - id: "quality.resource_naming"
+    description: "RESTful resource naming conventions"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api"]
+    check: "verify plural nouns for resources (e.g., /users, /orders), kebab-case for URLs, max 2-3 levels of nesting"
+    check_type: "content"
+
+  - id: "quality.rate_limiting"
+    description: "Rate limiting middleware implemented"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["api"]
+    check: "verify rate limiting middleware (e.g., express-rate-limit, @nestjs/throttler) with configurable limits per endpoint/user"
+    check_type: "content"
+
+  - id: "quality.cors_configuration"
+    description: "CORS properly configured for allowed origins"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["api"]
+    check: "verify CORS middleware with explicit allowed origins (not '*'), methods, and headers"
+    check_type: "content"
+
+  - id: "quality.security_headers"
+    description: "Security headers in all responses"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "security"
+    domain_tags: ["api"]
+    check: "verify security headers: X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, Strict-Transport-Security, X-XSS-Protection"
+    check_type: "content"
+
+  - id: "quality.domain_errors"
+    description: "Domain errors vs validation errors separation"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api"]
+    check: "verify separation of domain errors (business logic failures) from validation errors (invalid input) with appropriate status codes (422 vs 400)"
+    check_type: "content"
+
+  - id: "quality.error_consistency"
+    description: "Consistent error response format"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api", "graphql"]
+    check: "verify standardized error response structure with fields: error/code, error/message, error/details (optional), request_id"
+    check_type: "content"
+
+  - id: "security.stack_trace_sanitization"
+    description: "Stack traces not exposed in production"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    category: "security"
+    domain_tags: ["api", "graphql"]
+    check: "verify stack traces, file paths, and internal details are omitted from error responses in production; use request IDs for debugging"
+    check_type: "content"
+
+  - id: "quality.api_versioning"
+    description: "API versioning strategy implemented"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api"]
+    check: "verify API versioning approach: URL path (/v1/resources), header (Accept: application/vnd.api+json;version=1), or query parameter; include deprecation policy"
+    check_type: "content"
+
+  - id: "correctness.schema_validation"
+    description: "Request/response schema validation"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "testing"
+    domain_tags: ["api", "graphql"]
+    check: "verify schema validation for requests (using JSON Schema, Zod, Joi, class-validator) and consistent response formats"
+    check_type: "content"
+
+  - id: "quality.idempotency"
+    description: "Idempotent operations for safe retries"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["api", "async"]
+    check: "verify idempotency for PUT (update), DELETE (remove), and GET (read) operations; implement idempotency keys for POST when appropriate"
+    check_type: "content"
+
+  # GraphQL best practices (quality rules)
+  - id: "quality.graphql_n_plus1_prevention"
+    description: "DataLoader или batching для предотвращения N+1 запросов"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["graphql", "data"]
+    check: "verify DataLoader (JS), dataloader (Python), or similar batching pattern used for one-to-many relations"
+    check_type: "content"
+
+  - id: "quality.graphql_error_handling"
+    description: "Структурированные ошибки GraphQL с кодами и путями"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["graphql"]
+    check: "verify errors include message, locations, path, and extensions.code fields; mask internal errors"
+    check_type: "content"
+
+  - id: "quality.graphql_pagination"
+    description: "Connection-based pagination или cursor-based для больших списков"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["graphql", "data"]
+    check: "verify relay connection spec (edges, nodes, pageInfo, hasNextPage) or cursor-based pagination for list queries"
+    check_type: "content"
+
+  - id: "quality.graphql_subscriptions_auth"
+    description: "Authorization для WebSocket GraphQL subscriptions"
+    severity: "fail"
+    weight: 2
+    phase: "B"
+    category: "security"
+    domain_tags: ["graphql", "auth"]
+    check: "verify authentication on subscription connection initialization and field-level authorization on subscription events"
+    check_type: "content"
+
+  - id: "quality.graphql_description_documentation"
+    description: "Описание и deprecation для всех GraphQL полей и типов"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "documentation"
+    domain_tags: ["graphql"]
+    check: "verify all types, fields, and arguments have description comments; deprecated fields marked with @deprecated"
+    check_type: "content"
+
+  - id: "quality.graphql_federation_consistency"
+    description: "Consistency в GraphQL Federation схеме (entity keys, extends)"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "code_quality"
+    domain_tags: ["graphql", "microservices"]
+    check: "verify @key directives on entities, consistent @extends usage, proper entity reference handling"
+    check_type: "content"
+
+  - id: "performance.graphql_query_cost_analysis"
+    description: "Cost-based limiting для GraphQL запросов"
+    severity: "warn"
+    weight: 1
+    phase: "B"
+    category: "performance"
+    domain_tags: ["graphql"]
+    check: "verify query cost calculation based on field weights, with maximum cost limits per query"
     check_type: "content"
