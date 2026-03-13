@@ -22,16 +22,20 @@
 
 ---
 
-## Current State (Post-Audit)
+## Current State (Post-Audit + Cleanup)
 
-После 132 экспериментов проект имеет:
-- **62 Python-файла** в `src/specify_cli/quality/`
-- **627 классов/функций**
-- **1 тест** для нового кода (из 62 модулей)
+После 132 экспериментов и ручного cleanup:
+- **31 Python-файл** в `src/specify_cli/quality/` (было 62, сокращено вдвое)
+- **58/58 quality tests passing** (было 48/58)
+- **338 total tests passing** (было 328)
 
-**Диагноз**: Feature bloat. Много подсистем без тестов и без реальных пользователей.
+**Что удалено:** sms_integration, email_integration, webhook_integration, ab_testing, multi_variant_testing, quality_optimization, pareto_visualization, quality_simulation, industry_detector, alert_aggregation, alert_deduplication, alert_escalation, alert_dashboard, gate_policy_analytics, gate_policy_diff, report_aggregator, history_dashboard, correlation_analysis, quality_trend_analytics, smart_config_recommender и другие.
 
-**Текущая фаза**: CONSOLIDATION — улучшаем качество существующего, не добавляем новое.
+**Что объединено:** json_schema→json_report, template_integration→template_registry, gate_cascade+gate_policy_recommender→gate_policies, markdown_report→report_exporter.
+
+**Диагноз**: Feature bloat ЧАСТИЧНО устранён. Ядро работает, тесты проходят. Остаётся много подсистем которые сомнительно нужны (quality_plans, quality_benchmarking, feedback_loop, goal_suggester) — но они стабильны и не мешают.
+
+**Текущая фаза**: TESTING + CORE IMPROVEMENT — улучшаем тесты и ядро, не добавляем новое.
 
 ---
 
@@ -92,8 +96,9 @@ STOP. Не добавляй эти фичи:
 
 ## Complexity Budget
 
-**Текущий бюджет: 62 файла (ПРЕВЫШЕН)**
+**Текущий бюджет: 31 файл (в пределах нормы)**
 **Целевой бюджет: 25-30 файлов**
+**Жёсткий лимит: 35 файлов (НЕ ПРЕВЫШАТЬ)**
 
 ### Правило добавления
 
@@ -200,36 +205,19 @@ python -m pytest tests/ -v
 
 ## Research Areas Priority
 
-### Phase 1: CLEANUP (текущий приоритет)
+### Phase 1: CLEANUP (ВЫПОЛНЕНО)
 
-Цель: сократить 62 файла до 25-30.
+~~Цель: сократить 62 файла до 25-30.~~ **Достигнуто: 31 файл.**
 
-```
-1. Удалить неиспользуемые модули:
-   - sms_integration.py, email_integration.py, webhook_integration.py
-   - ab_testing.py, multi_variant_testing.py
-   - quality_optimization.py (32 класса для Bayesian/Genetic!)
-   - pareto_visualization.py (32 класса для ASCII-графиков)
-   - quality_simulation.py
-   - industry_presets.py, industry_detector.py
+Удалены 30+ модулей (SMS, Email, Webhook, Bayesian, Pareto, ANOVA и т.д.).
+Объединены 4 группы модулей. Все тесты проходят.
 
-2. Объединить связанные модули:
-   - gate_policies + gate_cascade + gate_policy_recommender
-     + gate_policy_analytics + gate_policy_diff → gates.py
-   - alert_aggregation + alert_deduplication + alert_escalation
-     + alert_dashboard + quality_alerting → alerts.py (если оставляем)
-   - quality_goals + goal_gates + goal_suggester
-     + trend_goal_suggester → goals.py
-   - json_report + markdown_report + html_report
-     + report_exporter + report_aggregator → reports.py
-   - result_card + live_progress → display.py
+**Возможные дальнейшие объединения (если нужно до 25):**
+- quality_goals + goal_gates + goal_suggester → goals.py
+- result_card + live_progress + terminal_colors → display.py
+- quality_anomaly + quality_benchmarking → analytics.py
 
-3. Рефакторить __init__.py:
-   - Lazy imports вместо eager imports
-   - Экспортировать только публичный API
-```
-
-### Phase 2: TESTING (после cleanup)
+### Phase 2: TESTING (ТЕКУЩИЙ ПРИОРИТЕТ)
 
 Цель: тестовое покрытие для всех оставшихся модулей.
 
@@ -277,38 +265,61 @@ python -m pytest tests/ -v
 
 ---
 
-## Anti-Patterns (запрещённые направления)
+## Anti-Patterns (CRITICAL — запрещённые направления)
 
-Эти паттерны привели к bloat в Phase 1. НЕ повторяй:
+Эти паттерны привели к bloat с 10 до 62 файлов за 132 эксперимента. ВСЕ были повторены НЕСМОТРЯ на предупреждения. НЕ повторяй.
 
 ### 1. Meta-System Cascade
 ```
-BAD:  Gates → Gate Recommender → Gate Analytics → Gate Diff → Gate Cascade
-GOOD: Gates (один файл, покрывает все нужды)
+БЫЛО: Gates → Gate Recommender → Gate Analytics → Gate Diff → Gate Cascade (5 файлов)
+БЫЛО: Alerts → Alert Aggregation → Alert Dedup → Alert Escalation → Alert Dashboard (5 файлов)
+БЫЛО: Optimization → Pareto → Adaptive → Warm Start → Ensemble → Visualization (6 файлов)
+СТАЛО: gates.py (1 файл). Остальное удалено.
 ```
 
 ### 2. Integration Without Users
 ```
-BAD:  "Добавлю SMS-уведомления для quality alerts"
-GOOD: "Улучшу console output чтобы критические проблемы были заметны"
+БЫЛО: SMS notifications, Email notifications, Multi-Provider SMS Routing, Webhook Integration
+ИТОГО: 4 модуля для 0 пользователей. Всё удалено.
+ПРАВИЛО: Если фича требует сервер, API-ключ, или внешний сервис — она ВНЕ scope.
 ```
 
 ### 3. Premature Specialization
 ```
-BAD:  "Создам пресеты для 8 индустрий (fintech, healthcare, gaming...)"
-GOOD: "Улучшу auto-detection для 3 основных типов проектов"
+БЫЛО: 8 Industry presets (fintech, healthcare, gaming, government, education, iot, ecommerce, saas)
+БЫЛО: Industry auto-detector с keyword scanning, dependency analysis, config detection
+ИТОГО: 2 модуля для функционала который никто не просил. Удалено.
 ```
 
 ### 4. Statistics Theater
 ```
-BAD:  "Добавлю Bayesian optimization + ANOVA + Pareto front"
-GOOD: "Добавлю простой trend: score растёт или падает"
+БЫЛО: Bayesian optimization, Genetic algorithms, Simulated Annealing, Response Surface Modeling,
+      ANOVA, Tukey HSD, Bonferroni correction, Pareto front, Knee detection, Hypervolume metric
+ИТОГО: 32 класса в quality_optimization.py. Для CLI tool. Удалено.
+ПРАВИЛО: Если для объяснения фичи нужна PhD — она не нужна в CLI tool.
 ```
 
 ### 5. Feature Without Test
 ```
-BAD:  "Создал 3 новых модуля, записал результат в lessons.md"
-GOOD: "Создал 1 модуль с 5 тестами, все проходят"
+БЫЛО: 62 модуля, 627 классов, 1 тест. Соотношение 1:627.
+СТАЛО: 31 модуль, 58 тестов. Улучшение, но далеко от идеала.
+ПРАВИЛО: Нет теста — нет фичи. Тест ПЕРЕД кодом.
+```
+
+### 6. Lessons.md Bloat
+```
+БЫЛО: 3021 строк, 43 записи по 50-170 строк каждая, ВСЕ [IMPORTANT]
+СТАЛО: ~100 строк, 7 записей по 10-20 строк каждая
+ПРАВИЛО: Lesson ≠ changelog. Max 30 строк на запись. Max 10 [CRITICAL], max 20 [IMPORTANT].
+```
+
+### 7. Self-Reflection Loop
+```
+BAD:  "Улучшу процесс автоисследования" / "Оптимизирую промпты AutoResearch"
+BAD:  "Создам фреймворк для генерации фреймворков"
+BAD:  "Проанализирую как я мог бы лучше анализировать"
+GOOD: Конкретное изменение кода с тестом.
+ПРАВИЛО: Каждый эксперимент ОБЯЗАН произвести конкретное изменение (код/баг/тест/документация).
 ```
 
 ---
@@ -332,8 +343,9 @@ BUILTIN_CRITERIA = [
 ]
 
 # Complexity budget
-MAX_QUALITY_FILES = 30  # Target after cleanup
-CURRENT_QUALITY_FILES = 62  # Needs reduction!
+MAX_QUALITY_FILES = 35  # Hard limit
+TARGET_QUALITY_FILES = 25  # Ideal target
+CURRENT_QUALITY_FILES = 31  # After cleanup (was 62)
 
 # Evaluation budget (seconds)
 EVALUATION_BUDGET = 60  # per iteration
@@ -359,22 +371,21 @@ EVALUATION_BUDGET = 60  # per iteration
 
 ---
 
-## Example Research Session (v2)
+## Example Research Session (v3)
 
 ```
-Агент: Читаю program.md... фаза CLEANUP.
-Агент: В quality/ 62 файла, бюджет 30.
-Агент: Experiment 133: Объединить 5 gate_* файлов в gates.py
-Агент: Пишу test_gates.py с тестами для основных gate операций...
-Агент: Тесты проходят. Объединяю 5 файлов в 1.
-Агент: Complexity: 62 → 58 файлов. Прогресс.
-Агент: Experiment 134: Удалить sms_integration.py (вне scope)
-Агент: Проверяю зависимости... никто не импортирует.
-Агент: Удаляю. 58 → 57 файлов.
-Агент: Experiment 135: Улучшить правила в frontend.yml
+Агент: Читаю program.md... фаза TESTING + CORE IMPROVEMENT.
+Агент: В quality/ 31 файл, бюджет 25-35. Тесты: 58/58 quality, 338 total.
+Агент: Experiment 133: Написать тесты для quality_history.py
+Агент: Пишу test_history.py с 8 тестами (add_run, get_stats, compare)...
+Агент: Тесты проходят. Coverage quality_history: 0 → 65%.
+Агент: Experiment 134: Улучшить правила в frontend.yml
 Агент: Пишу тест: sample artifact → expected score.
-Агент: Добавляю 2 правила, убираю 1 false positive.
-Агент: Complexity: 57 (без изменений). Качество templates выросло.
+Агент: Убираю 1 false positive, добавляю 1 более точное правило.
+Агент: Complexity: 31 (без изменений). Качество templates выросло.
+Агент: Experiment 135: Улучшить critique prompts для security domain
+Агент: Пишу тест: critique должна находить missing auth checks.
+Агент: Улучшаю промпт в critique.py. Тест проходит.
 ```
 
 ---
@@ -421,14 +432,14 @@ EVALUATION_BUDGET = 60  # per iteration
 
 ```
 Hi! Запусти автоисследование Spec Kit.
-Читай program.md. Текущая фаза: CLEANUP.
-Начни с сокращения файлов в quality/.
+Читай program.md. Текущая фаза: TESTING + CORE IMPROVEMENT.
+Cleanup завершён (31 файл). Фокус на тестах и улучшении ядра.
 ```
 
 Агент будет:
-1. Читать memory
-2. Выбрать файлы для удаления/объединения
-3. Написать тесты для сохраняемой функциональности
-4. Провести cleanup
-5. Проверить что всё работает
-6. Повторять пока complexity budget не достигнут
+1. Читать memory и program.md
+2. Выбрать модуль без тестов → написать тесты
+3. Или улучшить ядро (critique, templates, scorer) с тестом
+4. Проверить что ВСЕ тесты проходят
+5. НЕ создавать новых файлов
+6. Повторять

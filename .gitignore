@@ -62,3 +62,31 @@ docs/dev
 
 # AutoResearch experiment triggers
 .speckit/experiments/.experiment_running
+
+# AutoResearch scripts and docs (not part of spec-kit core)
+autoresearch*.py
+autoresearch*.bat
+autoresearch*.md
+autoresearch-*.md
+run_autoresearch*
+prepare.py
+requirements-autoresearch.txt
+new_methods.txt
+research-context.md
+AUTORESEARCH_*.md
+ANOMALY_DETECTION.md
+WINDOWS_*.md
+
+# Claude local settings and memory (session-specific)
+.claude/settings.local.json
+.claude/settings.json
+.claude/memory/
+
+# Environment examples
+.env.example
+
+# Speckit local state
+.speckit/
+
+# AutoResearch command template
+templates/commands/autoresearch.md
