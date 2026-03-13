@@ -1,6 +1,6 @@
 # Spec Kit
 
-> **AI-Powered Quality Assurance for Software Specifications**
+> **Автоматизированный контроль качества спецификаций ПО на базе ИИ**
 
 [![Python](https://img.shields.io/badge/python-3.11+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
@@ -9,16 +9,16 @@ Spec Kit — система автоматической оценки качес
 
 ---
 
-## Quick Start
+## Быстрый старт
 
 ```bash
-# Clone & install
+# Клонирование и установка
 git clone https://github.com/github/spec-kit.git
 cd spec-kit
 pip install -r requirements.txt
 ```
 
-### Python API
+### Python API (программный интерфейс)
 
 ```python
 from specify_cli.quality import QualityLoop, RuleManager, Evaluator, Scorer, Critique, Refiner
@@ -38,106 +38,106 @@ print(f"Score: {result['score']:.2f}, Passed: {result['passed']}")
 ### CLI (Claude Code)
 
 ```bash
-/speckit.loop --criteria backend                    # Run quality loop
-/speckit.loop --project-type web-app                # Auto-select templates
-/speckit.qa overview                                # Quality dashboard
-/speckit.goals check                                # Check quality goals
-/speckit.alerts check                               # Check for alerts
+/speckit.loop --criteria backend                    # Запуск цикла оценки качества
+/speckit.loop --project-type web-app                # Автовыбор шаблонов
+/speckit.qa overview                                # Дашборд качества
+/speckit.goals check                                # Проверка целей качества
+/speckit.alerts check                               # Проверка оповещений
 ```
 
 ---
 
-## Features
+## Возможности
 
-### Core Engine
+### Ядро системы
 
-- **Quality Loop** — evaluate, critique, refine (iterative cycle)
-- **13 Criteria Templates** — backend, frontend, security, performance, testing, api-spec, database, docs, config, infrastructure, ui-ux, live-test, code-gen
-- **Priority Profiles** — domain-weighted scoring (web-app, microservice, ml-service, mobile-app, etc.)
-- **Auto Template Selection** — `--project-type` picks the right templates automatically
+- **Quality Loop** — оценка, критика, улучшение (итеративный цикл)
+- **13 шаблонов критериев** — backend, frontend, security, performance, testing, api-spec, database, docs, config, infrastructure, ui-ux, live-test, code-gen
+- **Профили приоритетов** — доменная весовая оценка (web-app, microservice, ml-service, mobile-app и др.)
+- **Автовыбор шаблонов** — `--project-type` автоматически подбирает нужные шаблоны
 
-### Quality Management
+### Управление качеством
 
-- **Goals** — define targets, track progress, get suggestions
-- **History** — track trends, statistics, run comparison
-- **Insights** — AI-powered recommendations and optimization
-- **Anomalies** — statistical anomaly detection
-- **Benchmarks** — percentile ranking, historical baselines
-- **Alerts** — proactive notifications for quality issues
-- **Debt** — track and prioritize quality debt
-- **Feedback Loop** — adaptive configuration learning
+- **Цели (Goals)** — определение целевых показателей, отслеживание прогресса, рекомендации
+- **История (History)** — тренды, статистика, сравнение запусков
+- **Инсайты (Insights)** — рекомендации и оптимизация на базе ИИ
+- **Аномалии (Anomalies)** — статистическое обнаружение аномалий
+- **Бенчмарки (Benchmarks)** — перцентильный рейтинг, исторические базовые значения
+- **Оповещения (Alerts)** — проактивные уведомления о проблемах качества
+- **Технический долг (Debt)** — отслеживание и приоритизация долга качества
+- **Обратная связь (Feedback Loop)** — адаптивное обучение конфигурации
 
-### Advanced
+### Продвинутые возможности
 
-- **Gate Policies** — environment-specific quality gates (production, staging, ci, etc.)
-- **Quality Plans** — unified improvement strategies with presets
-- **Industry Presets** — fintech, healthcare, ecommerce, saas, gaming, government, education, iot
-- **Auto-Configuration** — one-command project setup with industry detection
-- **Simulation** — what-if analysis before applying changes
-- **Optimization** — Bayesian, genetic, annealing and other methods
-- **Multi-Variant Testing** — A/B/C/n comparison with statistical analysis
-- **Template Blending** — combine templates with union/consensus/weighted modes
+- **Политики шлюзов (Gate Policies)** — шлюзы качества для разных сред (production, staging, ci и др.)
+- **Планы качества (Quality Plans)** — единые стратегии улучшения с пресетами
+- **Отраслевые пресеты** — fintech, healthcare, ecommerce, saas, gaming, government, education, iot
+- **Автоконфигурация** — настройка проекта одной командой с определением отрасли
+- **Симуляция** — анализ «что если» перед применением изменений
+- **Оптимизация** — байесовский, генетический, отжиг и другие методы
+- **Мультивариантное тестирование** — сравнение A/B/C/n со статистическим анализом
+- **Смешивание шаблонов** — объединение шаблонов в режимах union/consensus/weighted
 
-### Reporting
+### Отчётность
 
-- **HTML** — interactive reports with charts
-- **Markdown** — human-readable for documentation
-- **JSON** — machine-readable for CI/CD
-- **Result Cards** — rich console output
-
----
-
-## Criteria Templates
-
-| Template | Description |
-|----------|-------------|
-| `backend` | Backend API and server-side quality |
-| `frontend` | Frontend UI/UX quality |
-| `security` | Security best practices |
-| `performance` | Performance optimization |
-| `testing` | Test coverage and quality |
-| `api-spec` | API specification completeness |
-| `database` | Database schema and queries |
-| `docs` | Documentation quality |
-| `config` | Configuration management |
-| `infrastructure` | Infrastructure as code |
-| `ui-ux` | User interface and experience |
-| `live-test` | Live testing validation |
-| `code-gen` | Code generation quality |
+- **HTML** — интерактивные отчёты с графиками
+- **Markdown** — человекочитаемые для документации
+- **JSON** — машиночитаемые для CI/CD
+- **Карточки результатов** — форматированный вывод в консоль
 
 ---
 
-## CLI Commands
+## Шаблоны критериев
 
-| Command | Description |
-|---------|-------------|
-| `/speckit.loop` | Run quality evaluation loop |
-| `/speckit.qa` | QA Dashboard |
-| `/speckit.goals` | Quality goals management |
-| `/speckit.history` | Quality history and trends |
-| `/speckit.insights` | AI-powered insights |
-| `/speckit.anomalies` | Anomaly detection |
-| `/speckit.benchmarks` | Benchmarking |
-| `/speckit.gates` | Gate policies |
-| `/speckit.alerts` | Quality alerts |
-| `/speckit.feedback` | Feedback loop analysis |
-| `/speckit.debt` | Quality debt tracking |
-| `/speckit.simulate` | What-if simulation |
-| `/speckit.plans` | Quality plans |
-| `/speckit.industries` | Industry presets |
-| `/speckit.autoconfig` | Smart auto-configuration |
-| `/speckit.templates` | Template registry |
-| `/speckit.configs` | Loop configurations |
-| `/speckit.profiles` | Priority profiles |
-| `/speckit.optimize` | Quality optimization |
-
-See [docs/cli-reference.md](docs/cli-reference.md) for detailed usage and examples.
+| Шаблон | Описание |
+|--------|----------|
+| `backend` | Качество Backend API и серверной части |
+| `frontend` | Качество Frontend UI/UX |
+| `security` | Лучшие практики безопасности |
+| `performance` | Оптимизация производительности |
+| `testing` | Покрытие и качество тестов |
+| `api-spec` | Полнота спецификации API |
+| `database` | Схема БД и запросы |
+| `docs` | Качество документации |
+| `config` | Управление конфигурацией |
+| `infrastructure` | Инфраструктура как код |
+| `ui-ux` | Пользовательский интерфейс и UX |
+| `live-test` | Валидация живого тестирования |
+| `code-gen` | Качество генерации кода |
 
 ---
 
-## Configuration
+## Команды CLI
 
-Basic project config in `.speckit/config.yml`:
+| Команда | Описание |
+|---------|----------|
+| `/speckit.loop` | Запуск цикла оценки качества |
+| `/speckit.qa` | Дашборд QA |
+| `/speckit.goals` | Управление целями качества |
+| `/speckit.history` | История и тренды качества |
+| `/speckit.insights` | Инсайты на базе ИИ |
+| `/speckit.anomalies` | Обнаружение аномалий |
+| `/speckit.benchmarks` | Бенчмаркинг |
+| `/speckit.gates` | Политики шлюзов |
+| `/speckit.alerts` | Оповещения о качестве |
+| `/speckit.feedback` | Анализ обратной связи |
+| `/speckit.debt` | Отслеживание технического долга |
+| `/speckit.simulate` | Симуляция «что если» |
+| `/speckit.plans` | Планы качества |
+| `/speckit.industries` | Отраслевые пресеты |
+| `/speckit.autoconfig` | Умная автоконфигурация |
+| `/speckit.templates` | Реестр шаблонов |
+| `/speckit.configs` | Конфигурации цикла |
+| `/speckit.profiles` | Профили приоритетов |
+| `/speckit.optimize` | Оптимизация качества |
+
+Подробное описание и примеры см. в [docs/cli-reference.md](docs/cli-reference.md).
+
+---
+
+## Конфигурация
+
+Базовая конфигурация проекта в `.speckit/config.yml`:
 
 ```yaml
 quality:
@@ -149,71 +149,71 @@ quality:
   gate_preset: production
 ```
 
-See [docs/configuration.md](docs/configuration.md) for full configuration reference.
+Полный справочник по конфигурации см. в [docs/configuration.md](docs/configuration.md).
 
 ---
 
-## Installation
+## Установка
 
-### Prerequisites
+### Требования
 
 - Python 3.11+
 - Git
-- (Optional) Ollama for vector memory
+- (Опционально) Ollama для векторной памяти
 
-### Detailed Setup
+### Подробная установка
 
-See [INSTALL.md](INSTALL.md) for comprehensive installation:
-- AI assistant integration (Claude Code, Cursor)
-- Vector memory setup with Ollama
-- CLI command configuration
-
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Quality Subsystems](docs/subsystems.md) | Goals, History, Insights, Alerts, Benchmarks, and more |
-| [CLI Reference](docs/cli-reference.md) | All commands with examples |
-| [Configuration](docs/configuration.md) | Config files, profiles, gate policies, alerts |
-| [Templates & Blending](docs/templates.md) | Template registry, blending, presets |
-| [Optimization](docs/optimization.md) | Optimization methods, Pareto, simulation |
-| [Quality Loop](docs/quality-loop.md) | Architecture and internals |
-| [Installation](INSTALL.md) | Full installation guide |
+См. [INSTALL.md](INSTALL.md) для полной инструкции по установке:
+- Интеграция с ИИ-ассистентами (Claude Code, Cursor)
+- Настройка векторной памяти с Ollama
+- Конфигурация команд CLI
 
 ---
 
-## Project Structure
+## Документация
+
+| Документ | Описание |
+|----------|----------|
+| [Подсистемы качества](docs/subsystems.md) | Цели, история, инсайты, оповещения, бенчмарки и др. |
+| [Справочник CLI](docs/cli-reference.md) | Все команды с примерами |
+| [Конфигурация](docs/configuration.md) | Файлы конфигурации, профили, политики шлюзов, оповещения |
+| [Шаблоны и смешивание](docs/templates.md) | Реестр шаблонов, смешивание, пресеты |
+| [Оптимизация](docs/optimization.md) | Методы оптимизации, Парето, симуляция |
+| [Quality Loop](docs/quality-loop.md) | Архитектура и внутреннее устройство |
+| [Установка](INSTALL.md) | Полное руководство по установке |
+
+---
+
+## Структура проекта
 
 ```
 spec-kit/
-├── src/specify_cli/quality/   # Core quality engine
-│   ├── models.py              # Data models
-│   ├── rules.py               # Rule management
-│   ├── evaluator.py           # Quality evaluation
-│   ├── scorer.py              # Scoring
-│   ├── critique.py            # Critique generation
-│   ├── refiner.py             # Artifact refinement
-│   ├── loop.py                # Quality loop coordinator
-│   ├── loop_config.py         # Loop configuration
-│   ├── gate_policies.py       # Gate policies
-│   ├── quality_goals.py       # Goals system
-│   ├── quality_history.py     # History tracking
-│   ├── quality_insights.py    # Insights engine
-│   ├── quality_alerting.py    # Alert system
-│   ├── template_registry.py   # Template registry
-│   └── ...                    # Other modules
-├── templates/commands/        # CLI command templates
-├── tests/                     # Test suite
-├── docs/                      # Documentation
-├── INSTALL.md                 # Installation guide
-└── README.md                  # This file
+├── src/specify_cli/quality/   # Ядро системы качества
+│   ├── models.py              # Модели данных
+│   ├── rules.py               # Управление правилами
+│   ├── evaluator.py           # Оценка качества
+│   ├── scorer.py              # Скоринг
+│   ├── critique.py            # Генерация критики
+│   ├── refiner.py             # Улучшение артефактов
+│   ├── loop.py                # Координатор цикла качества
+│   ├── loop_config.py         # Конфигурация цикла
+│   ├── gate_policies.py       # Политики шлюзов
+│   ├── quality_goals.py       # Система целей
+│   ├── quality_history.py     # Отслеживание истории
+│   ├── quality_insights.py    # Движок инсайтов
+│   ├── quality_alerting.py    # Система оповещений
+│   ├── template_registry.py   # Реестр шаблонов
+│   └── ...                    # Другие модули
+├── templates/commands/        # Шаблоны команд CLI
+├── tests/                     # Тесты
+├── docs/                      # Документация
+├── INSTALL.md                 # Руководство по установке
+└── README.md                  # Этот файл
 ```
 
 ---
 
-## Contributing
+## Разработка
 
 ```bash
 python -m venv venv
@@ -224,10 +224,10 @@ pytest tests/
 
 ---
 
-## License
+## Лицензия
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — см. [LICENSE](LICENSE).
 
 ---
 
-**Spec Kit** — AI-Powered Quality Assurance for Software Specifications
+**Spec Kit** — Автоматизированный контроль качества спецификаций ПО на базе ИИ
