@@ -161,14 +161,25 @@ class ResultCardFormatter:
         self.compact = compact
         self._terminal_info = detect_terminal_capabilities()
         self._supports_unicode = use_unicode if use_unicode is not None else self._terminal_info.supports_unicode
-        self._supports_colors = use_colors if use_colors is not None else self._terminal_info.supports_ansi
+        self._supports_colors = use_colors if use_colors is not None else self._terminal_info.supports_colors
 
-        # Setup ANSI codes
-        scheme = ColorScheme.BASIC if self._supports_colors else ColorScheme.NONE
-        self.ansi = ANSI(scheme=scheme, theme=theme)
+        # Setup theme colors (use static ANSI class directly)
+        self.theme_name = theme
+        self._theme_colors = self._get_theme_colors(theme)
 
         # Select character set
         self.box = self.BOX_CHARS if self._supports_unicode else self.ASCII_BOX
+
+    def _get_theme_colors(self, theme: ColorTheme) -> dict:
+        """Get color dict for theme"""
+        if theme == ColorTheme.DARK:
+            return ColorTheme.DARK
+        elif theme == ColorTheme.HIGH_CONTRAST:
+            return ColorTheme.HIGH_CONTRAST
+        elif theme == ColorTheme.MINIMAL:
+            return ColorTheme.MINIMAL
+        else:
+            return ColorTheme.DEFAULT
 
     def _icon(self, icon_tuple: Tuple[str, str]) -> str:
         """Get icon based on terminal support"""
@@ -184,13 +195,41 @@ class ResultCardFormatter:
         return self._icon(self.CATEGORY_ICONS.get(cat_key, self.CATEGORY_ICONS["general"]))
 
     def _colorize(self, text: str, color_name: str = "white") -> str:
-        """Apply color to text if supported"""
+        """Apply color to text if supported
+
+        Maps color names to ANSI codes or theme colors.
+        """
         if not self._supports_colors:
             return text
 
-        color_func = getattr(self.ansi, color_name, None)
-        if color_func:
-            return color_func(text)
+        # Try theme color first
+        theme_color = self._theme_colors.get(color_name)
+        if theme_color:
+            return f"{theme_color}{text}{ANSI.RESET}"
+
+        # Fallback to basic ANSI color mapping
+        color_map = {
+            "white": ANSI.WHITE,
+            "black": ANSI.BLACK,
+            "red": ANSI.RED,
+            "green": ANSI.GREEN,
+            "yellow": ANSI.YELLOW,
+            "blue": ANSI.BLUE,
+            "cyan": ANSI.CYAN,
+            "magenta": ANSI.MAGENTA,
+            "bright_red": ANSI.BRIGHT_RED,
+            "bright_green": ANSI.BRIGHT_GREEN,
+            "bright_yellow": ANSI.BRIGHT_YELLOW,
+            "bright_blue": ANSI.BRIGHT_BLUE,
+            "bright_cyan": ANSI.BRIGHT_CYAN,
+            "bright_magenta": ANSI.BRIGHT_MAGENTA,
+            "bright_white": ANSI.BRIGHT_WHITE,
+            "gray": ANSI.DIM + ANSI.WHITE,
+            "grey": ANSI.DIM + ANSI.WHITE,
+        }
+        color_code = color_map.get(color_name, "")
+        if color_code:
+            return f"{color_code}{text}{ANSI.RESET}"
         return text
 
     def _draw_box(self, lines: List[str], width: int = 60) -> str:
@@ -443,10 +482,17 @@ def create_result_card_data(
     max_iterations = state.get("max_iterations", 4)
     phase = state.get("phase", "A")
 
-    # Rule counts
+    # Rule counts - handle both list and count formats
     total_rules = evaluation.get("total_rules", 0)
     passed_rules = evaluation.get("passed_rules", 0)
-    failed_rules = evaluation.get("failed_rules", 0)
+
+    # failed_rules can be list (of dicts) or int (count)
+    failed_rules_raw = evaluation.get("failed_rules", 0)
+    if isinstance(failed_rules_raw, list):
+        failed_rules = len(failed_rules_raw)
+    else:
+        failed_rules = failed_rules_raw
+
     warnings = len(evaluation.get("warnings", []))
 
     # Duration (if available from history)
@@ -454,8 +500,11 @@ def create_result_card_data(
     if "duration_seconds" in result:
         duration = result["duration_seconds"]
 
-    # Category summaries
-    category_summaries = _create_category_summaries(evaluation)
+    # Category summaries - ensure failed_rules is a list
+    evaluation_for_summaries = evaluation.copy()
+    if not isinstance(evaluation_for_summaries.get("failed_rules"), list):
+        evaluation_for_summaries["failed_rules"] = []
+    category_summaries = _create_category_summaries(evaluation_for_summaries)
 
     # Determine status
     if failed_rules == 0 and score >= 0.9:

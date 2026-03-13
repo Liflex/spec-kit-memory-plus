@@ -682,6 +682,55 @@ def recommend_preset_command(
     console.print(f"\n[dim]Usage: speckit templates presets apply {preset.name}[/dim]")
 
 
+@presets_app.command("auto-detect")
+def auto_detect_preset_command(
+    project_root: Optional[str] = typer.Option(
+        None,
+        "--project-root",
+        "-r",
+        help="Project root directory (defaults to current directory)",
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show detailed detection information",
+    ),
+):
+    """Automatically detect and recommend a blend preset based on project analysis.
+
+    Analyzes the codebase to detect project characteristics and recommends
+    the most appropriate blend preset.
+    """
+    from pathlib import Path
+
+    registry = get_registry()
+
+    root_path = Path(project_root) if project_root else None
+    preset = registry.auto_detect_blend_preset(project_root=root_path)
+
+    if not preset:
+        console.print("[yellow]Could not auto-detect a suitable preset[/yellow]")
+        console.print("\n[dim]Use 'speckit templates presets list' to see all available presets.[/dim]")
+        return
+
+    tags_str = ', '.join(sorted(preset.tags)) if preset.tags else 'none'
+
+    console.print(
+        f"\n[bold green]Auto-detected Preset:[/bold green] {preset.name}\n"
+    )
+    console.print(f"[dim]{preset.description}[/dim]\n")
+    console.print(f"[bold]Mode:[/bold] {preset.mode}")
+    console.print(f"[bold]Templates:[/bold] {', '.join(preset.templates)}")
+    console.print(f"[bold]Tags:[/bold] {tags_str}")
+
+    if verbose:
+        console.print(f"\n[dim]Project Root:[/dim] {root_path or Path.cwd()}")
+
+    console.print(f"\n[dim]Usage: speckit templates presets apply {preset.name}[/dim]")
+
+
+
 @presets_app.command("apply")
 def apply_preset_command(
     preset_name: str = typer.Argument(
@@ -767,6 +816,7 @@ def apply_preset_command(
     else:
         console.print(f"\n[dim]Usage: speckit loop --criteria {blended.name}[/dim]")
         console.print("[dim]Use --output to save the blended template to a file.[/dim]")
+templates_app.add_typer(presets_app, name="presets")
 
 
 def main():

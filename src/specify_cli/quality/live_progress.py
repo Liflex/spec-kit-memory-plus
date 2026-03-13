@@ -21,10 +21,8 @@ import io
 from specify_cli.quality.terminal_colors import (
     TerminalInfo,
     ColorTheme,
-    ColorScheme,
     ANSI,
     detect_terminal_capabilities,
-    reset_terminal_cache,
 )
 
 
@@ -129,24 +127,29 @@ class ProgressTracker:
 
     def _detect_terminal(self) -> TerminalInfo:
         """Detect terminal capabilities for display formatting"""
-        # Apply config overrides if set
-        overrides = {}
-        if self.config.supports_ansi is not None:
-            overrides["supports_ansi"] = self.config.supports_ansi
-        if self.config.supports_unicode is not None:
-            overrides["supports_unicode"] = self.config.supports_unicode
-        if self.config.width is not None:
-            overrides["width"] = self.config.width
+        # Get base terminal info
+        terminal_info = detect_terminal_capabilities()
 
-        return detect_terminal_capabilities(**overrides)
+        # Apply config overrides manually (detect_terminal_capabilities doesn't accept kwargs)
+        if self.config.supports_ansi is not None:
+            # Create modified TerminalInfo with overridden supports_colors
+            # Note: supports_ansi config maps to supports_colors in TerminalInfo
+            from dataclasses import replace
+            terminal_info = replace(terminal_info, supports_colors=self.config.supports_ansi)
+        if self.config.supports_unicode is not None:
+            from dataclasses import replace
+            terminal_info = replace(terminal_info, supports_unicode=self.config.supports_unicode)
+        if self.config.width is not None:
+            from dataclasses import replace
+            terminal_info = replace(terminal_info, width=self.config.width)
+
+        return terminal_info
 
     def _setup_ansi(self):
         """Setup ANSI color codes based on terminal and theme"""
-        self.ansi = ANSI(
-            scheme=ColorScheme.BASIC if self._terminal_info.supports_ansi else ColorScheme.NONE,
-            theme=self.config.theme,
-        )
-        self._supports_colors = self._terminal_info.supports_ansi
+        # ANSI is a static class - just assign it directly
+        self.ansi = ANSI
+        self._supports_colors = self._terminal_info.supports_colors
         self._supports_unicode = self._terminal_info.supports_unicode
 
     def _get_frames(self) -> List[str]:
@@ -180,11 +183,19 @@ class ProgressTracker:
         self._frame_index += 1
         return frame
 
-    def _colorize(self, text: str, color_func: Optional[Callable] = None) -> str:
-        """Apply color to text if supported"""
-        if not self._supports_colors or color_func is None:
+    def _colorize(self, text: str, color_code: Optional[str] = None) -> str:
+        """Apply color to text if supported
+
+        Args:
+            text: Text to colorize
+            color_code: ANSI color code string (e.g., self.ansi.GREEN)
+
+        Returns:
+            Colorized text with reset code, or plain text if colors disabled
+        """
+        if not self._supports_colors or color_code is None:
             return text
-        return color_func(text)
+        return f"{color_code}{text}{self.ansi.RESET}"
 
     def _reset_line(self) -> str:
         """Get ANSI escape sequence to reset line"""
@@ -238,13 +249,13 @@ class ProgressTracker:
 
         # Color based on score
         if score >= 0.9:
-            color = self.ansi.green
+            color = self.ansi.GREEN
         elif score >= 0.8:
-            color = self.ansi.yellow
+            color = self.ansi.YELLOW
         elif score >= 0.6:
-            color = self.ansi.bright_yellow
+            color = self.ansi.BRIGHT_YELLOW
         else:
-            color = self.ansi.red
+            color = self.ansi.RED
 
         bar = self._colorize(filled_char * filled, color) + empty_char * empty
         return f"[{bar}] {score:.2f}"
@@ -255,9 +266,9 @@ class ProgressTracker:
 
         if self._supports_colors:
             if phase == "A":
-                return self._colorize(f"Phase {phase}", self.ansi.cyan)
+                return self._colorize(f"Phase {phase}", self.ansi.CYAN)
             else:
-                return self._colorize(f"Phase {phase}", self.ansi.bright_cyan)
+                return self._colorize(f"Phase {phase}", self.ansi.BRIGHT_CYAN)
         return f"Phase {phase}"
 
     def get_display_text(self) -> str:
@@ -283,11 +294,11 @@ class ProgressTracker:
             if self.state.previous_score is not None:
                 delta = self.state.score - self.state.previous_score
                 if delta > 0.01:
-                    trend = self._colorize("↑", self.ansi.green)
+                    trend = self._colorize("↑", self.ansi.GREEN)
                 elif delta < -0.01:
-                    trend = self._colorize("↓", self.ansi.red)
+                    trend = self._colorize("↓", self.ansi.RED)
                 else:
-                    trend = self._colorize("→", self.ansi.gray)
+                    trend = self._colorize("→", self.ansi.BLACK)  # No GRAY, using BLACK
                 score_text += f" {trend}"
         else:
             score_text = "..."
@@ -296,7 +307,7 @@ class ProgressTracker:
         # Phase indicator
         phase_indicator = self._colorize(
             self.state.phase.value.upper(),
-            self.ansi.bright_blue if self.state.phase != ProgressPhase.ERROR else self.ansi.red
+            self.ansi.BRIGHT_BLUE if self.state.phase != ProgressPhase.ERROR else self.ansi.RED
         )
 
         parts = [
@@ -323,7 +334,7 @@ class ProgressTracker:
         frame = self._get_current_frame() if self.config.animation_style != AnimationStyle.NONE else ""
         phase_text = self._colorize(
             self.state.phase.value.upper(),
-            self.ansi.bright_blue if self.state.phase != ProgressPhase.ERROR else self.ansi.red
+            self.ansi.BRIGHT_BLUE if self.state.phase != ProgressPhase.ERROR else self.ansi.RED
         )
         lines.append(f"{frame} {phase_text}: {self.state.message}")
 
@@ -343,16 +354,16 @@ class ProgressTracker:
                 if abs(delta) >= 0.01:
                     delta_str = f"({delta:+.2f})"
                     if delta > 0:
-                        delta_str = self._colorize(delta_str, self.ansi.green)
+                        delta_str = self._colorize(delta_str, self.ansi.GREEN)
                     elif delta < 0:
-                        delta_str = self._colorize(delta_str, self.ansi.red)
+                        delta_str = self._colorize(delta_str, self.ansi.RED)
                     bar += f" {delta_str}"
 
             lines.append(f"  Score: {bar}")
 
         # Failed rules count
         if self.state.failed_rules_count > 0:
-            count_text = self._colorize(str(self.state.failed_rules_count), self.ansi.red)
+            count_text = self._colorize(str(self.state.failed_rules_count), self.ansi.RED)
             lines.append(f"  Failed rules: {count_text}")
 
         # ETA
@@ -633,11 +644,13 @@ def create_progress_callback(
 
     def callback(state: ProgressState) -> None:
         """Update and display progress"""
-        # Update tracker state from state
-        tracker.phase = state.phase
-        tracker.iteration = state.iteration
-        tracker.score = state.score
-        tracker.message = state.message
+        # Update tracker state using update() method
+        tracker.update(
+            phase=state.phase,
+            iteration=state.iteration,
+            score=state.score,
+            message=state.message,
+        )
         tracker.display()
 
     return callback

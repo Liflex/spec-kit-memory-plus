@@ -503,12 +503,14 @@ class QualityHistoryManager:
         Returns:
             Number of records cleared
         """
-        records = self.load_history(task_alias=task_alias)
+        # Load ALL records first (no filter) to properly filter later
+        records = self.load_history(task_alias=None)
 
         if task_alias:
-            # Filter out records for this task
+            # Filter out records for this task (keep others)
             other_records = [r for r in records if r.task_alias != task_alias]
-            cleared_count = len(records) - len(other_records)
+            records_to_clear = [r for r in records if r.task_alias == task_alias]
+            cleared_count = len(records_to_clear)
 
             # Rewrite index with remaining records
             with open(self.index_file, "w", encoding="utf-8") as f:

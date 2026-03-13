@@ -76,6 +76,8 @@ python speckit_templates.py presets list --project-type microservice
 python speckit_templates.py presets info full_stack_secure
 python speckit_templates.py presets search security
 python speckit_templates.py presets recommend web-app
+python speckit_templates.py presets auto-detect
+python speckit_templates.py presets auto-detect --verbose --project-root /path/to/project
 python speckit_templates.py presets apply full_stack_secure --output stack.yml
 ```
 
@@ -94,6 +96,19 @@ python speckit_templates.py presets apply full_stack_secure --output stack.yml
 | `iot_platform` | backend, security, infrastructure, performance, testing | union |
 | `devsecops` | security, infrastructure, terraform, testing, config | union |
 
+n### Auto-Detection
+
+Команда `auto-detect` анализирует кодовую базу и автоматически рекомендует подходящий пресет:
+
+```bash
+# Автоматическое определение пресета для текущего проекта
+speckit templates presets auto-detect
+
+# С подробной информацией и для другой директории
+speckit templates presets auto-detect --verbose --project-root /path/to/project
+```
+
+Команда использует `ProfileDetector` для анализа файлов проекта (package.json, requirements.txt, и т.д.) и выбора наиболее подходящего пресета.
 ### Using Presets in Quality Loop
 
 ```bash

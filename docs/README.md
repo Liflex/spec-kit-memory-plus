@@ -1,19 +1,24 @@
-# Spec Kit Documentation
+# Документация Spec Kit
 
-## Guides
+## С чего начать
 
-| Document | Description |
-|----------|-------------|
-| [Quality Loop](quality-loop.md) | Architecture, components, how the loop works |
-| [Quality Subsystems](subsystems.md) | Goals, History, Insights, Alerts, Benchmarks, Plans, and more |
-| [CLI Reference](cli-reference.md) | All commands with usage examples |
-| [Configuration](configuration.md) | Config files, profiles, gate policies, alerts |
-| [Templates & Blending](templates.md) | Template registry, blending modes, presets |
-| [Optimization](optimization.md) | Optimization methods, Pareto analysis, simulation |
-| [Installation](../INSTALL.md) | Full installation guide |
+| Документ | Для кого | Описание |
+|----------|----------|----------|
+| **[Руководство по использованию](usage-guide.md)** | **Все** | **Когда, зачем и как использовать каждую команду. Начните здесь.** |
+| [Быстрый старт](quickstart.md) | Новые пользователи | Пошаговый пример: от идеи до кода |
 
-## Quick Links
+## Справочники
 
-- [Quick Start](../README.md#quick-start)
-- [Criteria Templates](../README.md#criteria-templates)
-- [Project Structure](../README.md#project-structure)
+| Документ | Описание |
+|----------|----------|
+| [CLI Reference](cli-reference.md) | Все команды с параметрами |
+| [Quality Loop](quality-loop.md) | Архитектура loop, шаблоны критериев, правила и веса |
+| [Шаблоны и смешивание](templates.md) | Реестр шаблонов, blend modes, пресеты |
+| [Конфигурация](configuration.md) | Файлы конфигурации, профили приоритетов, политики шлюзов |
+
+## Дополнительно
+
+| Документ | Описание |
+|----------|----------|
+| [Память агента](memory.md) | 3 уровня памяти, векторный поиск через Ollama |
+| [Установка](../INSTALL.md) | Полное руководство по установке |

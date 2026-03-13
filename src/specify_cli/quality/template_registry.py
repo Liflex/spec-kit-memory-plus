@@ -14,7 +14,7 @@ import os
 import yaml
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Any
 from enum import Enum
 
 
@@ -692,6 +692,53 @@ class TemplateRegistry:
             }
             for preset in self.BLEND_PRESETS
         ]
+
+    def auto_detect_blend_preset(self, project_root: Optional[Path] = None) -> Optional[BlendPreset]:
+        """
+        Automatically detect and recommend a blend preset based on project analysis.
+
+        Uses ProfileDetector from autodetect module to analyze the codebase
+        and recommend the most appropriate blend preset.
+
+        Args:
+            project_root: Root directory of the project to analyze.
+                         Defaults to current working directory.
+
+        Returns:
+            Recommended BlendPreset or None if detection fails
+        """
+        try:
+            # Lazy import to avoid circular dependencies
+            from .autodetect import ProfileDetector
+
+            detector = ProfileDetector(project_root)
+            detected_profile = detector.detect()
+
+            # Map detected profile to blend preset
+            preset_mapping = {
+                "web-app": "full_stack_secure",
+                "mobile-app": "mobile_backend",
+                "microservice": "microservices_robust",
+                "ml-service": "data_pipeline",
+                "data-pipeline": "data_pipeline",
+                "graphql-api": "api_first",
+                "default": "full_stack_secure",  # Fallback
+            }
+
+            # Get mapped preset name
+            preset_name = preset_mapping.get(detected_profile, "full_stack_secure")
+
+            # Try to get the preset
+            preset = self.get_blend_preset(preset_name)
+            if preset:
+                return preset
+
+            # Fallback: search by project type
+            return self.recommend_blend_preset(detected_profile)
+
+        except Exception:
+            # On any error, return a safe default
+            return self.get_blend_preset("full_stack_secure")
 
 
 # Singleton instance for easy access

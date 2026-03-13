@@ -24,10 +24,10 @@
 
 ## Current State (Post-Audit + Cleanup)
 
-После 132 экспериментов и ручного cleanup:
+После 147 экспериментов и ручного cleanup:
 - **31 Python-файл** в `src/specify_cli/quality/` (было 62, сокращено вдвое)
-- **58/58 quality tests passing** (было 48/58)
-- **338 total tests passing** (было 328)
+- **934 quality tests passing** (было 772/774, +73 test_models.py)
+- **1270 total tests passing** (было 1181, +89)
 
 **Что удалено:** sms_integration, email_integration, webhook_integration, ab_testing, multi_variant_testing, quality_optimization, pareto_visualization, quality_simulation, industry_detector, alert_aggregation, alert_deduplication, alert_escalation, alert_dashboard, gate_policy_analytics, gate_policy_diff, report_aggregator, history_dashboard, correlation_analysis, quality_trend_analytics, smart_config_recommender и другие.
 
@@ -78,6 +78,7 @@ STOP. Не добавляй эти фичи:
 - tests/                       # Тесты (ПРИОРИТЕТ!)
 - templates/commands/           # CLI command templates
 - README.md, CHANGELOG.md      # Документация
+- docs/                        # Руководства и справочники
 - program.md                   # Этот файл
 
 ЗАПРЕЩЕНО (без явного запроса):
@@ -261,6 +262,14 @@ python -m pytest tests/ -v
    - Понятные error messages
    - Helpful defaults
    - Минимум обязательных параметров
+
+5. Документация:
+   - docs/usage-guide.md — главный справочник "как пользоваться"
+   - Каждая команда: зачем, когда, пример, результат
+   - Decision guide: "я хочу X → используй Y"
+   - Полные сценарии от проблемы до результата
+   - README не дублирует usage-guide, а ссылается на него
+   - НЕ описывать удалённые/несуществующие фичи
 ```
 
 ---
@@ -313,7 +322,22 @@ python -m pytest tests/ -v
 ПРАВИЛО: Lesson ≠ changelog. Max 30 строк на запись. Max 10 [CRITICAL], max 20 [IMPORTANT].
 ```
 
-### 7. Self-Reflection Loop
+### 7. Documentation as Feature Listing
+```
+BAD:  "Возможности: HTML-отчёты, JSON-отчёты, Markdown-отчёты" — это список фич, не документация
+BAD:  "/speckit.goals — управление целями качества" — однострочное описание без примеров
+BAD:  Перечисление 20 команд таблицей без объяснения когда и зачем каждую использовать
+GOOD: "Зачем: ...", "Когда использовать: ...", "Пример: ...", "Не нужно если: ..."
+GOOD: Decision guide: "Я хочу X → используй команду Y"
+GOOD: Полные сценарии: от проблемы до результата
+
+ПРАВИЛО: Документация — это руководство "как пользоваться", а не каталог возможностей.
+         Каждая команда/фича должна иметь: (1) зачем, (2) когда использовать, (3) пример,
+         (4) что получится. Пользователь обращается к документации как к справочнику.
+         Основной справочник: docs/usage-guide.md
+```
+
+### 8. Self-Reflection Loop
 ```
 BAD:  "Улучшу процесс автоисследования" / "Оптимизирую промпты AutoResearch"
 BAD:  "Создам фреймворк для генерации фреймворков"

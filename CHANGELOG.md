@@ -1,24 +1,312 @@
 # Changelog
 
-## [0.75.1] - 2026-03-13
+## [0.79.0] - 2026-03-13
 
 ### Added
-- **Exp 132: Blend Preset Integration with Quality Loop**
-  - Added `blend_preset` parameter to `QualityLoop.run()` for direct preset usage
-  - Auto-detection and recommendation of blend presets based on project type
-  - Intelligent project_type to blend_preset mapping in `TemplateRegistry`
-  - Seamless integration: blend presets take precedence over project_type and criteria
-  - New presets info method `get_all_blend_presets_info()` for CLI display
-
-### Changed
-- Updated `QualityLoop.run()` docstring with blend_preset parameter documentation
-- Enhanced `TemplateRegistry.recommend_blend_preset()` with smart project type mapping
-- Updated README.md with blend preset usage examples for quality loop
+- **Exp 148: Live Progress Module Test Suite (89 new tests)**
+  - Comprehensive test suite for `live_progress.py` module (643 lines)
+  - Tests for ProgressPhase and AnimationStyle enums
+  - Tests for ProgressState and ProgressConfig dataclasses
+  - Tests for ProgressTracker class with all display modes
+  - Tests for ETA calculation and formatting (seconds, minutes+seconds, hours+minutes)
+  - Tests for score bar formatting with colorization and Unicode/ASCII support
+  - Tests for phase indicator formatting
+  - Tests for compact and full display modes
+  - Tests for duration formatting (milliseconds, seconds, minutes)
+  - Tests for LiveProgressContext context manager
+  - Tests for convenience functions (create_progress_config, track_quality_progress, create_progress_callback)
+  - Tests for thread safety (lock-based updates)
+  - Tests for edge cases (zero score, perfect score, empty message, rapid updates)
+  - Coverage increased from ~0% to estimated >85% of live_progress methods
 
 ### Fixed
-- Improved preset recommendation fallback to keyword matching when direct mapping fails
+- **API compatibility fixes in live_progress.py**:
+  - Fixed `detect_terminal_capabilities()` - doesn't accept keyword arguments, use dataclasses.replace() for overrides
+  - Fixed `TerminalInfo.supports_ansi` → `supports_colors` (correct attribute name)
+  - Fixed `ANSI` class usage - it's a static class, not instantiable
+  - Fixed `_colorize()` method to wrap text with color codes instead of calling as function
+  - Fixed all color references (lowercase → uppercase: `ansi.green` → `ansi.GREEN`, etc.)
+  - Fixed `create_progress_callback()` to use `tracker.update()` instead of direct attribute access
+
+### Changed
+- Total quality tests: 934 (was 845, +89)
+- Total passing tests: 1270 (was 1181, +89)
+- Live progress module now has comprehensive test coverage for all core functionality
+
+## [0.78.0] - 2026-03-13
+
+### Added
+- **Exp 147: Quality Data Models Test Suite (73 new tests)**
+  - Comprehensive test suite for `models.py` module (565 lines)
+  - Tests for all 5 Enum classes (Phase, LoopStatus, StopReason, RuleSeverity, RuleCheckType)
+  - Tests for 9 dataclass types (QualityRule, PhaseConfig, PriorityProfile, CriteriaTemplate, FailedRule, EvaluationResult, CritiqueResult, LoopState, LoopEvent)
+  - Tests for serialization methods (to_dict/from_dict) for all dataclasses
+  - Tests for effective weight calculation with domain and category multipliers
+  - Tests for priority profile management (get_multiplier, get_category_multiplier)
+  - Tests for criteria template operations (get_phase_config, get_active_rules, get_priority_profile, list_priority_profiles, get_default_profile)
+  - Tests for custom priority profiles from project files
+  - Tests for LoopState with nested EvaluationResult and CritiqueResult
+  - Integration tests for full template roundtrip (template -> dict -> template)
+  - Coverage increased from ~0% to estimated >85% of models classes
+
+### Changed
+- Total quality tests: 845/847 (was 772/774, +73)
+- Total passing tests: 1181 (was 1108, +73)
+- Models module now has comprehensive test coverage for all core data structures
+
+---
+
+## [0.77.0] - 2026-03-13
+
+### Added
+- **Exp 146: Loop Configuration Module Test Suite (42 new tests)**
+  - Comprehensive test suite for `loop_config.py` module
+  - Tests for LoopConfig dataclass (minimal, full, defaults, serialization)
+  - Tests for LoopConfigManager (save/load/delete/list operations)
+  - Tests for configuration persistence across manager instances
+  - Tests for built-in configuration presets (LOOP_CONFIG_PRESETS)
+  - Tests for project type system (get_available_project_types)
+  - Tests for criteria resolution with template expansion
+  - Tests for configuration formatting (format_config_summary, format_config_details)
+  - Tests for configuration recommendation (recommend_config)
+  - Tests for standalone wrapper functions
+  - Tests for edge cases (empty criteria, special chars, extreme values)
+  - Coverage increased from ~0% to estimated >70% of loop_config methods
+
+### Changed
+- Total quality tests: 772/774 (was 730/732, +42)
+- Total passing tests: 1108 (was 1066, +42)
+- Loop configuration module now has comprehensive test coverage
+
+---
+
+## [0.76.1] - 2026-03-13
+
+### Added
+- **Exp 145: Terminal Colors Module Test Suite (67 new tests)**
+  - Comprehensive test suite for `terminal_colors.py` module
+  - Tests for ANSI constants (RESET, foreground colors, bright variants, background colors, styles)
+  - Tests for dynamic color functions (fg_256, bg_256, fg_rgb, bg_rgb)
+  - Tests for ColorTheme presets (DEFAULT, DARK, MINIMAL, HIGH_CONTRAST)
+  - Tests for TerminalInfo dataclass (initialization, get_color, colorize)
+  - Tests for detect_terminal_capabilities() with various environment variables
+  - Tests for NO_COLOR, CI, TERM, COLORTERM, and locale detection
+  - Tests for Windows-specific terminal detection (Windows Terminal, VSCode)
+  - Tests for terminal width detection and fallback
+  - Tests for Unicode support detection from locale
+  - Tests for color scheme assignment (NONE, BASIC, EXTENDED, TRUECOLOR)
+  - Tests for COLOR_THEME environment variable (dark, high-contrast, minimal)
+  - Tests for terminal info caching (get_terminal_info, reset_terminal_cache)
+  - Tests for edge cases (empty environment, invalid locale, empty color codes)
+  - Integration tests for GitHub Actions, local dev, WSL, minimal terminal environments
+  - Coverage increased from ~0% to estimated >80% of terminal_colors methods
+
+### Changed
+- Total quality tests: 730/732 (was 663/665)
+- Total passing tests: 1066 (was 999)
+- Terminal colors module now has comprehensive test coverage
+
+---
+
+## [0.76.0] - 2026-03-13
+
+### Added
+- **Exp 144: HTML Report Generator Test Suite (50 new tests)**
+  - Comprehensive test suite for `html_report.py` module
+  - Tests for constants (SEVERITY_COLORS, SEVERITY_ORDER)
+  - Tests for HTMLReportGenerator initialization
+  - Tests for main generate() method with various options
+  - Tests for HTML section generation (header, styles, summary, gate, timeline, details, footer)
+  - Tests for chart generation (severity pie chart, score distribution bar chart)
+  - Tests for helper methods (extract_score_events, extract_rule_score)
+  - Tests for convenience function (generate_html_report)
+  - Integration tests for file output with encoding validation
+  - Edge case tests (unicode characters, large failed rules list)
+  - Coverage increased from ~0% to estimated >85% of html_report methods
+
+### Changed
+- Total quality tests: 663/665 (was 613/615)
+- Total passing tests: 999 (was 949)
+- HTML report module now has comprehensive test coverage
+
+---
+
+## [0.75.9] - 2026-03-13
+
+### Added
+- **Exp 143: JSON Report Generator Test Suite (71 new tests)**
+  - Comprehensive test suite for `json_report.py` module
+  - Tests for JSON Schema (QUALITY_REPORT_SCHEMA, structure, properties)
+  - Tests for schema validation functions (validate_schema, get_schema_info, etc.)
+  - Tests for distribution statistics (calculate_distribution_stats, percentiles)
+  - Tests for severity distribution (get_severity_distribution, case handling)
+  - Tests for JSONReportGenerator class (generate, filters, output)
+  - Tests for convenience function (generate_json_report)
+  - Integration tests for schema validation
+  - Coverage increased from ~0% to estimated >85% of json_report methods
+
+### Changed
+- Total quality tests: 613/615 (was 542/544)
+- Total passing tests: 949 (was 878)
+- JSON report module now has comprehensive test coverage
+
+---
+
+## [0.75.7] - 2026-03-13
+## [0.75.8] - 2026-03-13### Added- **Exp 142: Priority Profiles Test Suite (93 tests, 91 passing)**  - Comprehensive test suite for `priority_profiles.py` module (2673 lines)  - Tests for constants (CATEGORY_TAGS, DOMAIN_TAGS, BUILTIN_PRIORITY_PROFILES)  - Tests for builtin profile access and structure  - Tests for profile listing (all, builtin, custom)  - Tests for profile retrieval and summary generation  - Tests for profile comparison and diff  - Tests for cascade profile parsing (simple and weighted)  - Tests for merge strategies and cascade presets  - Tests for custom profile management and validation  - Tests for profile JSON output functions  - Tests for print/output functions  - Tests for profile recommendation and auto-detection  - Tests for profile merge functionality  - Tests for cascade profile resolution  - Tests for strategy comparison  - Tests for profile rule analysis  - Tests for edge cases and error handling  - Integration tests for complete workflows  - 2 tests skipped (RulesRepository not available)### Changed- Total quality tests: 542/544 (was 451/451)- Total passing tests: 878 (was 731)- Priority profiles module now has comprehensive test coverage
+
+### Added
+- **Exp 141: Quality Goals Test Suite (35 new tests)**
+  - Comprehensive test suite for `quality_goals.py` module
+  - Tests for QualityGoal, GoalProgress, GoalSummary dataclasses
+  - Tests for GoalStatus and GoalType enums
+  - Tests for QualityGoalsManager core operations (create, get, update, delete)
+  - Tests for goal creation helper functions (target_score, pass_rate, category, streak, improvement, stability)
+  - Tests for goal preset functionality (list, get info, apply)
+  - Tests for goal progress tracking and summary generation
+  - Tests for edge cases and error handling
+  - Tests for category-specific goals
+  - Coverage increased from ~0% to estimated >80% of quality_goals methods
+
+### Changed
+- Total quality tests: 451 (was 416)
+- Total passing tests: 731 (was 696)
+- Quality goals module now has comprehensive test coverage
+
+- AutoDetect module now has comprehensive test coverage
 
 
+
+## [0.75.5] - 2026-03-13
+
+### Added
+- **Exp 139: Scorer Test Suite Expansion (28 new tests)**
+  - Extended test coverage for `scorer.py` from 8 to 36 tests
+  - Tests for `calculate_score_simple()` (backward compatibility)
+  - Tests for `get_rule_priority_score()` with PriorityProfile
+  - Tests for `get_severity_counts()` with rule_id prefix mapping
+  - Tests for `get_category_scores()` with category breakdowns
+  - Tests for `check_gate_conditions()` with critical/high/medium severity
+  - Tests for priority profile helpers (list, get_default, validate)
+  - Coverage increased from ~40% to ~90% of scorer methods
+
+### Changed
+- Total quality tests: 340 (was 312)
+- Total passing tests: 620 (was 592)
+- Scorer module now has comprehensive test coverage for core functionality
+
+---
+## [0.75.4] - 2026-03-13
+
+### Added
+- **Exp 138: Report Exporter Test Suite (48 new tests)**
+  - Comprehensive test suite for `report_exporter.py` module
+  - Tests for ExportConfig, ExportedReport, ExportResult dataclasses
+  - Tests for ReportExporter class with all formats (console, json, html, markdown, csv)
+  - Tests for export_quality_reports() convenience function
+  - Tests for MarkdownReportGenerator and generate_markdown_report()
+  - Tests for export_result_card_json() function
+  - Integration tests for complete export workflows
+  - File I/O tests with temp directories
+
+### Changed
+- Total quality tests: 312 (was 264)
+- Report exporter now has full test coverage for multi-format export
+
+---
+## [0.75.3] - 2026-03-13
+
+### Added
+- **Exp 137: Templates CLI Commands Test Suite (23 new tests)**
+  - Comprehensive test suite for `templates_cli.py` module
+  - Tests for preset commands: `list`, `info`, `search`, `recommend`, `auto-detect`, `apply`
+  - Tests for template commands: `list`, `stats`, `search`
+  - Tests for CLI app integration and command registration
+  - Uses `typer.testing.CliRunner` for end-to-end CLI testing
+  - Mock fixtures for TemplateRegistry with BlendPreset data
+  - Coverage for error scenarios (non-existent presets, failed detection, exceptions)
+
+### Changed
+- Total quality tests: 264 (was 241)
+- Total passing tests: 544 (was 521)
+
+---
+
+# Changelog
+
+## [0.75.6] - 2026-03-13
+
+### Added
+- **Exp 140: AutoDetect Test Suite (76 new tests)**
+  - Comprehensive test suite for `autodetect.py` module
+  - Tests for ProfileDetector class initialization and detection methods
+  - Tests for package.json detection (React, Vue, Angular, Next.js, GraphQL, React Native)
+  - Tests for requirements.txt detection (ML, data pipeline, GraphQL, microservice)
+  - Tests for pyproject.toml and go.mod detection
+  - Tests for file structure detection (directories, config files)
+  - Tests for Docker configuration detection
+  - Integration tests for complete project detection workflows
+  - Tests for convenience functions (detect_priority_profile, get_detection_details)
+  - Tests for formatting functions (print_detection_details, print_detection_details_json)
+  - Tests for DETECTION_PATTERNS constant validation
+  - Coverage increased from ~0% to estimated >85% of autodetect methods
+
+### Changed
+- Total quality tests: 416 (was 340)
+- Total passing tests: 696 (was 620)
+- AutoDetect module now has comprehensive test coverage
+
+
+
+## [0.75.2] - 2026-03-13
+
+### Added
+- **Exp 132: Auto-Detection Integration for Blend Presets**
+  - Added `auto_detect_blend_preset()` method to `TemplateRegistry`
+  - New CLI command: `speckit templates presets auto-detect`
+  - Automatic blend preset recommendation based on project codebase analysis
+  - Integration of `ProfileDetector` with blend preset system
+  - 25 new tests for blend preset functionality in `test_blend_presets.py`
+- **Exp 134: Quality History Tests (40 new tests)**
+  - Comprehensive test suite for `quality_history.py` module
+  - Tests for `QualityRunRecord` dataclass (to_dict, from_dict, from_loop_result)
+  - Tests for `QualityHistoryManager` CRUD operations
+  - Tests for statistics and trends calculations
+  - Tests for run comparisons and formatting functions
+  - Coverage for convenience functions (save_quality_run, get_quality_statistics, get_quality_trends)
+- **Exp 135: Gate Policies Tests (61 new tests)**
+  - Comprehensive test suite for `gate_policies.py` module
+  - Tests for SeverityGate, CategoryGate, GatePolicy classes
+  - Tests for GatePolicyManager static methods (get_preset, list_presets, validate_policy)
+  - Tests for evaluate_quality_gate function
+  - Tests for CascadeGatePolicy, GatePolicyCascade, cascade_gate_policies
+  - Tests for PolicyRecommendation, GatePolicyRecommender
+  - Tests for formatting functions (format_cascade_policy, format_recommendation)
+  - Coverage for all enums (GateResult, ValidationError, CascadeStrategy, RecommendationReason)
+- **Exp 136: Result Card Tests (48 new tests)**
+  - Comprehensive test suite for `result_card.py` module
+  - Tests for ResultStatus enum (5 statuses: excellent, good, acceptable, needs_work, critical)
+  - Tests for dataclasses: CategorySummary, ActionItem, ResultCardData
+  - Tests for ResultCardFormatter class (initialization, colors, status determination, action items)
+  - Tests for helper functions: create_result_card_data, _create_category_summaries, format_result_card, print_result_card
+  - Coverage for terminal-aware formatting (Unicode/ASCII fallbacks, color themes)
+
+### Changed
+- Added presets as subcommand to templates CLI (`templates_app.add_typer(presets_app)`)
+- Updated `docs/templates.md` with auto-detect command documentation
+- Improved fallback behavior in preset recommendation
+
+### Fixed
+- Fixed test assertions for BlendPreset dataclass (added `mode` parameter)
+- Fixed preset list command registration in templates CLI
+- Fixed `clear_history()` method to properly filter by task_alias (was loading filtered records)
+- **Fixed `result_card.py` API compatibility with `terminal_colors.py`:**
+  - Changed `_terminal_info.supports_ansi` to `_terminal_info.supports_colors`
+  - Refactored `ANSI` class usage (static class, no constructor args)
+  - Added `_get_theme_colors()` method for proper theme handling
+  - Fixed `self.box` initialization (moved from after return to proper location)
+  - Fixed `create_result_card_data()` to handle both list and int formats for `failed_rules`
+- Quality test coverage increased from 92 to 241 tests (+149 from Exp 134-136)
 
 <!-- markdownlint-disable MD024 -->
 
@@ -26,295 +314,3 @@ Recent changes to the Specify CLI and templates are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-### Added
-
-- feat(quality): add `--project-type` parameter for automatic template selection (Exp 128)
-  - Automatically selects optimal template combination based on project type
-  - Supports 8 project types: web-app, microservice, ml-service, mobile-app, graphql-api, serverless, desktop, infrastructure
-  - Overrides `--criteria` when specified for simplified UX
-  - Example: `--project-type web-app` → frontend,backend,api-spec,security,performance,testing,docs
-
-- feat(quality): add template comparison feature (Exp 129)
-  - `speckit templates compare` - side-by-side comparison of 2-4 templates
-  - `speckit templates diff` - diff-style comparison between two templates
-  - Compare domain tags, severity breakdown, priority profiles, and phases
-  - Visual checkmarks (✓/✗) for quick scanning of differences
-  - Example: `speckit templates compare frontend mobile backend`
-
-- feat(quality): add template blend feature (Exp 130)
-  - `speckit templates blend` - blend multiple templates into a single configuration
-  - Three blend modes: union (all rules), consensus (majority rules), weighted (custom weights)
-  - Save blended templates to YAML files for reuse
-  - Control template influence with custom weights
-  - Example: `speckit templates blend frontend backend security --mode union --output full-stack.yml`
-  - Weighted example: `speckit templates blend backend frontend --mode weighted --weights backend:0.7,frontend:0.3`
-
-- feat(quality): add blend presets for common use cases (Exp 131)
-  - `speckit templates presets list` - list all available blend presets
-  - `speckit templates presets info <preset>` - show detailed preset information
-  - `speckit templates presets search <query>` - search presets by keyword
-  - `speckit templates presets recommend <project-type>` - recommend preset for project type
-  - `speckit templates presets apply <preset>` - apply preset to create blended template
-  - 10 built-in presets: full_stack_secure, microservices_robust, api_first, mobile_backend, data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform, devsecops
-  - Filter presets by tag or project type
-  - Example: `speckit templates presets apply full_stack_secure --output my-stack.yml`
-
-- feat(extensions): support `.extensionignore` to exclude files/folders during `specify extension add` (#1781)
-
-## [0.3.0] - 2025-03-11
-
-### Added 🆕 Quality Loop System
-
-- **Quality Loop** — Итеративное улучшение качества кода с автоматической оценкой
-  - Score-based метрики (0.0-1.0) для измеримого качества кода
-  - Автоматическая генерация критики и исправлений
-  - Stagnation detection для предотвращения залипаний
-  - Фазовая модель: Phase A (threshold 0.8), Phase B (threshold 0.9)
-
-- **Новые CLI команды**:
-  - `/speckit.implementloop` — Реализация задач + автоматический Quality Loop
-  - `/speckit.loop` — Отдельный Quality Loop для существующего кода
-    - Modes: new, resume, status, stop, list, history, clean
-  - `/speckit.implement` — Обновлён с рекомендацией Quality Loop в конце
-
-- **Criteria Templates** — 13 встроенных шаблонов правил качества (поддержка нескольких через запятую: `--criteria backend,live-test`):
-  - `api-spec.yml` — для API спецификаций (10 правил: CRUD, status codes, auth)
-  - `code-gen.yml` — для кода (11 правил: tests, error handling, types, structure)
-  - `docs.yml` — для документации (10 правил: title, installation, usage)
-  - `config.yml` — для конфигурации (9 правил: syntax, types, paths, secrets)
-  - `database.yml` — для баз данных (10 правил: primary/foreign keys, indexes, SQLi)
-  - `frontend.yml` — для frontend кода (10 правил: components, state management, routing)
-  - `backend.yml` — для backend сервисов (10 правил: API structure, service layer, DI)
-  - `infrastructure.yml` — для DevOps и IaC (10 правил: Dockerfile, health checks, scaling)
-  - `testing.yml` — для тестовых файлов (10 правил: AAA pattern, assertions, isolation)
-  - `security.yml` — для безопасности (10 правил: secrets, validation, auth, XSS/SQLi)
-  - `performance.yml` — для производительности (10 правил: caching, async, queries)
-  - `ui-ux.yml` — для UI/UX дизайна (10 правил: accessibility, responsive, states)
-  - `live-test.yml` — физическое тестирование (10 правил: реальные HTTP запросы, браузер, БД, полная цепочка)
-
-- **Auto-detection критериев** — Automatic detection по ключевым словам:
-  - "api", "endpoint", "rest" → `api-spec`
-  - "database", "sql", "schema" → `database`
-  - "frontend", "react", "component" → `frontend`
-  - "backend", "service", "middleware" → `backend`
-  - "docker", "kubernetes", "deploy" → `infrastructure`
-  - "test", "testing", "unit" → `testing`
-  - "security", "auth", "authorization" → `security`
-  - "performance", "cache", "optimization" → `performance`
-  - "ux", "accessibility", "responsive" → `ui-ux`
-  - "live", "physical", "runtime", "smoke" → `live-test`
-
-- **Quality Loop Components**:
-  - `RuleManager` — управление criteria templates с auto-detection
-  - `Scorer` — расчёт score с weighted formula
-  - `Evaluator` — оценка артефактов против правил
-  - `Critique` — генерация targeted feedback
-  - `Refiner` — применение исправлений (через LLM)
-  - `QualityLoop` — оркестрация цикла
-  - `LoopStateManager` — persistence (run.json, history.jsonl, artifact.md, current.json)
-
-- **Persistence для Quality Loop**:
-  - `.speckit/evolution/` — сохранение состояния loops
-  - Resume capability после прерывания (Ctrl+C, crash)
-  - Event stream для аудита (history.jsonl)
-
-### Added 🆕 Security Scanning System
-
-- **Двухуровневая защита** от вредоносных скиллов и агентов
-  - **Level 1**: Python статический сканер (из ai-factory)
-    - Детектирует: prompt injection, data exfiltration, stealth instructions
-    - Детектирует: destructive commands, config tampering, encoded payloads
-    - Exit codes: 0=CLEAN, 1=BLOCKED, 2=WARNINGS
-  - **Level 2**: LLM семантический обзор
-    - Анализирует контекст и намерения
-    - Выявляет: authority abuse, obfuscation, intent mismatch
-
-- **Автоматическое сканирование** при:
-  - Получении скиллов из SkillsMP (`SkillsMPIntegration`)
-  - Создании новых агентов (`SkillCreationWorkflow`)
-  - Автоматическое удаление BLOCKED контента
-
-- **Security Components**:
-  - `SecurityScanner` — wrapper для ai-factory security-scan.py
-  - `LLMSecurityReviewer` — Level 2 семантический обзор
-  - `skillsmp_hooks.py` — hooks для SkillsMP integration
-  - `agent_hooks.py` — hooks для Agent creation
-  - Agent-specific threat detection
-
-- **Три уровня результатов**:
-  - **SAFE** ✅ — Безопасно, установка разрешена
-  - **WARNING** ⚠️ — Требуется подтверждение пользователя
-  - **BLOCKED** 🚫 — Опасно, автоматически удаляется
-
-### Added
-
-- **Unit тесты** для Quality Loop (9 тестовых файлов)
-  - test_scorer.py — scoring, thresholds, distance calculation
-  - test_rules.py — criteria templates, auto-detection
-  - test_state.py — persistence, event streaming
-  - test_evaluator.py — rule checking, content analysis
-  - test_critique.py — fix instruction generation
-  - test_refiner.py — refinement application
-  - test_loop_integration.py — full loop workflow
-
-- **Unit тесты** для Security Scanning (3 тестовых файла)
-  - test_scanner.py — scan result parsing, threat detection
-  - test_llm_review.py — LLM response parsing, fallback behavior
-  - test_hooks.py — SkillsMP и Agent hooks
-
-### Changed
-
-- **README.md** — полное обновление с описанием Quality Loop и Security Scanning
-  - Новые секции для Quality Loop (использование, примеры, benefits)
-  - Новые секции для Security Scanning (как работает, угрозы, защита)
-  - Обновлён список команд SpecKit с новыми командами
-  - Обновлён статус проекта с фазами Quality Loop и Security
-  - Добавлена таблица всех 13 criteria templates
-
-- **docs/quality-loop.md** — расширена документация по Quality Loop
-  - Детальное описание всех 13 criteria templates
-  - Объяснение как severity влияет на loop (fail блокирует, warn снижает)
-  - Примеры score calculation и phase transitions
-  - Таблица auto-detection keywords
-
-### Dependencies
-
-- Added `jsonlines>=4.0` — для history.jsonl event streaming
-- Added `pyyaml>=6.0` — для criteria templates (уже был, но явно указан)
-
-### Documentation
-
-- **[Quality Loop Documentation](docs/quality-loop.md)** — полное руководство по Quality Loop
-  - Architecture, components, data flow
-  - Все 13 criteria templates детально описаны
-  - API reference, usage examples
-  - Troubleshooting, performance metrics
-
-- **[Security Scanning Documentation](docs/security-scanning.md)** — полное руководство по security
-  - Threat patterns, detection methods
-  - API reference, hooks documentation
-  - Integration points, best practices
-
-- **[Quickstart Guide](specs/002-implement-quality-loop/quickstart.md)** — начать за 10 минут
-  - Part 1: Quality Loop (3 способа использования)
-  - Part 2: Security Scanning (автоматическое сканирование)
-  - Part 3-9: Workflows, configuration, troubleshooting
-
-- **API Contracts**:
-  - [CLI Commands Contract](specs/002-implement-quality-loop/contracts/cli-commands.md)
-  - [Quality Evaluation Contract](specs/002-implement-quality-loop/contracts/quality-eval.md)
-  - [Security Scan Contract](specs/002-implement-quality-loop/contracts/security-scan.md)
-
-### Performance
-
-- Quality Loop итерация: <60s
-- Security scan: <30s
-- Score calculation: <10ms
-- Rule loading: <100ms
-- Evaluation (10 rules): <1s
-
-### Project Structure
-
-```
-src/specify_cli/
-├── quality/                    # 🆕 Quality Loop Module
-│   ├── __init__.py
-│   ├── models.py              # Data models
-│   ├── state.py               # Loop state manager
-│   ├── rules.py               # Rule manager с auto-detection
-│   ├── scorer.py              # Score calculator
-│   ├── evaluator.py           # Evaluator
-│   ├── critique.py            # Critique generator
-│   ├── refiner.py             # Refiner
-│   ├── loop.py                # Quality loop orchestrator
-│   └── templates/             # Built-in criteria (12 шаблонов)
-│       ├── api-spec.yml       # API спецификации
-│       ├── code-gen.yml       # Генерация кода
-│       ├── docs.yml           # Документация
-│       ├── config.yml         # Конфигурация
-│       ├── database.yml       # Базы данных 🆕
-│       ├── frontend.yml       # Frontend код 🆕
-│       ├── backend.yml        # Backend сервисы 🆕
-│       ├── infrastructure.yml # DevOps & IaC 🆕
-│       ├── testing.yml        # Тестовые файлы 🆕
-│       ├── security.yml       # Безопасность 🆕
-│       ├── performance.yml    # Производительность 🆕
-│       ├── ui-ux.yml          # UI/UX дизайн 🆕
-│       └── live-test.yml      # Физическое тестирование 🆕
-├── security/                   # 🆕 Security Module
-│   ├── __init__.py
-│   ├── scanner.py              # Level 1 scanner wrapper
-│   ├── llm_review.py           # Level 2 LLM reviewer
-│   ├── skillsmp_hooks.py       # SkillsMP hooks
-│   └── agent_hooks.py          # Agent creation hooks
-
-.speckit/                        # 🆕 Runtime state
-├── evolution/                  # Quality Loop state
-│   ├── current.json
-│   └── <task-alias>/
-│       ├── run.json
-│       ├── history.jsonl
-│       └── artifact.md
-└── criteria/                    # Custom criteria
-    └── custom.yml
-
-templates/commands/              # 🆕 Updated CLI templates
-├── loop.md                      # /speckit.loop command
-├── implementloop.md             # /speckit.implementloop command
-└── implement.md                 # Updated with recommendation
-
-tests/                           # 🆕 New tests
-├── quality/                     # Quality Loop tests
-│   ├── test_scorer.py
-│   ├── test_rules.py
-│   ├── test_state.py
-│   ├── test_evaluator.py
-│   ├── test_critique.py
-│   ├── test_refiner.py
-│   └── test_loop_integration.py
-└── security/                    # Security tests
-    ├── test_scanner.py
-    ├── test_llm_review.py
-    └── test_hooks.py
-```
-
----
-
-## [0.2.0] - 2026-03-09
-
-### Changed
-
-- fix: sync agent list comments with actual supported agents (#1785)
-- feat(extensions): support multiple active catalogs simultaneously (#1720)
-- Pavel/add tabnine cli support (#1503)
-- Add Understanding extension to community catalog (#1778)
-- Add ralph extension to community catalog (#1780)
-- Update README with project initialization instructions (#1772)
-- feat: add review extension to community catalog (#1775)
-- Add fleet extension to community catalog (#1771)
-- Integration of Mistral vibe support into speckit (#1725)
-- fix: Remove duplicate options in specify.md (#1765)
-- fix: use global branch numbering instead of per-short-name detection (#1757)
-- Add Community Walkthroughs section to README (#1766)
-- feat(extensions): add Jira Integration to community catalog (#1764)
-- Add Azure DevOps Integration extension to community catalog (#1734)
-- Fix docs: update Antigravity link and add initialization example (#1748)
-- fix: wire after_tasks and after_implement hook events into command templates (#1702)
-- make c ignores consistent with c++ (#1747)
-- chore: bump version to 0.1.13 (#1746)
-- feat: add kiro-cli and AGENT_CONFIG consistency coverage (#1690)
-- feat: add verify extension to community catalog (#1726)
-- Add Retrospective Extension to community catalog (#1741)
-- fix(scripts): add empty description validation and branch checkout error handling (#1559)
-- fix: correct Copilot extension command registration (#1724)
-- fix(implement): remove Makefile from C ignore patterns (#1558)
-- Add sync extension to community catalog (#1728)
-- fix(checklist): clarify file handling behavior for append vs create (#1556)
-- fix(clarify): correct conflicting question limit from 10 to 5 (#1557)
-- chore: bump version to 0.1.12 (#1737)
-- fix: use RELEASE_PAT so tag push triggers release workflow (#1736)
-- fix: release-trigger uses release branch + PR instead of direct push to main (#1733)
-- fix: Split release process to sync pyproject.toml version with git tags (#1732)

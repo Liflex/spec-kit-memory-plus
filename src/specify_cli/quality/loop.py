@@ -123,6 +123,8 @@ class QualityLoop:
         project_type: Optional[str] = None,
         # Exp 132: Blend preset for automatic template blending
         blend_preset: Optional[str] = None,
+        # Exp 133: Auto-detect blend preset from project analysis
+        auto_detect: bool = False,
         priority_profile: Optional[str] = None,
         cascade_strategy: Optional[str] = None,
         strict_mode: bool = False,
@@ -180,6 +182,10 @@ class QualityLoop:
                           Options: full_stack_secure, microservices_robust, api_first, mobile_backend,
                           data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform,
                           devsecops. Takes precedence over project_type if both specified.
+            auto_detect: If True, automatically detect project type and select appropriate blend preset (Exp 133).
+                         Analyzes the codebase to determine the best blend preset. Takes precedence over
+                         criteria_name, but is overridden by blend_preset or project_type if specified.
+                         Recommended for zero-config experience on new projects.
             cascade_strategy: Optional cascade merge strategy (avg/max/min/wgt/weighted)
             strict_mode: If True, use strict mode (web-app+mobile-app with max strategy)
             lenient_mode: If True, use lenient mode (default profile with min strategy)
@@ -227,6 +233,11 @@ class QualityLoop:
             specific use cases. This takes precedence over both project_type and criteria_name.
             Available presets: full_stack_secure, microservices_robust, api_first, mobile_backend,
             data_pipeline, cloud_native, quality_rigorous, startup_mvp, iot_platform, devsecops.
+
+        Note on auto_detect (Exp 133):
+            If auto_detect is True, the system will analyze the project codebase and automatically
+            select the most appropriate blend preset. This provides a zero-config experience for
+            typical projects. Precedence order: blend_preset > project_type > auto_detect > criteria_name.
         """
         # Get project root for custom profiles
         project_root = str(Path.cwd())
@@ -272,6 +283,16 @@ class QualityLoop:
                     # Fall back to criteria_name if provided, otherwise use default
                     if not criteria_name or criteria_name == "default":
                         criteria_name = "backend"  # Sensible default
+
+        # Exp 133: Auto-detect blend preset if requested (only if blend_preset and project_type not used)
+        elif auto_detect:
+            registry = get_registry()
+            detected_preset = registry.auto_detect_blend_preset(project_root=Path(project_root))
+            if detected_preset:
+                # Use detected preset
+                resolved_templates = ",".join(detected_preset.templates)
+                criteria_name = resolved_templates
+            # If detection fails, fall back to original criteria_name
 
         # Load criteria (supports comma-separated merge)
         if "," in criteria_name:
