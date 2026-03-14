@@ -146,21 +146,93 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Task details**: ID, description, file paths, parallel markers [P]
    - **Execution flow**: Order and dependency requirements
 
-6. Execute implementation following the task plan:
+6. **Agent Capability Check** (semi-automatic agent creation):
+
+   Before executing tasks, analyze if specialized agents are needed:
+
+   **Detection triggers:**
+   - Tasks involving ML/AI work → may need `ml-engineer` agent
+   - Tasks with CI/CD, Docker, K8s → may need `devops` agent
+   - Tasks with data pipelines, ETL → may need `data-engineer` agent
+   - Tasks with complex testing → may need `qa-tester` agent
+   - Tasks with architecture decisions → may need `architect` agent
+   - Tasks with frontend-specific work → may need `frontend-dev` agent
+   - Tasks with backend-specific work → may need `backend-dev` agent
+
+   **Check existing agents:**
+   ```python
+   from pathlib import Path
+   agents_dir = Path.home() / ".claude" / "agents"
+   existing_agents = [d.name for d in agents_dir.iterdir() if d.is_dir()] if agents_dir.exists() else []
+   ```
+
+   **If specialized agent needed but missing:**
+
+   ```
+   ## Agent Capability Gap Detected
+
+   Task "{task_description}" requires specialized expertise in {domain}.
+
+   Available agents: {existing_agents}
+   Missing: {needed_agent_type}
+
+   Options:
+   1. Create agent now (semi-automatic) - recommended
+   2. Continue without specialized agent
+   3. Skip tasks requiring this expertise
+
+   Create {agent_type} agent? (yes/no)
+   ```
+
+   **If user confirms, run semi-automatic agent creation:**
+
+   ```python
+   from specify_cli.memory.agents.skill_workflow import SemiAutomaticAgentCreator
+
+   creator = SemiAutomaticAgentCreator()
+
+   # Step 1: Analyze request
+   analysis = creator.analyze_request(f"Agent for {domain} tasks in project")
+
+   # Step 2: Generate draft
+   result = creator.generate_draft(
+       agent_name=needed_agent_type,
+       base_template=analysis['suggested_template'],
+       customizations={
+           "role": f"Specialized {domain} agent for {project_name}",
+           "skills": extracted_skills_from_tasks
+       }
+   )
+
+   # Step 3: Show draft files to user
+   # [Display AGENTS.md, SOUL.md, USER.md, MEMORY.md]
+
+   # Step 4: Wait for user feedback
+   # User can: confirm, edit, request web research, or cancel
+
+   # Step 5: Apply feedback if any, then save
+   saved = creator.save_agent()
+   ```
+
+   **Available templates:** `frontend-dev`, `backend-dev`, `fullstack-dev`, `architect`, `qa-tester`, `devops`, `data-engineer`, `ml-engineer`
+
+   **After agent creation:** Continue with implementation, the new agent's expertise is now available.
+
+7. Execute implementation following the task plan:
    - **Phase-by-phase execution**: Complete each phase before moving to the next
-   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together  
+   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together
    - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
    - **File-based coordination**: Tasks affecting the same files must run sequentially
    - **Validation checkpoints**: Verify each phase completion before proceeding
 
-7. Implementation execution rules:
+8. Implementation execution rules:
    - **Setup first**: Initialize project structure, dependencies, configuration
    - **Tests before code**: If you need to write tests for contracts, entities, and integration scenarios
    - **Core development**: Implement models, services, CLI commands, endpoints
    - **Integration work**: Database connections, middleware, logging, external services
    - **Polish and validation**: Unit tests, performance optimization, documentation
 
-8. Progress tracking and error handling:
+9. Progress tracking and error handling:
    - Report progress after each completed task
    - Halt execution if any non-parallel task fails
    - For parallel tasks [P], continue with successful tasks, report failed ones
@@ -168,7 +240,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Suggest next steps if implementation cannot proceed
    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
 
-9. Completion validation:
+10. Completion validation:
    - Verify all required tasks are completed
    - Check that implemented features match the original specification
    - Validate that tests pass and coverage meets requirements
@@ -177,7 +249,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
 
-10. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
+11. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
     - If it exists, read it and look for entries under the `hooks.after_implement` key
     - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
     - Filter to only hooks where `enabled: true`
@@ -206,7 +278,7 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
         ```
     - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
-11. **Save to Memory** (silent, after all tasks are complete):
+12. **Save to Memory** (silent, after all tasks are complete):
     - **Bugs encountered during implementation?** Append to `.claude/memory/lessons.md`: problem, root cause, solution, tags
     - **Reusable pattern discovered?** Append to `.claude/memory/patterns.md`: when to use, how, example
     - **Architecture clarification or deviation from plan?** Append to `.claude/memory/architecture.md`: context, decision, rationale
@@ -214,7 +286,7 @@ Note: This command assumes a complete task breakdown exists in tasks.md. If task
     - Auto-create the memory file with a header if it does not exist yet
     - Only write entries that meet the importance threshold (non-trivial insights, reusable knowledge)
 
-12. **Show Quality Loop Recommendation**:
+13. **Show Quality Loop Recommendation**:
 
 After implementation is complete and all hooks are executed, show a recommendation for the Quality Loop feature:
 
