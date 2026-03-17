@@ -88,136 +88,6 @@ from specify_cli.quality.gate_policies import (
     format_cascade_policy,
     format_cascade_policy_json,
 )
-from specify_cli.quality.goal_gates import (
-    GoalGateMode,
-    GoalGateConfig,
-    GoalGateResult,
-    GoalGatePolicy,
-    GoalAwareGatePolicy,
-    GOAL_GATE_PRESETS,
-    create_goal_gate,
-    evaluate_goal_gate,
-    format_goal_gate_result,
-    format_goal_gate_result_json,
-    list_goal_gate_presets,
-    get_goal_gate_preset_info,
-    recommend_goal_gate,
-    create_aware_gate,
-)
-
-# === History & Analytics ===
-from specify_cli.quality.quality_history import (
-    QualityRunRecord,
-    QualityStatistics,
-    QualityTrend,
-    RunComparison,
-    QualityHistoryManager,
-    save_quality_run,
-    get_quality_statistics,
-    get_quality_trends,
-    format_statistics_report,
-    format_trends_report,
-    format_history_json,
-)
-from specify_cli.quality.quality_anomaly import (
-    QualityAnomalyDetector,
-    QualityAnomaly,
-    AnomalyReport,
-    AnomalySeverity,
-    AnomalyType,
-    AnomalyDetectionConfig,
-    detect_anomalies,
-    format_anomaly_report,
-    format_anomalies_json,
-    get_anomaly_summary,
-    list_anomaly_types,
-    format_config,
-    get_anomaly_recommendations,
-    get_anomaly_statistics,
-    filter_anomalies,
-    export_anomalies_csv,
-    AnomalyRiskScore,
-    AnomalyRiskScorer,
-    enrich_anomalies_with_risk,
-    format_risk_scores_text,
-    export_risk_scores_csv,
-)
-from specify_cli.quality.quality_benchmarking import (
-    BenchmarkType,
-    BenchmarkComparison,
-    PercentileMetrics,
-    BenchmarkResult,
-    CategoryBenchmark,
-    BenchmarkProfile,
-    BenchmarkReport,
-    QualityBenchmarkingEngine,
-    create_benchmark,
-    compare_quality,
-    generate_benchmark_report,
-    format_benchmark_report,
-    format_benchmark_json,
-    get_benchmark_summary,
-)
-
-# === Goals ===
-from specify_cli.quality.quality_goals import (
-    GoalStatus,
-    GoalType,
-    QualityGoal,
-    GoalProgress,
-    GoalSummary,
-    QualityGoalsManager,
-    create_target_score_goal,
-    create_pass_rate_goal,
-    create_category_goal,
-    create_streak_goal,
-    create_improvement_goal,
-    create_stability_goal,
-    format_goal_progress,
-    format_goals_summary,
-    GoalPreset,
-    GOAL_PRESETS,
-    apply_preset,
-    list_presets,
-    get_preset_info,
-    recommend_preset,
-    export_goals,
-    import_goals,
-    export_goals_as_dict,
-    export_progress_as_dict,
-    CATEGORY_GOAL_TEMPLATES,
-    apply_category_template,
-    list_category_templates,
-    get_category_template_info,
-    recommend_category_template,
-)
-from specify_cli.quality.goal_suggester import (
-    GoalSuggester,
-    GoalSuggestion,
-    SuggestionReason,
-    SuggestionConfidence,
-    SuggestionReport,
-    suggest_goals,
-    format_suggestions_report,
-    format_suggestions_json,
-    get_suggestions_summary,
-)
-from specify_cli.quality.quality_insights import (
-    QualityInsightsEngine,
-    QualityInsight,
-    InsightType,
-    InsightPriority,
-    PatternInsight,
-    TrendInsight,
-    OptimizationInsight,
-    InsightsReport,
-    InsightsConfig,
-    generate_insights,
-    format_insights_report,
-    format_insights_json,
-    get_insights_summary,
-    export_action_items,
-)
 
 # === Configuration ===
 from specify_cli.quality.loop_config import (
@@ -281,22 +151,6 @@ from specify_cli.quality.autodetect import (
     print_detection_details_json,
 )
 
-# === Feedback ===
-from specify_cli.quality.feedback_loop import (
-    TrendDirection as FeedbackTrendDirection,
-    AdjustmentType,
-    InsightPriority as FeedbackInsightPriority,
-    QualityResult,
-    TrendAnalysis,
-    ConfigurationAdjustment,
-    FeedbackReport,
-    FeedbackAnalyzer,
-    create_quality_result,
-    analyze_feedback,
-    get_improvement_suggestions,
-    export_feedback_report,
-)
-
 # === Display ===
 from specify_cli.quality.live_progress import (
     ProgressPhase,
@@ -318,28 +172,6 @@ from specify_cli.quality.terminal_colors import (
     detect_terminal_capabilities,
     get_terminal_info,
     reset_terminal_cache,
-)
-
-# === QA Dashboard ===
-from specify_cli.quality.qa_dashboard import (
-    TrendDirection,
-    QualityOverview,
-    QualityCheckResult,
-    RunComparison,
-    QualityTrend,
-    BenchmarkAwareQualityOverview,
-    get_quality_overview,
-    run_quality_check,
-    compare_quality_runs,
-    get_quality_trends,
-    format_overview_report,
-    format_check_result,
-    format_comparison_report,
-    format_trends_report,
-    format_overview_json,
-    format_check_json,
-    get_benchmark_aware_overview,
-    format_benchmark_aware_overview_report,
 )
 
 # === Templates ===

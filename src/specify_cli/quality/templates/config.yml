@@ -167,7 +167,7 @@ rules:
     check: "verify all required configuration keys exist"
     check_type: "content"
 
-  - id: "correctness.types"
+  - id: "correctness.field_types"
     description: "Field values match expected types"
     severity: "fail"
     weight: 2

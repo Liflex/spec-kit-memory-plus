@@ -111,11 +111,6 @@ src/specify_cli/quality/
 /speckit.loop list
 ```
 
-**History**:
-```bash
-/speckit.loop history <task_alias>
-```
-
 **Clean**:
 ```bash
 /speckit.loop clean <task_alias>

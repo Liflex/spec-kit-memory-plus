@@ -155,7 +155,7 @@ rules:
     check: "verify comments or docstrings present"
     check_type: "content"
 
-  - id: "correctness.types"
+  - id: "correctness.type_hints"
     description: "Type hints or annotations present"
     severity: "warn"
     weight: 1

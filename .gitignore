@@ -63,6 +63,10 @@ docs/dev
 # AutoResearch experiment triggers
 .speckit/experiments/.experiment_running
 
+# AutoResearch config and runtime data
+.autoresearch.json
+.autoresearch/
+
 # AutoResearch scripts and docs (not part of spec-kit core)
 autoresearch*.py
 autoresearch*.bat

@@ -218,7 +218,7 @@ class Evaluator:
             "correctness.tests": self._check_tests,
             "quality.error_handling": self._check_error_handling,
             "quality.readability": self._check_readability,
-            "correctness.types": self._check_type_hints,
+            "correctness.type_hints": self._check_type_hints,
             "correctness.structure": self._check_structure,
             "security.input_validation": self._check_input_validation,
             "security.secrets": self._check_secrets,
@@ -229,8 +229,6 @@ class Evaluator:
             "quality.installation": self._check_installation,
             "quality.usage": self._check_usage,
 
-            # Config rules
-            "security.secrets": self._check_secrets,
         }
 
         method = check_methods.get(rule.id)
@@ -352,18 +350,50 @@ class Evaluator:
         found = [kw for kw in validation_keywords if kw in artifact_lower]
         return len(found) > 0, f"Found {len(found)} validation-related terms"
 
+    # Patterns that indicate a value is a placeholder, not a real secret
+    _PLACEHOLDER_PATTERNS = [
+        r"^\$\{",          # ${ENV_VAR}
+        r"^\$\(",          # $(ENV_VAR)
+        r"^%\w+%$",        # %ENV_VAR%
+        r"^\<.+\>$",       # <your-secret>
+        r"^YOUR_",         # YOUR_API_KEY_HERE
+        r"_HERE$",         # API_KEY_HERE
+        r"^xxx+$",         # xxx, xxxx
+        r"^\*{3,}",        # ***, ****REDACTED****
+        r"^CHANGE.?ME",    # CHANGEME, CHANGE_ME
+        r"^TODO",          # TODO: replace
+        r"^REPLACE",       # REPLACE_WITH_YOUR_KEY
+        r"^example",       # example_token
+        r"^test$",         # test
+        r"^dummy",         # dummy_key
+        r"^fake",          # fake_token
+        r"^placeholder",   # placeholder
+        r"^\.\.\.$",       # ...
+    ]
+
     def _check_secrets(self, artifact: str, artifact_lower: str) -> Tuple[bool, str]:
         """Check for no hardcoded secrets"""
         secret_patterns = [
-            r"password\s*=\s*['\"][^'\"]+['\"]",
-            r"api_key\s*=\s*['\"][^'\"]+['\"]",
-            r"secret\s*=\s*['\"][^'\"]+['\"]",
-            r"token\s*=\s*['\"][^'\"]+['\"]",
+            r"password\s*=\s*['\"]([^'\"]+)['\"]",
+            r"api_key\s*=\s*['\"]([^'\"]+)['\"]",
+            r"secret\s*=\s*['\"]([^'\"]+)['\"]",
+            r"token\s*=\s*['\"]([^'\"]+)['\"]",
         ]
         for pattern in secret_patterns:
-            if re.search(pattern, artifact, re.IGNORECASE):
-                return False, "Potential hardcoded secret found"
+            match = re.search(pattern, artifact, re.IGNORECASE)
+            if match:
+                value = match.group(1)
+                if not self._is_placeholder(value):
+                    return False, "Potential hardcoded secret found"
         return True, "No hardcoded secrets detected"
+
+    def _is_placeholder(self, value: str) -> bool:
+        """Check if a value is a placeholder, env var reference, or example"""
+        stripped = value.strip()
+        for pattern in self._PLACEHOLDER_PATTERNS:
+            if re.search(pattern, stripped, re.IGNORECASE):
+                return True
+        return False
 
     def _check_title(self, artifact: str, artifact_lower: str) -> Tuple[bool, str]:
         """Check for document title"""

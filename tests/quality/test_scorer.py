@@ -301,7 +301,7 @@ class TestScorerSeverityCounts:
         """Test severity counts with mixed severities"""
         failed_rules = [
             FailedRule(rule_id="security.auth", reason="No auth", category="security"),
-            FailedRule(rule_id="correctness.types", reason="No types", category="correctness"),
+            FailedRule(rule_id="correctness.type_hints", reason="No types", category="correctness"),
             FailedRule(rule_id="performance.complexity", reason="Complex", category="performance"),
         ]
 

@@ -24,8 +24,6 @@ quality:
   json_output: .speckit/quality-report.json
 
   gate_preset: production
-  gate_goal_mode: balanced
-  auto_update_goals: true
 ```
 
 ---
@@ -76,28 +74,6 @@ policies:
 ```
 
 **Встроенные политики:** production, staging, development, ci, strict, lenient.
-
----
-
-## Alert Configuration
-
-Файл `.speckit/alerts.yml`:
-
-```yaml
-enabled: true
-cooldown_minutes: 60
-aggregate_count: 1
-
-webhooks:
-  slack: https://hooks.slack.com/services/YOUR/WEBHOOK
-  teams: https://outlook.office.com/webhook/YOUR-WEBHOOK
-
-conditions:
-  critical-quality-drop:
-    enabled: true
-    threshold: 0.10
-    cooldown_minutes: 30
-```
 
 ---
 

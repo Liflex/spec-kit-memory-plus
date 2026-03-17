@@ -74,7 +74,7 @@ class Critique:
             "3. Use descriptive variable names\n"
             "4. Break up long functions"
         ),
-        "correctness.types": (
+        "correctness.type_hints": (
             "Add type hints:\n"
             "1. Add type annotations to function parameters\n"
             "2. Add return type annotations\n"
@@ -183,7 +183,7 @@ class Critique:
             "2. Add all required keys\n"
             "3. Use appropriate values"
         ),
-        "correctness.types": (
+        "correctness.field_types": (
             "Fix field value types:\n"
             "1. Check expected types for each field\n"
             "2. Convert strings to numbers/booleans as needed\n"

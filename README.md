@@ -90,21 +90,13 @@ pip install -r requirements.txt
 |---------|-----------|
 | `/speckit.loop` | Итеративная оценка и улучшение кода |
 | `/speckit.implementloop` | Реализация + quality loop |
-| `/speckit.goals` | Целевые показатели качества |
-| `/speckit.history` | Тренды и статистика |
-| `/speckit.gates` | Quality gates для CI/CD |
-| `/speckit.qa` | Обзор состояния качества |
-| `/speckit.insights` | ИИ-рекомендации по улучшению |
-| `/speckit.alerts` | Оповещения о проблемах |
-| `/speckit.feedback` | Адаптивная настройка |
 
 ### Шаблоны и конфигурация
 
 | Команда | Что делает |
 |---------|-----------|
-| `/speckit.templates` | Управление шаблонами критериев |
-| `/speckit.profiles` | Профили приоритетов по типу проекта |
-| `/speckit.configs` | Сохранённые конфигурации loop |
+| `/speckit.templates` | Реестр шаблонов критериев |
+| `/speckit.plans` | Сохраненные планы и конфигурации loop |
 
 ### Интеграции
 

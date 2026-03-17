@@ -28,30 +28,6 @@ from specify_cli.quality.report_exporter import generate_markdown_report
 from specify_cli.quality.json_report import generate_json_report
 from specify_cli.quality.gate_policies import evaluate_quality_gate, GatePolicyManager
 from specify_cli.quality.gate_policies import recommend_gate_policy, format_recommendation
-from specify_cli.quality.quality_history import save_quality_run
-from specify_cli.quality.quality_goals import QualityGoalsManager, format_goal_progress, format_goals_summary
-# Exp 71: Goal-Based Quality Gates - Integration with quality loop
-from specify_cli.quality.goal_gates import (
-    GoalGateMode,
-    GoalGateConfig,
-    create_aware_gate,
-    evaluate_goal_gate,
-    format_goal_gate_result,
-    format_goal_gate_result_json,
-    recommend_goal_gate,
-)
-# Exp 75: Smart Goal Suggestions - Integration with quality loop
-from specify_cli.quality.goal_suggester import (
-    GoalSuggester,
-    suggest_goals,
-    format_suggestions_report,
-    format_suggestions_json,
-)
-# Exp 87: Quality Feedback Loop - Collect results for adaptive configuration
-from specify_cli.quality.feedback_loop import (
-    FeedbackAnalyzer,
-    create_quality_result,
-)
 # Exp 101: Real-time Quality Progress Updates
 from specify_cli.quality.live_progress import (
     ProgressState,
@@ -76,7 +52,6 @@ from specify_cli.quality.report_exporter import (
 )
 from typing import List, Optional, Set
 from pathlib import Path
-import time
 
 # Exp 128: Template registry for automatic template selection based on project type
 from specify_cli.quality.template_registry import get_registry
@@ -139,18 +114,6 @@ class QualityLoop:
         gate_preset: Optional[str] = None,
         gate_policy_name: Optional[str] = None,
         gate_policy_auto: bool = False,
-        # Exp 64: Quality history tracking
-        save_history: bool = True,
-        # Exp 68: Quality goals tracking
-        check_goals: bool = False,
-        # Exp 71: Goal-based quality gates
-        gate_goal_mode: Optional[str] = None,
-        auto_update_goals: bool = False,
-        # Exp 75: Smart goal suggestions
-        suggest_goals: bool = False,
-        auto_apply_goals: bool = False,
-        # Exp 87: Quality feedback collection
-        collect_feedback: bool = False,
         # Exp 101: Real-time progress updates
         progress_callback: Optional[ProgressCallback] = None,
         show_progress: bool = False,
@@ -198,13 +161,6 @@ class QualityLoop:
             gate_preset: Optional quality gate preset name (production, staging, development, ci, strict, lenient) or custom policy name from .speckit/gate-policies.yml
             gate_policy_name: Optional custom gate policy name from project config (alias for gate_preset)
             gate_policy_auto: If True, automatically recommend and apply gate policy based on CI environment, branch, project type (Exp 60)
-            save_history: If True, save quality run to history for trend analysis (Exp 64)
-            check_goals: If True, check and update quality goals after run (Exp 68)
-            gate_goal_mode: Optional goal gate mode (strict, moderate, lenient, conservative, balanced) for goal-based quality gates (Exp 71)
-            auto_update_goals: If True, automatically update goal progress during evaluation when using gate_goal_mode (Exp 71)
-            suggest_goals: If True, generate and display goal suggestions after quality run (Exp 75)
-            auto_apply_goals: If True, automatically apply top suggested goal (requires suggest_goals=True) (Exp 75)
-            collect_feedback: If True, collect quality results for feedback loop analysis (Exp 87)
             progress_callback: Optional callback function for real-time progress updates (Exp 101)
             show_progress: If True, show animated progress bar during quality loop (Exp 101)
             progress_animation: Animation style for progress display (spinner, dots, bar, pulse, none) (Exp 101)
@@ -346,9 +302,6 @@ class QualityLoop:
 
         # Set refiner LLM client
         self.refiner.llm_client = llm_client
-
-        # Track start time for history (Exp 64)
-        start_time = time.time()
 
         # Exp 101: Setup progress tracking
         progress_context = None
@@ -709,192 +662,6 @@ class QualityLoop:
                     # JSON generation failure should not break the loop
                     result["json_report_error"] = str(e)
 
-        # Exp 64: Save to quality history if enabled
-        if save_history:
-            try:
-                duration_seconds = time.time() - start_time
-                history_path = save_quality_run(
-                    result=result,
-                    criteria_name=criteria_name,
-                    duration_seconds=duration_seconds,
-                )
-                if history_path:
-                    result["history_saved"] = True
-                    result["history_path"] = history_path
-            except Exception as e:
-                # History save failure should not break the loop
-                result["history_save_error"] = str(e)
-
-        # Exp 68: Check quality goals if requested
-        if check_goals:
-            try:
-                goals_manager = QualityGoalsManager()
-                goals = goals_manager.get_all_goals()
-
-                if goals:
-                    goal_updates = []
-                    for goal in goals:
-                        progress = goals_manager.update_goal_progress(goal)
-                        goal_updates.append(progress.to_dict())
-
-                    result["goals_checked"] = True
-                    result["goal_updates"] = goal_updates
-
-                    # Get summary
-                    summary = goals_manager.get_goal_summary()
-                    if summary:
-                        result["goal_summary"] = summary.to_dict()
-            except Exception as e:
-                # Goals checking failure should not break the loop
-                result["goals_check_error"] = str(e)
-
-        # Exp 71: Goal-based quality gate evaluation if requested
-        if gate_goal_mode:
-            try:
-                # Validate goal gate mode
-                valid_modes = ["strict", "moderate", "lenient", "conservative", "balanced"]
-                if gate_goal_mode not in valid_modes:
-                    result["goal_gate_error"] = f"Invalid gate_goal_mode: {gate_goal_mode}. Valid modes: {', '.join(valid_modes)}"
-                else:
-                    # Get category scores from evaluation result
-                    category_scores = {}
-                    if "state" in result and "evaluation" in result["state"]:
-                        eval_data = result["state"]["evaluation"]
-                        if "category_scores" in eval_data:
-                            category_scores = eval_data["category_scores"]
-                        elif "categories" in eval_data:
-                            # Fallback: extract from categories dict
-                            category_scores = {
-                                cat: data.get("score", 0.0)
-                                for cat, data in eval_data["categories"].items()
-                            }
-
-                    # Create goal-aware gate with auto-update if requested
-                    gate = create_aware_gate(
-                        name=f"goal-gate-{gate_goal_mode}",
-                        mode=gate_goal_mode,
-                        auto_update=auto_update_goals,
-                    )
-
-                    # Evaluate gate
-                    if auto_update_goals:
-                        # Update goals and evaluate in one call
-                        gate_result = gate.evaluate_and_update(
-                            evaluation_result=result,
-                            score=state.current_score,
-                            category_scores=category_scores,
-                        )
-                    else:
-                        # Just evaluate without updating
-                        gate_result = gate.evaluate(evaluation_result=result)
-
-                    # Add gate result to output
-                    result["goal_gate_result"] = {
-                        "passed": gate_result.passed,
-                        "policy_name": gate_result.policy_name,
-                        "message": gate_result.message,
-                        "details": gate_result.details,
-                        "mode": gate_goal_mode,
-                        "auto_updated": auto_update_goals,
-                    }
-
-                    # Add formatted text output
-                    result["goal_gate_text"] = format_goal_gate_result(gate_result)
-            except Exception as e:
-                # Goal gate evaluation failure should not break the loop
-                result["goal_gate_error"] = str(e)
-
-        # Exp 75: Smart goal suggestions if requested
-        if suggest_goals:
-            try:
-                # Generate goal suggestions
-                suggester = GoalSuggester(
-                    history_dir=None,  # Use default
-                    goals_dir=None,   # Use default
-                )
-
-                # Generate suggestions with correlation analysis
-                suggestion_report = suggester.generate_suggestions(
-                    max_suggestions=10,
-                    include_presets=True,
-                    task_alias=task_alias,
-                    use_correlations=True,
-                )
-
-                # Add suggestions to result
-                result["goal_suggestions"] = suggestion_report.to_dict()
-                result["goal_suggestions_text"] = format_suggestions_report(suggestion_report)
-                result["goal_suggestions_json"] = format_suggestions_json(suggestion_report)
-
-                # Auto-apply top suggestion if requested
-                if auto_apply_goals and suggestion_report.suggestions:
-                    top_suggestion = suggestion_report.suggestions[0]
-
-                    # Apply the suggestion
-                    goals_manager = QualityGoalsManager()
-                    created_goal = goals_manager.create_goal(
-                        name=top_suggestion.name,
-                        description=top_suggestion.description,
-                        goal_type=top_suggestion.goal_type,
-                        target_value=top_suggestion.suggested_target,
-                        category=top_suggestion.category,
-                        window_size=10,
-                    )
-
-                    result["auto_applied_goal"] = created_goal.to_dict()
-                    result["auto_applied_goal_name"] = top_suggestion.name
-            except Exception as e:
-                # Goal suggestion failure should not break the loop
-                result["goal_suggestions_error"] = str(e)
-
-        # Exp 87: Collect feedback for adaptive configuration if requested
-        if collect_feedback:
-            try:
-                # Extract category scores from evaluation result
-                category_scores = {}
-                if "state" in result and "evaluation" in result["state"]:
-                    eval_data = result["state"]["evaluation"]
-                    if "category_scores" in eval_data:
-                        category_scores = eval_data["category_scores"]
-                    elif "categories" in eval_data:
-                        # Fallback: extract from categories dict
-                        category_scores = {
-                            cat: data.get("score", 0.0)
-                            for cat, data in eval_data["categories"].items()
-                        }
-
-                # Extract failed rules
-                failed_rules = []
-                if "state" in result and "evaluation" in result["state"]:
-                    eval_data = result["state"]["evaluation"]
-                    if "failed_rules" in eval_data:
-                        failed_rules = [
-                            fr.get("id", fr.get("rule_id", "unknown"))
-                            for fr in eval_data["failed_rules"]
-                        ]
-
-                # Create quality result
-                quality_result = create_quality_result(
-                    score=state.current_score,
-                    passed=result.get("passed", False),
-                    iteration_count=state.iteration - 1,  # Actual iterations used
-                    criteria=criteria_name.split(",") if "," in criteria_name else [criteria_name],
-                    category_scores=category_scores,
-                    failed_rules=failed_rules,
-                    warnings=[],  # Could extract from evaluation if needed
-                    config_id=priority_profile,
-                    task_alias=task_alias,
-                )
-
-                # Save to feedback analyzer
-                feedback_analyzer = FeedbackAnalyzer()
-                feedback_analyzer.collect_result(quality_result)
-
-                result["feedback_collected"] = True
-            except Exception as e:
-                # Feedback collection failure should not break the loop
-                result["feedback_collect_error"] = str(e)
-
         # Exp 101: Close progress context
         if progress_context:
             progress_context.__exit__(None, None, None)
@@ -902,20 +669,10 @@ class QualityLoop:
         # Exp 102: Display final result card if requested
         if show_result_card:
             try:
-                # Get previous score for trend indicator (from history if available)
-                previous_score = None
-                if result.get("history_saved") or result.get("history_path"):
-                    # Try to get previous run score
-                    from specify_cli.quality.quality_history import QualityHistoryManager
-                    history_mgr = QualityHistoryManager()
-                    runs = history_mgr.get_recent_runs(task_alias, limit=2)
-                    if len(runs) >= 2:
-                        previous_score = runs[1].score  # Second most recent run
-
                 # Display result card
                 print_result_card(
                     result=result,
-                    previous_score=previous_score,
+                    previous_score=None,
                     compact=result_card_compact,
                     theme=result_card_theme,
                 )

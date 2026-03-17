@@ -109,21 +109,11 @@
 # Управление итерациями
 /speckit.loop --criteria security --max-iterations 6
 
-# С целями
-/speckit.loop --suggest-goals --auto-update-goals
-
-# С обратной связью
-/speckit.loop --criteria backend --collect-feedback
-
 # Вывод отчётов
 /speckit.loop --html-output quality-report.html
 /speckit.loop --json-output quality-report.json
 /speckit.loop --show-result-card
 /speckit.loop --show-result-card --result-card-compact --result-card-theme dark
-
-# Управление конфигурациями
-/speckit.loop --save-config my-config
-/speckit.loop --config my-config
 
 # Управление loop
 /speckit.loop resume        # Возобновить прерванный
@@ -140,84 +130,6 @@
 
 ```bash
 /speckit.implementloop --criteria code-gen --max-iterations 4
-```
-
----
-
-## Управление качеством
-
-### /speckit.qa
-
-QA Dashboard --- обзор состояния качества.
-
-```bash
-/speckit.qa overview      # Обзор
-/speckit.qa check         # Быстрая проверка
-/speckit.qa compare --runs 5
-/speckit.qa trends --forecast
-```
-
-### /speckit.goals
-
-Управление целями качества.
-
-```bash
-/speckit.goals create --type target_score --target 0.90
-/speckit.goals check
-/speckit.goals suggest
-```
-
-### /speckit.history
-
-История и тренды качества.
-
-```bash
-/speckit.history list --runs 10
-/speckit.history stats
-/speckit.history compare --runs 5
-```
-
-### /speckit.gates
-
-Политики шлюзов качества для разных окружений.
-
-```bash
-/speckit.gates list
-/speckit.gates recommend
-/speckit.gates compare --policies production,staging
-```
-
-### /speckit.alerts
-
-Оповещения о проблемах качества.
-
-```bash
-/speckit.alerts check
-/speckit.alerts history --hours 24
-/speckit.alerts summary
-/speckit.alerts list
-```
-
-### /speckit.insights
-
-ИИ-рекомендации на основе истории запусков.
-
-```bash
-/speckit.insights generate
-/speckit.insights optimize
-/speckit.insights export
-```
-
-### /speckit.feedback
-
-Анализ обратной связи и адаптивная настройка.
-
-```bash
-/speckit.feedback analyze
-/speckit.feedback analyze --runs 50 --task my-api-spec
-/speckit.feedback suggestions
-/speckit.feedback trends
-/speckit.feedback insights --priority high,critical
 ```
 
 ---
@@ -242,25 +154,6 @@ QA Dashboard --- обзор состояния качества.
 /speckit.templates presets info full_stack_secure
 /speckit.templates presets apply full_stack_secure --output stack.yml
 /speckit.templates presets auto-detect
-```
-
-### /speckit.profiles
-
-Профили приоритетов.
-
-```bash
-/speckit.profiles list
-/speckit.profiles show web-app
-/speckit.profiles compare web-app,microservice
-```
-
-### /speckit.configs
-
-Сохранённые конфигурации loop.
-
-```bash
-/speckit.configs list
-/speckit.configs load production-strict
 ```
 
 ### /speckit.plans

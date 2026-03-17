@@ -24,9 +24,6 @@ import json
 import yaml
 
 from .loop_config import LoopConfig
-from .quality_goals import QualityGoal, GoalType, GoalStatus
-from .gate_policies import GatePolicyManager
-from .priority_profiles import PriorityProfilesManager
 
 
 # Available categories for quality plans
