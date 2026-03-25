@@ -1025,6 +1025,53 @@ def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = 
             for f in failures:
                 console.print(f"  - {f}")
 
+def ensure_specify_directory(project_path: Path, tracker: StepTracker | None = None) -> bool:
+    """Ensure .specify/ directory exists in the target project.
+
+    Copies from the spec-kit installation (~/.claude/spec-kit/.specify) or
+    from the bundled package data if the project doesn't have one yet.
+    Existing .specify/ directories are never overwritten.
+
+    Returns True if .specify/ is now present, False otherwise.
+    """
+    specify_dir = project_path / ".specify"
+    if specify_dir.is_dir():
+        return True
+
+    # Source 1: global spec-kit installation
+    global_source = Path.home() / ".claude" / "spec-kit" / ".specify"
+
+    # Source 2: bundled package data (pip install)
+    package_source = Path(__file__).parent / "_data" / ".specify"
+
+    # Source 3: repo-relative (running from source checkout)
+    repo_source = Path(__file__).parent.parent.parent / ".specify"
+
+    source = None
+    for candidate in (global_source, package_source, repo_source):
+        if candidate.is_dir():
+            source = candidate
+            break
+
+    if source is None:
+        if tracker:
+            tracker.add("specify-dir", "Ensure .specify/ directory")
+            tracker.error("specify-dir", "no source found")
+        return False
+
+    try:
+        shutil.copytree(source, specify_dir)
+        if tracker:
+            tracker.add("specify-dir", "Ensure .specify/ directory")
+            tracker.complete("specify-dir", f"copied from {source}")
+        return True
+    except Exception as e:
+        if tracker:
+            tracker.add("specify-dir", "Ensure .specify/ directory")
+            tracker.error("specify-dir", str(e))
+        return False
+
+
 def ensure_constitution_from_template(project_path: Path, tracker: StepTracker | None = None) -> None:
     """Copy constitution template to memory if it doesn't exist (preserves existing constitution on reinitialization)."""
     memory_constitution = project_path / ".specify" / "memory" / "constitution.md"
@@ -1461,6 +1508,7 @@ def init(
         ("extract", "Extract template"),
         ("zip-list", "Archive contents"),
         ("extracted-summary", "Extraction summary"),
+        ("specify-dir", "Ensure .specify/ directory"),
         ("chmod", "Ensure scripts executable"),
         ("constitution", "Constitution setup"),
     ]:
@@ -1497,6 +1545,8 @@ def init(
                     speckit_dir = project_path / ".speckit"
                     if speckit_dir.is_dir() and not any(speckit_dir.iterdir()):
                         speckit_dir.rmdir()
+
+            ensure_specify_directory(project_path, tracker=tracker)
 
             ensure_executable_scripts(project_path, tracker=tracker)
 

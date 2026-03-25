@@ -360,6 +360,18 @@ class TestReportExporter:
         # Just verify it runs without error - trend display format may vary
         assert len(console_content) > 0
 
+    def test_export_excel_with_list_criteria(self, sample_result):
+        """Test Excel export handles list-type criteria without error (Exp 44)"""
+        # sample_result has criteria as list: ["api-spec", "security"]
+        config = ExportConfig(formats={"excel"})
+        exporter = ReportExporter(config=config)
+
+        export_result = exporter.export(sample_result)
+
+        assert "excel" in export_result.reports
+        excel_report = export_result.reports["excel"]
+        assert excel_report.format == "excel"
+
     def test_export_to_file(self, sample_result, temp_output_dir):
         """Test exporting reports to files"""
         config = ExportConfig(

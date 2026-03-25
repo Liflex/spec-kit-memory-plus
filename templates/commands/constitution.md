@@ -22,6 +22,24 @@ You are updating the project constitution at `.specify/memory/constitution.md`. 
 
 Follow this execution flow:
 
+0. **Ensure `.specify/` directory exists** in the project root:
+   - Check if `.specify/` directory exists in the project root (git root or current working directory)
+   - If `.specify/` is missing, copy it from the spec-kit installation:
+     ```bash
+     SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+     REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+     if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+       cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+       echo "[specify] Copied .specify/ directory to project root"
+     fi
+     ```
+   - If the source `~/.claude/spec-kit/.specify` also doesn't exist, try the Python package fallback:
+     ```bash
+     python -c "from pathlib import Path; import specify_cli; src=Path(specify_cli.__file__).parent/'_data'/'.specify'; print(src) if src.is_dir() else exit(1)" 2>/dev/null
+     ```
+   - If neither source exists, warn the user that `.specify/` is required for constitution, templates, and scripts
+   - This ensures `.specify/templates/`, `.specify/memory/`, and `.specify/scripts/` are available for the project workflows
+
 1. Load the existing constitution at `.specify/memory/constitution.md`.
    - Identify every placeholder token of the form `[ALL_CAPS_IDENTIFIER]`.
    **IMPORTANT**: The user might require less or more principles than the ones used in the template. If a number is specified, respect that - follow the general template. You will update the doc accordingly.

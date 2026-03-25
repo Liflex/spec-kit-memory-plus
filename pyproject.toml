@@ -31,6 +31,18 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/specify_cli"]
 
+[tool.hatch.build.targets.wheel.force-include]
+".specify" = "specify_cli/_data/.specify"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    ".specify/",
+    "templates/",
+    "pyproject.toml",
+    "README.md",
+]
+
 [project.optional-dependencies]
 test = [
     "pytest>=7.0",

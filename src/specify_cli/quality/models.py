@@ -373,12 +373,16 @@ class FailedRule:
     rule_id: str
     reason: str
     category: str = "general"  # Rule category: security, performance, testing, etc. (Exp 50)
+    weight: int = 1  # Rule weight for critique prioritization (Exp 37)
+    severity: str = "fail"  # Original rule severity: fail/warn/info (Exp 43)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "rule_id": self.rule_id,
             "reason": self.reason,
             "category": self.category,
+            "weight": self.weight,
+            "severity": self.severity,
         }
 
     @classmethod
@@ -387,6 +391,8 @@ class FailedRule:
             rule_id=data["rule_id"],
             reason=data["reason"],
             category=data.get("category", "general"),
+            weight=data.get("weight", 1),
+            severity=data.get("severity", "fail"),
         )
 
 

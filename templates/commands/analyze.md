@@ -1,8 +1,8 @@
 ---
 description: Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation.
 scripts:
-  sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
-  ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
+  sh: ~/.claude/spec-kit/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+  ps: ~/.claude/spec-kit/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
 ## User Input
@@ -33,6 +33,16 @@ Identify inconsistencies, duplications, ambiguities, and underspecified items ac
 - Apply relevant context during analysis (e.g., check for issues similar to past findings)
 
 ### 1. Initialize Analysis Context
+
+**Ensure `.specify/` directory exists** in the project root before running any scripts:
+- If `.specify/` is missing, copy from `~/.claude/spec-kit/.specify` to project root:
+  ```bash
+  SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+    cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+  fi
+  ```
 
 Run `{SCRIPT}` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
 

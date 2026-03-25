@@ -79,22 +79,22 @@ class TestScorer:
         # score = 2/3 = 0.67 < 0.8, should fail
         assert not passed
 
-    def test_check_passed_with_fail_severity(self):
-        """Test pass check with fail-severity failures"""
+    def test_check_passed_with_blocking_failure(self):
+        """Test pass check with blocking failure (weight >= 2)"""
         all_rules = [self.rule1, self.rule2]
         passed_rules = all_rules
         failed_rules = [
-            FailedRule(rule_id="security.rule1", reason="Failed")
+            FailedRule(rule_id="security.rule1", reason="Failed", weight=2)
         ]
 
         score = self.scorer.calculate_score(passed_rules, all_rules)
         passed = self.scorer.check_passed(score, 0.8, failed_rules)
 
-        # High score but has fail-severity failure (security prefix)
+        # High score but has blocking failure (weight=2)
         assert not passed
 
-    def test_check_passed_no_fail_severity(self):
-        """Test pass check without fail-severity failures"""
+    def test_check_passed_no_failures(self):
+        """Test pass check without any failures"""
         all_rules = [self.rule1, self.rule2]
         passed_rules = all_rules
         failed_rules = []  # No failures
@@ -103,6 +103,54 @@ class TestScorer:
         passed = self.scorer.check_passed(score, 0.8, failed_rules)
 
         # High score, no failures
+        assert passed
+
+    def test_check_passed_non_blocking_failure(self):
+        """Test pass check with non-blocking failure (weight < 2)"""
+        all_rules = [self.rule1, self.rule2]
+        passed_rules = all_rules
+        failed_rules = [
+            FailedRule(rule_id="quality.readability", reason="Low readability", weight=1)
+        ]
+
+        score = self.scorer.calculate_score(passed_rules, all_rules)
+        passed = self.scorer.check_passed(score, 0.8, failed_rules)
+
+        # High score, only non-blocking failure (weight=1) — should pass
+        assert passed
+
+    def test_check_passed_mixed_weights(self):
+        """Test pass check with mixed blocking and non-blocking failures"""
+        failed_rules = [
+            FailedRule(rule_id="quality.readability", reason="Low readability", weight=1),
+            FailedRule(rule_id="security.auth", reason="No auth", weight=2),
+        ]
+
+        passed = self.scorer.check_passed(0.9, 0.8, failed_rules)
+
+        # Has at least one blocking failure (weight=2) — should not pass
+        assert not passed
+
+    def test_check_passed_weight_zero_not_blocking(self):
+        """Test that weight=0 failures do not block"""
+        failed_rules = [
+            FailedRule(rule_id="docs.readme", reason="Missing readme", weight=0),
+        ]
+
+        passed = self.scorer.check_passed(0.9, 0.8, failed_rules)
+
+        # weight=0 is info-level, should not block
+        assert passed
+
+    def test_check_passed_default_weight_not_blocking(self):
+        """Test that default weight (1) does not block"""
+        failed_rules = [
+            FailedRule(rule_id="correctness.tests", reason="No tests"),  # default weight=1
+        ]
+
+        passed = self.scorer.check_passed(0.9, 0.8, failed_rules)
+
+        # Default weight=1, not blocking
         assert passed
 
     def test_calculate_distance_to_success_passed(self):
@@ -248,7 +296,7 @@ class TestScorerPriorityScore:
 
 
 class TestScorerSeverityCounts:
-    """Test Scorer severity counting (Exp 139)"""
+    """Test Scorer severity counting (Exp 139, updated Exp 43)"""
 
     def setup_method(self):
         self.scorer = Scorer()
@@ -263,33 +311,57 @@ class TestScorerSeverityCounts:
         assert counts["low"] == 0
         assert counts["info"] == 0
 
-    def test_get_severity_counts_security(self):
-        """Test severity counts for security rules"""
+    def test_get_severity_counts_security_blocking(self):
+        """Test severity counts for security blocking rules (weight>=2 -> critical)"""
         failed_rules = [
-            FailedRule(rule_id="security.sql_injection", reason="SQL injection vulnerability", category="security"),
-            FailedRule(rule_id="security.xss_attack", reason="XSS vulnerability", category="security"),
+            FailedRule(rule_id="security.sql_injection", reason="SQL injection", category="security", weight=2, severity="fail"),
+            FailedRule(rule_id="security.xss_attack", reason="XSS vulnerability", category="security", weight=2, severity="fail"),
         ]
 
         counts = self.scorer.get_severity_counts(failed_rules, [])
 
-        # security.* -> critical
+        # security + weight>=2 -> critical
         assert counts["critical"] == 2
 
-    def test_get_severity_counts_correctness(self):
-        """Test severity counts for correctness rules"""
+    def test_get_severity_counts_security_warning(self):
+        """Exp 43: Security warning (weight=1) maps to high, not critical"""
+        warnings = [
+            FailedRule(rule_id="security.cors_config", reason="CORS not strict", category="security", weight=1, severity="warn"),
+        ]
+
+        counts = self.scorer.get_severity_counts([], warnings)
+
+        # security + weight<2 -> high (not critical!)
+        assert counts["high"] == 1
+        assert counts["critical"] == 0
+
+    def test_get_severity_counts_correctness_blocking(self):
+        """Test correctness blocking rules (weight>=2 -> high)"""
         failed_rules = [
-            FailedRule(rule_id="correctness.tests", reason="No tests", category="correctness"),
+            FailedRule(rule_id="correctness.tests", reason="No tests", category="correctness", weight=2, severity="fail"),
         ]
 
         counts = self.scorer.get_severity_counts(failed_rules, [])
 
-        # correctness.* -> high
+        # correctness + weight>=2 -> high
         assert counts["high"] == 1
 
+    def test_get_severity_counts_correctness_warning(self):
+        """Exp 43: Correctness warning (weight=1) maps to medium, not high"""
+        failed_rules = [
+            FailedRule(rule_id="correctness.type_hints", reason="Missing types", category="correctness", weight=1, severity="warn"),
+        ]
+
+        counts = self.scorer.get_severity_counts(failed_rules, [])
+
+        # correctness + weight<2 -> medium
+        assert counts["medium"] == 1
+        assert counts["high"] == 0
+
     def test_get_severity_counts_performance(self):
-        """Test severity counts for performance rules"""
+        """Test severity counts for performance rules (always medium)"""
         warnings = [
-            FailedRule(rule_id="performance.caching", reason="No caching", category="performance"),
+            FailedRule(rule_id="performance.caching", reason="No caching", category="performance", weight=1, severity="warn"),
         ]
 
         counts = self.scorer.get_severity_counts([], warnings)
@@ -297,30 +369,77 @@ class TestScorerSeverityCounts:
         # performance.* -> medium
         assert counts["medium"] == 1
 
-    def test_get_severity_counts_mixed(self):
-        """Test severity counts with mixed severities"""
+    def test_get_severity_counts_quality_blocking(self):
+        """Exp 43: Quality blocking rule (weight>=2) maps to medium, not low"""
         failed_rules = [
-            FailedRule(rule_id="security.auth", reason="No auth", category="security"),
-            FailedRule(rule_id="correctness.type_hints", reason="No types", category="correctness"),
-            FailedRule(rule_id="performance.complexity", reason="Complex", category="performance"),
+            FailedRule(rule_id="quality.error_handling", reason="No error handling", category="quality", weight=2, severity="fail"),
         ]
 
         counts = self.scorer.get_severity_counts(failed_rules, [])
 
-        assert counts["critical"] == 1  # security
-        assert counts["high"] == 1  # correctness
-        assert counts["medium"] == 1  # performance
+        # quality + weight>=2 -> medium
+        assert counts["medium"] == 1
+        assert counts["low"] == 0
+
+    def test_get_severity_counts_quality_warning(self):
+        """Test quality warning maps to low"""
+        failed_rules = [
+            FailedRule(rule_id="quality.readability", reason="Low readability", category="quality", weight=1, severity="warn"),
+        ]
+
+        counts = self.scorer.get_severity_counts(failed_rules, [])
+
+        # quality + weight<2 -> low
+        assert counts["low"] == 1
+
+    def test_get_severity_counts_info_always_info(self):
+        """Exp 43: Info rules (weight=0) always map to info regardless of prefix"""
+        failed_rules = [
+            FailedRule(rule_id="security.advisory", reason="Advisory", category="security", weight=0, severity="info"),
+            FailedRule(rule_id="correctness.hint", reason="Hint", category="correctness", weight=0, severity="info"),
+        ]
+
+        counts = self.scorer.get_severity_counts(failed_rules, [])
+
+        # weight=0 / severity=info -> always info
+        assert counts["info"] == 2
+        assert counts["critical"] == 0
+        assert counts["high"] == 0
+
+    def test_get_severity_counts_mixed(self):
+        """Test severity counts with mixed severities and weights"""
+        failed_rules = [
+            FailedRule(rule_id="security.auth", reason="No auth", category="security", weight=2, severity="fail"),
+            FailedRule(rule_id="correctness.type_hints", reason="No types", category="correctness", weight=1, severity="warn"),
+            FailedRule(rule_id="performance.complexity", reason="Complex", category="performance", weight=1, severity="warn"),
+        ]
+
+        counts = self.scorer.get_severity_counts(failed_rules, [])
+
+        assert counts["critical"] == 1  # security + blocking
+        assert counts["medium"] == 2  # correctness warning + performance
+        assert counts["high"] == 0
 
     def test_get_severity_counts_unknown_prefix(self):
         """Test severity counts for unknown rule prefix (defaults to medium)"""
         failed_rules = [
-            FailedRule(rule_id="unknown.rule", reason="Unknown rule", category="general"),
+            FailedRule(rule_id="unknown.rule", reason="Unknown rule", category="general", weight=1, severity="warn"),
         ]
 
         counts = self.scorer.get_severity_counts(failed_rules, [])
 
         # Unknown prefix -> medium (default)
         assert counts["medium"] == 1
+
+    def test_get_severity_counts_docs_always_info(self):
+        """Test docs rules always map to info"""
+        failed_rules = [
+            FailedRule(rule_id="docs.readme", reason="Missing readme", category="docs", weight=1, severity="warn"),
+        ]
+
+        counts = self.scorer.get_severity_counts(failed_rules, [])
+
+        assert counts["info"] == 1
 
 
 class TestScorerCategoryScores:

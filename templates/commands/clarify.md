@@ -5,8 +5,8 @@ handoffs:
     agent: speckit.plan
     prompt: Create a plan for the spec. I am building with...
 scripts:
-   sh: scripts/bash/check-prerequisites.sh --json --paths-only
-   ps: scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly
+   sh: ~/.claude/spec-kit/scripts/bash/check-prerequisites.sh --json --paths-only
+   ps: ~/.claude/spec-kit/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly
 ---
 
 ## User Input
@@ -30,6 +30,16 @@ Execution steps:
    - If directory exists — read `lessons.md`, `patterns.md` headers for past clarification patterns and ambiguity lessons
    - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for similar past clarifications. If not configured — skip entirely, do not check or ask.
    - Apply relevant context when generating clarification questions (e.g., prioritize areas that caused issues in past projects)
+
+1. **Ensure `.specify/` directory exists** in the project root before running any scripts:
+   - If `.specify/` is missing, copy from `~/.claude/spec-kit/.specify` to project root:
+     ```bash
+     SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+     REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+     if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+       cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+     fi
+     ```
 
 1. Run `{SCRIPT}` from repo root **once** (combined `--json --paths-only` mode / `-Json -PathsOnly`). Parse minimal JSON payload fields:
    - `FEATURE_DIR`

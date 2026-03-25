@@ -717,6 +717,11 @@ class ReportExporter:
         ]
 
         for idx, (field, value) in enumerate(meta_data, 1):
+            # Convert non-scalar values to strings for Excel compatibility
+            if isinstance(value, (list, tuple)):
+                value = ", ".join(str(v) for v in value)
+            elif isinstance(value, dict):
+                value = str(value)
             ws_meta.cell(row=row+idx, column=1, value=field).border = border
             ws_meta.cell(row=row+idx, column=2, value=value).border = border
 

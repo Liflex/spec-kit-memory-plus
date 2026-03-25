@@ -9,8 +9,8 @@ handoffs:
     prompt: Clarify specification requirements
     send: true
 scripts:
-  sh: scripts/bash/create-new-feature.sh "{ARGS}"
-  ps: scripts/powershell/create-new-feature.ps1 "{ARGS}"
+  sh: ~/.claude/spec-kit/scripts/bash/create-new-feature.sh "{ARGS}"
+  ps: ~/.claude/spec-kit/scripts/powershell/create-new-feature.ps1 "{ARGS}"
 ---
 
 ## User Input
@@ -33,7 +33,26 @@ Given that feature description, do this:
    - If Ollama is configured (known from session Health-Check) and vector memory has entries — run semantic search for the current feature context. If not configured — skip entirely, do not check or ask.
    - Apply any relevant context when writing the specification (e.g., avoid repeating past mistakes, use proven patterns)
 
-1. **Generate a concise short name** (2-4 words) for the branch:
+1. **Ensure `.specify/` directory exists** in the project root:
+   - Check if `$REPO_ROOT/.specify/` directory exists (where `$REPO_ROOT` is the git root or current working directory)
+   - If `.specify/` is missing, copy it from the spec-kit installation:
+     ```bash
+     # Copy .specify/ from spec-kit installation to project root
+     SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+     REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+     if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+       cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+       echo "[specify] Copied .specify/ directory to project root"
+     fi
+     ```
+   - If the source `~/.claude/spec-kit/.specify` also doesn't exist, try the Python package fallback:
+     ```bash
+     python -c "from pathlib import Path; import specify_cli; src=Path(specify_cli.__file__).parent/'_data'/'.specify'; print(src) if src.is_dir() else exit(1)" 2>/dev/null
+     ```
+   - If neither source exists, warn and continue (templates will be missing but scripts will handle it gracefully)
+   - This ensures `.specify/scripts/`, `.specify/templates/`, and `.specify/memory/` are available for branch creation, atomic commits, and other workflows
+
+2. **Generate a concise short name** (2-4 words) for the branch:
    - Analyze the feature description and extract the most meaningful keywords
    - Create a 2-4 word short name that captures the essence of the feature
    - Use action-noun format when possible (e.g., "add-user-auth", "fix-payment-bug")
@@ -45,7 +64,7 @@ Given that feature description, do this:
      - "Create a dashboard for analytics" → "analytics-dashboard"
      - "Fix payment processing timeout bug" → "fix-payment-timeout"
 
-2. **Create the feature branch** by running the script with `--short-name` (and `--json`), and do NOT pass `--number` (the script auto-detects the next globally available number across all branches and spec directories):
+3. **Create the feature branch** by running the script with `--short-name` (and `--json`), and do NOT pass `--number` (the script auto-detects the next globally available number across all branches and spec directories):
 
    - Bash example: `{SCRIPT} --json --short-name "user-auth" "Add user authentication"`
    - PowerShell example: `{SCRIPT} -Json -ShortName "user-auth" "Add user authentication"`
@@ -58,9 +77,9 @@ Given that feature description, do this:
    - The JSON output will contain BRANCH_NAME and SPEC_FILE paths
    - For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot")
 
-3. Load `templates/spec-template.md` to understand required sections.
+4. Load `templates/spec-template.md` to understand required sections.
 
-4. Follow this execution flow:
+5. Follow this execution flow:
 
     1. Parse user description from Input
        If empty: ERROR "No feature description provided"
@@ -86,9 +105,9 @@ Given that feature description, do this:
     7. Identify Key Entities (if data involved)
     8. Return: SUCCESS (spec ready for planning)
 
-5. Write the specification to SPEC_FILE using the template structure, replacing placeholders with concrete details derived from the feature description (arguments) while preserving section order and headings.
+6. Write the specification to SPEC_FILE using the template structure, replacing placeholders with concrete details derived from the feature description (arguments) while preserving section order and headings.
 
-6. **Specification Quality Validation**: After writing the initial spec, validate it against quality criteria:
+7. **Specification Quality Validation**: After writing the initial spec, validate it against quality criteria:
 
    a. **Create Spec Quality Checklist**: Generate a checklist file at `FEATURE_DIR/checklists/requirements.md` using the checklist template structure with these validation items:
 
@@ -135,7 +154,7 @@ Given that feature description, do this:
 
    c. **Handle Validation Results**:
 
-      - **If all items pass**: Mark checklist complete and proceed to step 6
+      - **If all items pass**: Mark checklist complete and proceed to step 7
 
       - **If items fail (excluding [NEEDS CLARIFICATION])**:
         1. List the failing items and specific issues
@@ -180,13 +199,13 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. **Save to Memory** (inline, as discovered — do not wait for completion):
+8. **Save to Memory** (inline, as discovered — do not wait for completion):
    - If the spec revealed important architectural constraints or domain-specific rules — **immediately** append to `.claude/memory/architecture.md`
    - If creating this spec required resolving a non-obvious ambiguity — **immediately** append to `.claude/memory/lessons.md`
    - For high-importance insights (cross-project relevance, significant architecture constraint) — also store in vector memory via `vector_memory.py`. If Ollama is not configured — skip entirely.
    - The session may end at any moment; save insights as soon as they are recognized
 
-8. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
+9. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
 
 **NOTE:** The script creates and checks out the new branch and initializes the spec file before writing.
 

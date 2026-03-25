@@ -1,8 +1,8 @@
 ---
 description: Implement tasks and run quality loop in one command
 scripts:
-  sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
-  ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
+  sh: ~/.claude/spec-kit/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+  ps: ~/.claude/spec-kit/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
 ## User Input
@@ -14,6 +14,17 @@ $ARGUMENTS
 You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
+
+### Pre-flight: Ensure `.specify/` exists
+
+Before running any scripts, ensure `.specify/` directory exists in the project root. If missing, copy from `~/.claude/spec-kit/.specify`:
+```bash
+SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+  cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+fi
+```
 
 ### Phase 1: Implementation (same as `/speckit.implement`)
 

@@ -425,6 +425,11 @@ class QualityLoop:
             # Switch to Phase B if Phase A passed
             if result.passed and state.phase == Phase.A:
                 state.phase = Phase.B
+                # Exp 47: Reset stagnation counter on phase transition
+                # Without reset, accumulated stagnation from Phase A could
+                # falsely trigger stagnation stop in Phase B's first iterations
+                stagnation_count = 0
+                state.last_score = None
                 self.state_manager.save_state(state)
 
                 # Exp 101: Update progress for phase transition
@@ -452,8 +457,8 @@ class QualityLoop:
                     f"Analyzing {len(result.failed_rules)} failed rules",
                 )
 
-                failed_rules_list = [fr.to_dict() for fr in result.failed_rules]
-                critique_result = self.critique.generate(failed_rules_list, artifact)
+                # Exp 40: Pass FailedRule objects directly (type-safe API)
+                critique_result = self.critique.generate(result.failed_rules, artifact)
                 state.critique = critique_result
 
                 self._log_event(
@@ -461,7 +466,7 @@ class QualityLoop:
                     event_type="critique_done",
                     iteration=state.iteration,
                     phase=state.phase.value,
-                    details={"issues": critique_result["addressed"]}
+                    details={"issues": critique_result.addressed}
                 )
 
                 state.current_step = "REFINE"
@@ -469,7 +474,7 @@ class QualityLoop:
                 # Exp 101: Update progress for refinement
                 _update_progress(
                     ProgressPhase.REFINE,
-                    f"Refining artifact ({critique_result.get('addressed', 0)} issues to fix)",
+                    f"Refining artifact ({critique_result.addressed} issues to fix)",
                 )
 
                 artifact = self.refiner.apply(artifact, critique_result)

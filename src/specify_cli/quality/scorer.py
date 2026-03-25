@@ -80,25 +80,16 @@ class Scorer:
         Args:
             score: Calculated score
             threshold: Threshold to compare against
-            failed_rules: Rules that failed
+            failed_rules: Rules that failed (each has weight field)
 
         Returns:
-            True if passed (score >= threshold AND no fail-severity failures)
+            True if passed (score >= threshold AND no blocking failures)
         """
-        # Check if any fail-severity rules failed
-        from specify_cli.quality.models import RuleSeverity
+        # Exp 38: Use actual weight instead of rule_id prefix heuristic
+        # weight >= 2 = fail severity (blocking), weight < 2 = warn/info (non-blocking)
+        has_blocking_failure = any(r.weight >= 2 for r in failed_rules)
 
-        has_fail_severity = any(
-            rule_id.startswith("correctness.") or
-            rule_id.startswith("security.")
-            for rule_id in [r.rule_id for r in failed_rules]
-        )
-
-        # More precise check: look at actual rule severity
-        # For now, use simple heuristic based on rule ID prefix
-        # In production, would look up actual rule severity
-
-        return score >= threshold and not has_fail_severity
+        return score >= threshold and not has_blocking_failure
 
     def calculate_distance_to_success(
         self,
@@ -203,37 +194,60 @@ class Scorer:
 
         # Count from failed rules
         for rule in failed_rules:
-            severity = self._get_rule_severity(rule.rule_id)
+            severity = self._get_rule_severity(rule)
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
 
         # Count from warnings
         for rule in warnings:
-            severity = self._get_rule_severity(rule.rule_id)
+            severity = self._get_rule_severity(rule)
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
 
         return severity_counts
 
-    def _get_rule_severity(self, rule_id: str) -> str:
-        """Get severity level for a rule ID
+    def _get_rule_severity(self, rule: FailedRule) -> str:
+        """Get severity level combining domain prefix and actual rule weight/severity
+
+        Exp 43: Uses both rule_id prefix (domain) and actual weight/severity
+        instead of prefix-only heuristic. This prevents a security warning
+        (weight=1) from being mapped as "critical".
+
+        Mapping logic:
+        - info severity (weight=0) -> always "info"
+        - security + fail (weight>=2) -> "critical"
+        - security + warn (weight<2) -> "high"
+        - correctness + fail (weight>=2) -> "high"
+        - correctness + warn (weight<2) -> "medium"
+        - performance + any -> "medium"
+        - quality + fail (weight>=2) -> "medium"
+        - quality + warn (weight<2) -> "low"
+        - docs + any -> "info"
 
         Args:
-            rule_id: Rule identifier
+            rule: FailedRule with rule_id, weight, and severity fields
 
         Returns:
             Severity level (critical, high, medium, low, info)
         """
-        # Map rule prefixes to severity levels
-        severity_map = {
-            "security.": "critical",
-            "correctness.": "high",
-            "performance.": "medium",
-            "quality.": "low",
-            "docs.": "info",
-        }
+        rule_id = rule.rule_id
+        weight = rule.weight
+        severity = getattr(rule, 'severity', 'fail')
 
-        for prefix, severity in severity_map.items():
-            if rule_id.startswith(prefix):
-                return severity
+        # Info rules are always info regardless of domain
+        if severity == "info" or weight == 0:
+            return "info"
+
+        is_blocking = weight >= 2
+
+        if rule_id.startswith("security."):
+            return "critical" if is_blocking else "high"
+        elif rule_id.startswith("correctness."):
+            return "high" if is_blocking else "medium"
+        elif rule_id.startswith("performance."):
+            return "medium"
+        elif rule_id.startswith("quality."):
+            return "medium" if is_blocking else "low"
+        elif rule_id.startswith("docs."):
+            return "info"
 
         return "medium"  # Default severity
 

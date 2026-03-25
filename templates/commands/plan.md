@@ -9,11 +9,11 @@ handoffs:
     agent: speckit.checklist
     prompt: Create a checklist for the following domain...
 scripts:
-  sh: scripts/bash/setup-plan.sh --json
-  ps: scripts/powershell/setup-plan.ps1 -Json
+  sh: ~/.claude/spec-kit/scripts/bash/setup-plan.sh --json
+  ps: ~/.claude/spec-kit/scripts/powershell/setup-plan.ps1 -Json
 agent_scripts:
-  sh: scripts/bash/update-agent-context.sh __AGENT__
-  ps: scripts/powershell/update-agent-context.ps1 -AgentType __AGENT__
+  sh: ~/.claude/spec-kit/scripts/bash/update-agent-context.sh __AGENT__
+  ps: ~/.claude/spec-kit/scripts/powershell/update-agent-context.ps1 -AgentType __AGENT__
 ---
 
 ## User Input
@@ -25,6 +25,20 @@ $ARGUMENTS
 You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
+
+1. **Ensure `.specify/` directory exists** in the project root before running any scripts:
+   - Check if `.specify/` directory exists in the project root
+   - If missing, copy from `~/.claude/spec-kit/.specify` to project root:
+     ```bash
+     SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+     REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+     if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+       cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+       echo "[specify] Copied .specify/ directory to project root"
+     fi
+     ```
+   - If source not found, try Python package fallback: `python -c "from pathlib import Path; import specify_cli; src=Path(specify_cli.__file__).parent/'_data'/'.specify'; print(src) if src.is_dir() else exit(1)"`
+   - This is required for plan templates, agent context templates, and constitution access
 
 1. **Setup**: Run `{SCRIPT}` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 

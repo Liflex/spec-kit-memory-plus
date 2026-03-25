@@ -819,6 +819,70 @@ class TestFailedRule:
         failed = FailedRule.from_dict(data)
         assert failed.category == "general"
 
+    # Exp 37: Weight field tests
+    def test_failed_rule_weight_default(self):
+        """FailedRule weight defaults to 1"""
+        failed = FailedRule(rule_id="r", reason="r")
+        assert failed.weight == 1
+
+    def test_failed_rule_weight_explicit(self):
+        """FailedRule accepts explicit weight"""
+        failed = FailedRule(rule_id="r", reason="r", weight=2)
+        assert failed.weight == 2
+
+    def test_failed_rule_weight_in_to_dict(self):
+        """Weight is included in to_dict output"""
+        failed = FailedRule(rule_id="r", reason="r", weight=2)
+        data = failed.to_dict()
+        assert data["weight"] == 2
+
+    def test_failed_rule_weight_from_dict(self):
+        """Weight is restored from dict"""
+        data = {"rule_id": "r", "reason": "r", "weight": 2}
+        failed = FailedRule.from_dict(data)
+        assert failed.weight == 2
+
+    def test_failed_rule_weight_from_dict_default(self):
+        """Weight defaults to 1 when missing from dict"""
+        data = {"rule_id": "r", "reason": "r"}
+        failed = FailedRule.from_dict(data)
+        assert failed.weight == 1
+
+    # Exp 43: Severity field tests
+    def test_failed_rule_severity_default(self):
+        """FailedRule severity defaults to 'fail'"""
+        failed = FailedRule(rule_id="r", reason="r")
+        assert failed.severity == "fail"
+
+    def test_failed_rule_severity_explicit(self):
+        """FailedRule accepts explicit severity"""
+        failed = FailedRule(rule_id="r", reason="r", severity="warn")
+        assert failed.severity == "warn"
+
+    def test_failed_rule_severity_info(self):
+        """FailedRule accepts info severity"""
+        failed = FailedRule(rule_id="r", reason="r", severity="info", weight=0)
+        assert failed.severity == "info"
+        assert failed.weight == 0
+
+    def test_failed_rule_severity_in_to_dict(self):
+        """Severity is included in to_dict output"""
+        failed = FailedRule(rule_id="r", reason="r", severity="warn")
+        data = failed.to_dict()
+        assert data["severity"] == "warn"
+
+    def test_failed_rule_severity_from_dict(self):
+        """Severity is restored from dict"""
+        data = {"rule_id": "r", "reason": "r", "severity": "warn"}
+        failed = FailedRule.from_dict(data)
+        assert failed.severity == "warn"
+
+    def test_failed_rule_severity_from_dict_default(self):
+        """Severity defaults to 'fail' when missing from dict"""
+        data = {"rule_id": "r", "reason": "r"}
+        failed = FailedRule.from_dict(data)
+        assert failed.severity == "fail"
+
 
 class TestEvaluationResult:
     """Test EvaluationResult dataclass"""

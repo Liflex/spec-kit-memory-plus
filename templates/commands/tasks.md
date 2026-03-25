@@ -10,8 +10,8 @@ handoffs:
     prompt: Start the implementation in phases
     send: true
 scripts:
-  sh: scripts/bash/check-prerequisites.sh --json
-  ps: scripts/powershell/check-prerequisites.ps1 -Json
+  sh: ~/.claude/spec-kit/scripts/bash/check-prerequisites.sh --json
+  ps: ~/.claude/spec-kit/scripts/powershell/check-prerequisites.ps1 -Json
 ---
 
 ## User Input
@@ -57,6 +57,16 @@ You **MUST** consider the user input before proceeding (if not empty).
 - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
 ## Outline
+
+1. **Ensure `.specify/` directory exists** in the project root before running any scripts:
+   - If `.specify/` is missing, copy from `~/.claude/spec-kit/.specify` to project root:
+     ```bash
+     SPECKIT_SOURCE="$HOME/.claude/spec-kit/.specify"
+     REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+     if [ ! -d "$REPO_ROOT/.specify" ] && [ -d "$SPECKIT_SOURCE" ]; then
+       cp -r "$SPECKIT_SOURCE" "$REPO_ROOT/.specify"
+     fi
+     ```
 
 1. **Setup**: Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
