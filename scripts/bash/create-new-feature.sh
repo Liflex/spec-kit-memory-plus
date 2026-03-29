@@ -40,7 +40,7 @@ while [ $i -le $# ]; do
             fi
             BRANCH_NUMBER="$next_arg"
             ;;
-        --help|-h) 
+        --help|-h)
             echo "Usage: $0 [--json] [--short-name <name>] [--number N] <feature_description>"
             echo ""
             echo "Options:"
@@ -54,8 +54,13 @@ while [ $i -le $# ]; do
             echo "  $0 'Implement OAuth2 integration for API' --number 5"
             exit 0
             ;;
-        *) 
-            ARGS+=("$arg") 
+        --*)
+            echo "Error: Unknown option '$arg'. Use --help for usage information." >&2
+            echo "Hint: To get feature paths without creating a branch, use check-prerequisites.sh --paths-only" >&2
+            exit 1
+            ;;
+        *)
+            ARGS+=("$arg")
             ;;
     esac
     i=$((i + 1))
